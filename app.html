@@ -184,6 +184,13 @@ textarea.f-input{resize:none}
         <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services.<br>
           <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">Créer un compte gratuit →</a>
         </div>
+        <div id="lfm-secret-wrap" style="display:none;flex-direction:column;gap:6px">
+          <div class="f-label">Shared Secret (pour export loved)</div>
+          <input class="f-input" id="lfm-secret-inp" type="password" placeholder="Shared secret Last.fm API" onclick="event.stopPropagation()">
+          <div style="font-family:'Space Mono';font-size:8px;color:var(--grey2);line-height:1.6">
+            <a href="https://www.last.fm/api/accounts" target="_blank" style="color:var(--lfm)" onclick="event.stopPropagation()">last.fm/api/accounts</a> → colonne Secret
+          </div>
+        </div>
         <div>
           <div class="f-label">Pseudo Last.fm</div>
           <input class="f-input" id="lfm-inp" type="text" placeholder="ton_pseudo" style="margin-top:6px" onclick="event.stopPropagation()">
@@ -330,12 +337,14 @@ import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet, ARTIST_GENRE_MA
 // ── State ─────────────────────────────────────────────────────────────────────
 const S = {
   lfm: { on:false, user:null, src:'loved' },
+  lfmSession: null,   // session key Last.fm pour track.love (obtenue via OAuth)
   dz:  { on:false, userId:null },
   sc:  { on:false, token:null, userId:null },
   sp:  { on:false, tracks:[] },
   results: null,
   labels: {},
   openCat: null,
+  sharedCats: new Set(),   // catégories partagées sur le Hub
 };
 
 const SETS_CAT = { name:'SETS', label:'Sets / Mixes', emoji:'🎚️', color:'#888888' };
@@ -754,10 +763,31 @@ function openModal(catName) {
 
   // Export buttons
   const bar = $('m-exports');
-  bar.innerHTML = `<button class="btn" id="m-json">↓ JSON</button>
-    <button class="btn" id="m-txt" style="border-color:var(--lfm);color:var(--lfm)">🎵 Export liste .txt</button>`;
+  const lfmConnected = !!S.lfmSession;
+  const lfmBtnHtml = lfmConnected
+    ? `<button class="btn" id="m-lfm-love" style="border-color:var(--lfm);color:var(--lfm)">🔴 Ajouter au Last.fm Loved</button>`
+    : `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Connecter Last.fm pour exporter</button>`;
+  bar.innerHTML = `
+    <button class="btn" id="m-json">↓ JSON</button>
+    <button class="btn" id="m-txt">↓ .txt</button>
+    ${lfmBtnHtml}
+    <label class="btn" style="display:flex;align-items:center;gap:8px;cursor:pointer" id="m-hub-wrap">
+      <span id="m-hub-dot" style="width:8px;height:8px;border-radius:50%;background:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};transition:background .2s;flex-shrink:0"></span>
+      Partager sur le Hub
+    </label>`;
   $('m-json').onclick = ()=>exportPlaylistJSON(catName);
   $('m-txt').onclick  = ()=>exportTXT(catName);
+  $('m-hub-wrap').onclick = ()=>toggleHubShare(catName);
+  if (lfmConnected) {
+    $('m-lfm-love').onclick = ()=>exportToLFMLoved(catName);
+  } else {
+    $('m-lfm-auth').onclick = ()=>startLFMAuth(catName);
+  }
+
+  // Catégories disponibles pour le déplacement (celles qui ont des tracks)
+  const availableCats = ALL_CATS.filter(c =>
+    c.name !== catName && (S.results[c.name]?.length > 0 || c.name === 'NON_CLASSES')
+  );
 
   // Track list
   const tl=$('tl'); tl.innerHTML='';
@@ -776,7 +806,7 @@ function openModal(catName) {
         <span class="tr-src">${t.source}</span>
         <div class="move-wrap">
           <button class="move-btn">Déplacer ↓</button>
-          <div class="move-menu">${ALL_CATS.filter(c=>c.name!==catName).map(c=>`<div class="move-opt" data-cat="${c.name}">${c.emoji||''} ${esc(S.labels[c.name]||c.label)}</div>`).join('')}</div>
+          <div class="move-menu">${availableCats.map(c=>`<div class="move-opt" data-cat="${c.name}">${c.emoji||''} ${esc(S.labels[c.name]||c.label)} <span style="color:var(--grey2);margin-left:4px">${S.results[c.name]?.length||0}</span></div>`).join('')}</div>
         </div>`;
       const mb=row.querySelector('.move-btn'), mm=row.querySelector('.move-menu');
       mb.addEventListener('click',e=>{
@@ -818,7 +848,132 @@ function closeModal() {
   renderGrid(S.results);
 }
 
-// ── Export ────────────────────────────────────────────────────────────────────
+// ── Hub share ──────────────────────────────────────────────────────────────────
+function toggleHubShare(catName) {
+  if (S.sharedCats.has(catName)) S.sharedCats.delete(catName);
+  else S.sharedCats.add(catName);
+  // update dot
+  const dot = $('m-hub-dot');
+  if (dot) dot.style.background = S.sharedCats.has(catName) ? 'var(--green)' : 'var(--border2)';
+  // TODO: save to Supabase hub table
+}
+
+// ── Last.fm Web Auth → session key → track.love ───────────────────────────────
+// Last.fm utilise un flow "web auth" : 
+//   1. On ouvre last.fm/api/auth/?api_key=KEY&cb=CALLBACK_URL
+//   2. L'user autorise → Last.fm redirige vers CALLBACK_URL?token=TOKEN
+//   3. On échange token → session key via auth.getSession (nécessite signature MD5)
+//   4. Avec la session key on peut appeler track.love (aussi signé MD5)
+//
+// La signature MD5 est possible en pur JS (pas besoin de backend).
+// ⚠️ LFM_SECRET doit correspondre à ton API key Last.fm
+// Trouve-le sur https://www.last.fm/api/accounts (colonne "Secret")
+// Si tu utilises la clé b25b959554ed76058ac220b7b2e0a026, son secret associé est nécessaire
+const LFM_SECRET = localStorage.getItem('lfm_secret') || '';
+
+async function md5(str) {
+  // MD5 en pur JS via SubtleCrypto n'est pas dispo (pas supporté).
+  // On utilise une implem JS minimaliste.
+  return md5js(str);
+}
+
+// MD5 implem pure JS (RFC 1321)
+function md5js(str) {
+  function safeAdd(x, y) { const lsw=(x&0xffff)+(y&0xffff); return (((x>>16)+(y>>16)+(lsw>>16))<<16)|(lsw&0xffff); }
+  function bitRotateLeft(num,cnt) { return (num<<cnt)|(num>>>(32-cnt)); }
+  function md5cmn(q,a,b,x,s,t) { return safeAdd(bitRotateLeft(safeAdd(safeAdd(a,q),safeAdd(x,t)),s),b); }
+  function md5ff(a,b,c,d,x,s,t){return md5cmn((b&c)|((~b)&d),a,b,x,s,t);}
+  function md5gg(a,b,c,d,x,s,t){return md5cmn((b&d)|(c&(~d)),a,b,x,s,t);}
+  function md5hh(a,b,c,d,x,s,t){return md5cmn(b^c^d,a,b,x,s,t);}
+  function md5ii(a,b,c,d,x,s,t){return md5cmn(c^(b|(~d)),a,b,x,s,t);}
+  const M=[];
+  const strL=str.length;
+  for(let i=0;i<strL;i++){M[i>>2]|=str.charCodeAt(i)<<((i%4)*8);}
+  M[strL>>2]|=0x80<<((strL%4)*8);
+  M[(((strL+8)>>6)<<4)+14]=strL*8;
+  let a=1732584193,b=-271733879,c=-1732584194,d=271733878;
+  for(let i=0;i<M.length;i+=16){
+    const [oa,ob,oc,od]=[a,b,c,d];
+    a=md5ff(a,b,c,d,M[i],7,-680876936);d=md5ff(d,a,b,c,M[i+1],12,-389564586);c=md5ff(c,d,a,b,M[i+2],17,606105819);b=md5ff(b,c,d,a,M[i+3],22,-1044525330);
+    a=md5ff(a,b,c,d,M[i+4],7,-176418897);d=md5ff(d,a,b,c,M[i+5],12,1200080426);c=md5ff(c,d,a,b,M[i+6],17,-1473231341);b=md5ff(b,c,d,a,M[i+7],22,-45705983);
+    a=md5ff(a,b,c,d,M[i+8],7,1770035416);d=md5ff(d,a,b,c,M[i+9],12,-1958414417);c=md5ff(c,d,a,b,M[i+10],17,-42063);b=md5ff(b,c,d,a,M[i+11],22,-1990404162);
+    a=md5ff(a,b,c,d,M[i+12],7,1804603682);d=md5ff(d,a,b,c,M[i+13],12,-40341101);c=md5ff(c,d,a,b,M[i+14],17,-1502002290);b=md5ff(b,c,d,a,M[i+15],22,1236535329);
+    a=md5gg(a,b,c,d,M[i+1],5,-165796510);d=md5gg(d,a,b,c,M[i+6],9,-1069501632);c=md5gg(c,d,a,b,M[i+11],14,643717713);b=md5gg(b,c,d,a,M[i],20,-373897302);
+    a=md5gg(a,b,c,d,M[i+5],5,-701558691);d=md5gg(d,a,b,c,M[i+10],9,38016083);c=md5gg(c,d,a,b,M[i+15],14,-660478335);b=md5gg(b,c,d,a,M[i+4],20,-405537848);
+    a=md5gg(a,b,c,d,M[i+9],5,568446438);d=md5gg(d,a,b,c,M[i+14],9,-1019803690);c=md5gg(c,d,a,b,M[i+3],14,-187363961);b=md5gg(b,c,d,a,M[i+8],20,1163531501);
+    a=md5gg(a,b,c,d,M[i+13],5,-1444681467);d=md5gg(d,a,b,c,M[i+2],9,-51403784);c=md5gg(c,d,a,b,M[i+7],14,1735328473);b=md5gg(b,c,d,a,M[i+12],20,-1926607734);
+    a=md5hh(a,b,c,d,M[i+5],4,-378558);d=md5hh(d,a,b,c,M[i+8],11,-2022574463);c=md5hh(c,d,a,b,M[i+11],16,1839030562);b=md5hh(b,c,d,a,M[i+14],23,-35309556);
+    a=md5hh(a,b,c,d,M[i+1],4,-1530992060);d=md5hh(d,a,b,c,M[i+4],11,1272893353);c=md5hh(c,d,a,b,M[i+7],16,-155497632);b=md5hh(b,c,d,a,M[i+10],23,-1094730640);
+    a=md5hh(a,b,c,d,M[i+13],4,681279174);d=md5hh(d,a,b,c,M[i],11,-358537222);c=md5hh(c,d,a,b,M[i+3],16,-722521979);b=md5hh(b,c,d,a,M[i+6],23,76029189);
+    a=md5hh(a,b,c,d,M[i+9],4,-640364487);d=md5hh(d,a,b,c,M[i+12],11,-421815835);c=md5hh(c,d,a,b,M[i+15],16,530742520);b=md5hh(b,c,d,a,M[i+2],23,-995338651);
+    a=md5ii(a,b,c,d,M[i],6,-198630844);d=md5ii(d,a,b,c,M[i+7],10,1126891415);c=md5ii(c,d,a,b,M[i+14],15,-1416354905);b=md5ii(b,c,d,a,M[i+5],21,-57434055);
+    a=md5ii(a,b,c,d,M[i+12],6,1700485571);d=md5ii(d,a,b,c,M[i+3],10,-1894986606);c=md5ii(c,d,a,b,M[i+10],15,-1051523);b=md5ii(b,c,d,a,M[i+1],21,-2054922799);
+    a=md5ii(a,b,c,d,M[i+8],6,1873313359);d=md5ii(d,a,b,c,M[i+15],10,-30611744);c=md5ii(c,d,a,b,M[i+6],15,-1560198380);b=md5ii(b,c,d,a,M[i+13],21,1309151649);
+    a=md5ii(a,b,c,d,M[i+4],6,-145523070);d=md5ii(d,a,b,c,M[i+11],10,-1120210379);c=md5ii(c,d,a,b,M[i+2],15,718787259);b=md5ii(b,c,d,a,M[i+9],21,-343485551);
+    a=safeAdd(a,oa);b=safeAdd(b,ob);c=safeAdd(c,oc);d=safeAdd(d,od);
+  }
+  return [a,b,c,d].map(n=>('0000000'+(n>>>0).toString(16)).slice(-8).match(/.{2}/g).reverse().join('')).join('');
+}
+
+function lfmSign(params) {
+  // Signature = md5(sorted_params_string + secret)
+  const sorted = Object.keys(params).filter(k=>k!=='format').sort()
+    .map(k=>k+params[k]).join('');
+  return md5js(sorted + LFM_SECRET);
+}
+
+async function lfmPost(params) {
+  const sig = lfmSign(params);
+  const body = new URLSearchParams({...params, api_sig:sig, format:'json'});
+  const r = await fetch(LFM, {method:'POST', body});
+  return r.json();
+}
+
+// Démarre le flow Last.fm Web Auth
+// Last.fm redirigera vers cette page avec ?token=XXXX
+function startLFMAuth(catName) {
+  // Sauvegarder la catégorie en cours pour y revenir après auth
+  if (catName) sessionStorage.setItem('lfm_pending_cat', catName);
+  const callbackUrl = window.location.href.split('?')[0];
+  const authUrl = `https://www.last.fm/api/auth/?api_key=${LFMK}&cb=${encodeURIComponent(callbackUrl)}`;
+  window.location.href = authUrl;
+}
+
+async function getLFMSession(token, catName) {
+  try {
+    const d = await lfmPost({method:'auth.getSession', api_key:LFMK, token});
+    if (d.error) throw new Error(d.message);
+    S.lfmSession = d.session.key;
+    localStorage.setItem('lfm_session', d.session.key);
+    // Réouvrir la modale pour afficher le bouton love
+    if (catName) openModal(catName);
+  } catch(e) {
+    alert('Erreur auth Last.fm : '+e.message);
+  }
+}
+
+async function exportToLFMLoved(catName) {
+  const tracks = S.results[catName]||[];
+  if (!tracks.length||!S.lfmSession) return;
+  const btn = $('m-lfm-love');
+  btn.textContent='⟳ Envoi en cours...'; btn.disabled=true;
+
+  let ok=0, fail=0;
+  for (const t of tracks) {
+    if (!t.artist||!t.title) continue;
+    try {
+      const d = await lfmPost({
+        method:'track.love', api_key:LFMK,
+        sk:S.lfmSession, artist:t.artist, track:t.title
+      });
+      if (d.error) fail++; else ok++;
+    } catch { fail++; }
+    await delay(300); // rate limit Last.fm
+    btn.textContent=`⟳ ${ok}/${tracks.length}...`;
+  }
+  btn.textContent=`✓ ${ok} lovés${fail?` (${fail} erreurs)`:''}`;
+  btn.disabled=false;
+}
 function exportPlaylistJSON(catName) {
   const payload={playlist:S.labels[catName]||catName, tracks:S.results[catName]||[]};
   dl(JSON.stringify(payload,null,2),'application/json',`soundhub-${catName.toLowerCase()}.json`);
@@ -842,7 +997,22 @@ function dl(content, mime, filename) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-// Restore LFM session
+// Handle Last.fm OAuth callback — ?token=XXXX in URL after redirect
+(function handleLFMCallback(){
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    window.history.replaceState({}, '', window.location.pathname);
+    const pendingCat = sessionStorage.getItem('lfm_pending_cat')||null;
+    sessionStorage.removeItem('lfm_pending_cat');
+    getLFMSession(token, pendingCat);
+  }
+  // Restore existing session key
+  const sess = localStorage.getItem('lfm_session');
+  if (sess) S.lfmSession = sess;
+})();
+
+// Restore LFM user
 const savedU=localStorage.getItem('lfm_user');
 if (savedU) {
   $('lfm-inp').value=savedU;
@@ -852,6 +1022,20 @@ if (savedU) {
 }
 
 // Events
+// Show/hide secret input based on session state
+(function(){
+  const wrap = $('lfm-secret-wrap');
+  const inp  = $('lfm-secret-inp');
+  if (wrap && inp) {
+    // Show if no session yet
+    if (!S.lfmSession) wrap.style.display='flex';
+    inp.value = localStorage.getItem('lfm_secret')||'';
+    inp.addEventListener('input', ()=>{
+      const v = inp.value.trim();
+      if (v) localStorage.setItem('lfm_secret', v);
+    });
+  }
+})();
 $('lfm-btn').onclick=connectLFM;
 $('lfm-inp').addEventListener('keydown',e=>{if(e.key==='Enter')connectLFM();});
 $('lfm-disc').onclick=e=>{e.stopPropagation();disconn('lfm');};

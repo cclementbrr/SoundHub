@@ -285,7 +285,7 @@ export const GENRE_CATEGORIES = [
     color: "#334488",
     priority: 40,
     keywords: [
-      "ambient","dark ambient","drone ambient","ambient dub",
+      "dark ambient","drone ambient","ambient dub",
       "dungeon synth","new age","space music","kosmische",
       "isolationism","astral","ethereal","meditative","meditation music",
       "soundscape","field recording","nature sounds",
@@ -314,9 +314,9 @@ export const GENRE_CATEGORIES = [
     label: "Électronique Expérimentale / IDM / Glitch",
     emoji: "🔬",
     color: "#555577",
-    priority: 38,
+    priority: 78,
     keywords: [
-      "idm","intelligent dance music","glitch","microsound",
+      "idm","intelligent dance music","glitch","microsound","electronica","braindance","drill n bass",
       "acousmatic","musique concrete","musique concrète","electroacoustic",
       "noise music","black midi","deconstructed club","avant garde electronic",
       "experimental electronic","post digital","abstract electronic",
@@ -366,10 +366,17 @@ export const GENRE_CATEGORIES = [
     label: "Trap / Drill / Cloud Rap / Hyperpop",
     emoji: "🌩️",
     color: "#ffcc00",
-    priority: 70,
+    priority: 82,
+    // strongKeywords : matchent +5 comme un genre field — signal très spécifique à ce genre
+    strongKeywords: [
+      "cloud rap","cloudrap","trap","trap music","drill","uk drill",
+      "brooklyn drill","chicago drill","french drill","mumble rap",
+      "hyperpop","digicore","emo rap","phonk","dark phonk","memphis rap",
+      "afrotrap","afro trap","drain","surf gang","plugg",
+    ],
     keywords: [
       "trap","trap music","cloud rap","cloudrap","mumble rap",
-      "drill","uk drill","brooklyn drill","chicago drill",
+      "drill","uk drill","brooklyn drill","chicago drill","french drill",
       "jersey club","jerk","crunk","snap music",
       "hyperpop","digicore","emo rap","sad rap","melodic rap",
       "afrotrap","afro trap","ghetto music trap",
@@ -860,7 +867,7 @@ export const ARTIST_GENRE_MAP = {
   "rufus du sol": ["indie dance","deep house","melodic techno"],
   // ── HOUSE / TECHNO UNDERGROUND ──
   "interplanetary criminal": ["uk garage","bassline","house"],
-  "crudo means raw": ["house","jackin house","deep house"],
+  "crudo means raw": ["rap","hip hop","colombian rap"],
   "pauly": ["house","deep house"],
   "bicep": ["house","techno","uk rave"],
   "adam beyer": ["techno","drumcode"],
@@ -932,7 +939,14 @@ function normalize(text) {
 
 function extractTags(tagList) {
   if (!tagList) return [];
-  const matches = [...String(tagList).matchAll(/"([^"]+)"|(\S+)/g)];
+  // Supporte les deux formats :
+  //   array  : ["cloud rap", "hip hop", "trap"]   (Last.fm API enrichi)
+  //   string : '"cloud rap" hip-hop techno'        (SoundCloud tag_list)
+  if (Array.isArray(tagList)) {
+    return tagList.map(t => normalize(String(t))).filter(Boolean);
+  }
+  // Format string SoundCloud : mots entre guillemets ou mots séparés
+  const matches = [...String(tagList).matchAll(/"([^"]+)"|([^\s"]+)/g)];
   return matches.map(m => normalize(m[1] || m[2])).filter(Boolean);
 }
 
@@ -954,16 +968,37 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
   const artistNorm = normalize(track.artist || "");
   const descNorm   = normalize(track.description || "").slice(0, 600);
   const labelNorm  = normalize(track.label || "");
-  const context    = `${titleNorm} ${artistNorm} ${descNorm} ${labelNorm}`;
+  // Contexte séparé pour contrôler le poids :
+  // - genre field  → +5  (champ explicite, le plus fiable)
+  // - tags API     → +3  (enrichissement Last.fm / base artiste)
+  // - description/label → +2  (contexte riche)
+  // - titre        → +1  (faible : évite "House Is Gettin Raw" → HOUSE si tags rap)
+  // - artiste seul → +1  (faible : "Techno Animal" ne doit pas forcer TECHNO)
+  const richContext = `${descNorm} ${labelNorm}`;
 
   // Enrichissement par base artiste — injecte les genres connus comme pseudo-tags
   const artistKey    = artistNorm.trim();
   const firstArtist  = artistKey.split(/[,\s&]/)[0].trim();
-  const knownTags    = [
-    ...(ARTIST_GENRE_MAP[artistKey]      || []),
-    ...(ARTIST_GENRE_MAP[firstArtist]    || []),
+  // Combiner tags réels + base artiste :
+  // Les tags réels (Last.fm enrichissement) scorent comme d'habitude.
+  // La base artiste s'ajoute UNIQUEMENT si les tags réels ne couvrent pas le genre principal.
+  // Ex : David Guetta a tags ['house','dance','techno'] → base artiste ajoute ['edm','big room']
+  //      → EDM score monte et l'emporte sur HOUSE
+  // Ex : Crudo Means Raw a tags ['rap','hip hop','colombia'] → base artiste dit ['rap'] → cohérent
+  const knownTags = [
+    ...(ARTIST_GENRE_MAP[artistKey]   || []),
+    ...(ARTIST_GENRE_MAP[firstArtist] || []),
   ].map(normalize);
-  const allEnrichedTags = [...new Set([...tagNorms, ...knownTags])];
+  // On n'ajoute les tags de la base artiste que s'ils ne contredisent pas les tags réels.
+  // "Contradire" = le genre principal des tags réels est totalement différent de la base artiste.
+  // Heuristique simple : si tags réels ont ≥2 mots-clés rap/hip-hop ET base dit electronic → ignorer base.
+  const realGenreStr = tagNorms.join(' ');
+  const isReallyRap  = /\b(rap|hip.?hop|trap|drill|cloud rap)\b/.test(realGenreStr) && tagNorms.length >= 2;
+  const baseIsElec   = knownTags.some(t => /\b(edm|house|techno|electronic)\b/.test(t));
+  const skipBase     = isReallyRap && baseIsElec && tagNorms.length >= 3;
+  const mergedTags   = skipBase ? tagNorms : [...new Set([...tagNorms, ...knownTags])];
+  const allEnrichedTags = mergedTags;
+  const hasStrongTags = allEnrichedTags.length >= 3;
 
   let bestCat    = "NON_CLASSES";
   let bestScore  = 0;
@@ -975,11 +1010,19 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
     let score = 0;
     const matches = [];
 
+    // strongKeywords : tags très spécifiques au genre → scorent +5 comme un genre field
+    for (const kw of (cat.strongKeywords || [])) {
+      const pat = kwRegex(normalize(kw));
+      if (allEnrichedTags.some(t => pat.test(t))) { score += 5; matches.push(`strong:${kw}`); }
+    }
     for (const kw of (cat.keywords || [])) {
       const pat = kwRegex(normalize(kw));
       if (pat.test(genreNorm))                        { score += 5; matches.push(`genre:${kw}`); }
       if (allEnrichedTags.some(t => pat.test(t)))     { score += 3; matches.push(`tag:${kw}`); }
-      if (pat.test(context))                          { score += 2; matches.push(`ctx:${kw}`); }
+      if (pat.test(richContext))                      { score += 2; matches.push(`ctx:${kw}`); }
+      // Titre & artiste ont poids réduit (1pt) pour éviter les faux positifs
+      if (pat.test(titleNorm))                        { score += 1; matches.push(`title:${kw}`); }
+      if (pat.test(artistNorm))                       { score += 1; matches.push(`artist:${kw}`); }
     }
     for (const lbl of (cat.labels || [])) {
       const pat = kwRegex(normalize(lbl));
