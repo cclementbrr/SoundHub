@@ -24,6 +24,7 @@
     --sc:      #ff5500;
     --sp:      #1db954;
     --dz:      #ef5466;
+    --lfm:     #d51007;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -283,8 +284,68 @@
     <div>
       <div class="sidebar-title">// Connexion</div>
 
-      <!-- ── SoundCloud ── -->
-      <div class="service-btn" id="sc-card" style="--service-color: var(--sc)">
+      <!-- ── Last.fm ── -->
+      <div class="service-btn" id="lfm-card" style="--service-color: var(--lfm)">
+        <div class="service-header">
+          <div class="service-left">
+            <span class="service-icon">🎵</span>
+            <div>
+              <div class="service-name">Last.fm</div>
+              <div class="service-status status-idle" id="lfm-status">Non connecté</div>
+            </div>
+          </div>
+        </div>
+        <div class="connected-info" id="lfm-connected">
+          <img class="avatar" id="lfm-avatar" style="display:none" src="" alt="">
+          <div class="avatar-placeholder" id="lfm-avatar-ph">🎵</div>
+          <div>
+            <div class="connected-name" id="lfm-username">—</div>
+            <div class="connected-count" id="lfm-count">— loved tracks</div>
+          </div>
+          <button class="disconnect-btn" onclick="disconnectLFM();event.stopPropagation()">✕</button>
+        </div>
+        <div class="manual-input" id="lfm-manual" style="--service-color: var(--lfm)" onclick="event.stopPropagation()">
+          <div style="font-size:11px;color:var(--grey);line-height:1.6;margin-bottom:10px">
+            Fonctionne avec Spotify, SoundCloud, Deezer et +30 services.<br>
+            <a href="https://www.last.fm/join" target="_blank"
+               style="color:var(--lfm);font-family:'Space Mono';font-size:9px"
+               onclick="event.stopPropagation()">
+              Créer un compte Last.fm gratuit →
+            </a>
+          </div>
+          <label style="font-family:'Space Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--grey)">
+            Pseudo Last.fm
+          </label>
+          <input id="lfm-username-input" type="text" placeholder="ton_pseudo"
+                 style="margin-top:6px"
+                 onkeydown="if(event.key==='Enter'){connectLFM();event.stopPropagation()}"
+                 onclick="event.stopPropagation()">
+          <div style="margin-top:8px;display:flex;gap:8px;flex-direction:column">
+            <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2)">
+              Source des tracks :
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-source" value="loved" checked onclick="event.stopPropagation()"> Loved tracks
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-source" value="recent" onclick="event.stopPropagation()"> Écoutes récentes
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-source" value="top" onclick="event.stopPropagation()"> Top tracks
+              </label>
+            </div>
+          </div>
+          <button class="oauth-btn" style="--service-color:var(--lfm);margin-top:10px;width:100%"
+                  onclick="connectLFM();event.stopPropagation()">
+            🔴 Connecter Last.fm
+          </button>
+          <div id="lfm-status-msg" style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:6px;min-height:14px"></div>
+        </div>
+      </div>
+
+      <!-- ── SoundCloud (import token manuel) ── -->
+      <div class="service-btn" id="sc-card" style="--service-color: var(--sc); margin-top:2px">
         <div class="service-header">
           <div class="service-left">
             <span class="service-icon">☁️</span>
@@ -294,8 +355,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Connected info -->
         <div class="connected-info" id="sc-connected">
           <div class="avatar-placeholder">☁️</div>
           <div>
@@ -304,31 +363,19 @@
           </div>
           <button class="disconnect-btn" onclick="disconnect('sc');event.stopPropagation()">✕</button>
         </div>
-
-        <!-- Manual input (token) -->
         <div class="manual-input" id="sc-manual" style="--service-color: var(--sc)" onclick="event.stopPropagation()">
           <label>Token OAuth (depuis DevTools)</label>
           <textarea id="sc-token" rows="2" placeholder="2-abc123..."></textarea>
           <div style="font-size:11px;color:var(--grey);line-height:1.5">
             SoundCloud → DevTools → Network → chercher <code style="color:var(--accent)">Authorization: OAuth</code>
           </div>
-          <div class="input-row">
+          <div class="input-row" style="margin-top:8px">
             <button class="btn-sm primary" onclick="connectSC();event.stopPropagation()">Connecter</button>
-            <a href="#" class="btn-sm" onclick="event.stopPropagation()">Guide ↗</a>
-          </div>
-          <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-            <div style="font-family:'Space Mono';font-size:9px;color:var(--grey);letter-spacing:1px;margin-bottom:6px">OU — Via OAuth officiel (beta)</div>
-            <button class="oauth-btn" style="--service-color:var(--sc)" onclick="oauthSC();event.stopPropagation()">
-              🔐 Autoriser SoundHub
-            </button>
-            <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:6px;line-height:1.6">
-              Nécessite un client_id approuvé par SoundCloud. Si indisponible, utilise le token manuel ci-dessus.
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Spotify ── -->
+      <!-- ── Spotify (import JSON) ── -->
       <div class="service-btn" id="sp-card" style="--service-color: var(--sp); margin-top: 2px">
         <div class="service-header">
           <div class="service-left">
@@ -341,46 +388,28 @@
         </div>
         <div class="connected-info" id="sp-connected">
           <div class="avatar-placeholder" id="sp-avatar-ph">💚</div>
-          <img class="avatar" id="sp-avatar" style="display:none" src="" alt="">
           <div>
             <div class="connected-name" id="sp-username">—</div>
-            <div class="connected-count" id="sp-count">— likes</div>
+            <div class="connected-count" id="sp-count">— tracks</div>
           </div>
           <button class="disconnect-btn" onclick="disconnect('sp');event.stopPropagation()">✕</button>
         </div>
         <div class="manual-input" id="sp-manual" style="--service-color: var(--sp)" onclick="event.stopPropagation()">
-          <div style="font-size:12px;color:var(--grey);line-height:1.7;margin-bottom:10px">
-            Exporte tes données Spotify puis importe le fichier ici.<br>
+          <div style="font-size:11px;color:var(--grey);line-height:1.6;margin-bottom:8px">
+            Import <strong style="color:var(--white)">YourLibrary.json</strong> depuis ton export Spotify.<br>
             <a href="https://www.spotify.com/account/privacy" target="_blank"
-               style="color:var(--sp);font-family:'Space Mono';font-size:9px;letter-spacing:1px"
+               style="color:var(--sp);font-family:'Space Mono';font-size:9px"
                onclick="event.stopPropagation()">
               spotify.com/account/privacy →
             </a>
-            <span style="font-family:'Space Mono';font-size:9px;color:var(--grey2);display:block;margin-top:4px">
-              Compte → Confidentialité → Télécharger mes données → "Bibliothèque étendue"<br>
-              Cherche le fichier <strong style="color:var(--white)">YourLibrary.json</strong> dans le zip.
-            </span>
           </div>
-          <button class="oauth-btn" style="--service-color:var(--sp);width:100%;cursor:pointer"
+          <button class="oauth-btn" style="--service-color:var(--sp);width:100%"
                   onclick="event.stopPropagation();document.getElementById('sp-file-input').click()">
             📂 Importer YourLibrary.json
           </button>
           <input type="file" id="sp-file-input" accept=".json" style="display:none"
                  onchange="importSpotifyJSON(event)">
-          <div id="sp-import-status" style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:8px;min-height:14px"></div>
-        </div>
-      </div>
-
-      <!-- ── Deezer ── -->
-      <div class="service-btn" id="dz-card" style="--service-color: var(--dz); margin-top: 2px; opacity:0.45; cursor:default; pointer-events:none">
-        <div class="service-header">
-          <div class="service-left">
-            <span class="service-icon">🎶</span>
-            <div>
-              <div class="service-name">Deezer</div>
-              <div class="service-status" style="color:#666;font-size:10px;letter-spacing:1px">API fermée — bientôt</div>
-            </div>
-          </div>
+          <div id="sp-import-status" style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:6px;min-height:14px"></div>
         </div>
       </div>
     </div>
@@ -401,7 +430,7 @@
     <div class="empty-state" id="empty-state">
       <div class="empty-icon">🎛️</div>
       <div class="empty-title">Prêt à classifier</div>
-      <div class="empty-sub">Connecte ton SoundCloud ou Spotify à gauche, puis lance l'analyse.</div>
+      <div class="empty-sub">Connecte ton compte Last.fm (ou SoundCloud/Spotify) à gauche, puis lance l'analyse.</div>
     </div>
 
     <!-- Progress -->
@@ -462,8 +491,9 @@ const CONFIG = {
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const state = {
+  lfm: { connected: false, username: null, likeCount: 0, tracks: [] },
   sc:  { connected: false, token: null, userId: null, username: null, likeCount: 0 },
-  sp:  { connected: false, token: null, userId: null, username: null, likeCount: 0 },
+  sp:  { connected: false, token: null, userId: null, username: null, likeCount: 0, importedTracks: [] },
   dz:  { connected: false, token: null, userId: null, username: null, likeCount: 0 },
   results: null,
 };
@@ -495,6 +525,11 @@ window.toggleManual = function(service) {
   const el = document.getElementById(`${service}-manual`);
   el.classList.toggle('open');
 };
+
+function toggleManualLFM() {
+  if (state.lfm.connected) return;
+  document.getElementById('lfm-manual').classList.toggle('open');
+}
 
 function setStatus(service, type, text) {
   const el = document.getElementById(`${service}-status`);
@@ -807,6 +842,15 @@ async function completeDeezerAuth(token) {
 // Le vrai travail OAuth se passe dans callback.html.
 // Quand l'utilisateur revient sur app.html, on lit les tokens depuis sessionStorage.
 function handleCallbackParams() {
+  // Last.fm — username sauvegardé
+  const lfmUser = localStorage.getItem('lfm_username');
+  if (lfmUser) {
+    state.lfm.username = lfmUser;
+    state.lfm.source   = localStorage.getItem('lfm_source') || 'loved';
+    showConnectedLFM(lfmUser, 'chargé depuis cache');
+    // Ouvrir le panneau pour forcer refresh si besoin
+  }
+
   // Spotify — token stocké par callback.html
   if (localStorage.getItem('sp_access_token') && !state.sp.connected) {
     const token   = localStorage.getItem('sp_access_token');
@@ -883,6 +927,142 @@ async function completeSCAuth(code) {
   showConnected('sc', me.username, likesRes.total_results || 0);
 }
 
+window.disconnectLFM = function() {
+  state.lfm.connected = false;
+  state.lfm.tracks = [];
+  state.lfm.username = null;
+  localStorage.removeItem('lfm_username');
+  localStorage.removeItem('lfm_source');
+  document.getElementById('lfm-connected').style.display = 'none';
+  document.getElementById('lfm-manual').classList.add('open');
+  setStatus('lfm', 'idle', 'Non connecté');
+  updateRunBtn();
+};
+
+
+// ─── LAST.FM ──────────────────────────────────────────────────────────────────
+const LFM_API  = 'https://ws.audioscrobbler.com/2.0/';
+const LFM_KEY  = 'b25b959554ed76058ac220b7b2e0a026'; // clé publique demo Last.fm
+
+window.connectLFM = async function() {
+  const username = document.getElementById('lfm-username-input').value.trim();
+  if (!username) return;
+  const source = document.querySelector('input[name="lfm-source"]:checked')?.value || 'loved';
+  const msgEl = document.getElementById('lfm-status-msg');
+
+  setStatus('lfm', 'loading', '⟳ Connexion...');
+  msgEl.style.color = 'var(--grey)';
+  msgEl.textContent = '⟳ Vérification du profil...';
+
+  try {
+    // Vérifier que le user existe
+    const infoRes = await fetch(`${LFM_API}?method=user.getinfo&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json`);
+    const info = await infoRes.json();
+    if (info.error) throw new Error(info.message || 'Utilisateur introuvable');
+
+    const user = info.user;
+    const avatar = user.image?.find(i => i.size === 'large')?.['#text'] || '';
+    const playcount = parseInt(user.playcount || '0');
+
+    // Compter les loved tracks
+    const countRes = await fetch(`${LFM_API}?method=user.getlovedtracks&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json&limit=1`);
+    const countData = await countRes.json();
+    const total = parseInt(countData.lovedtracks?.['@attr']?.total || '0');
+
+    state.lfm.username = user.name;
+    state.lfm.source   = source;
+    state.lfm.likeCount = source === 'loved' ? total : playcount;
+
+    localStorage.setItem('lfm_username', user.name);
+    localStorage.setItem('lfm_source', source);
+
+    if (avatar) {
+      const img = document.getElementById('lfm-avatar');
+      img.src = avatar; img.style.display = 'block';
+      document.getElementById('lfm-avatar-ph').style.display = 'none';
+    }
+
+    const countLabel = source === 'loved' ? `${total.toLocaleString('fr')} loved tracks`
+                     : source === 'recent' ? `${playcount.toLocaleString('fr')} scrobbles`
+                     : `top tracks`;
+    showConnectedLFM(user.name, countLabel);
+    msgEl.style.color = 'var(--green)';
+    msgEl.textContent = `✓ Connecté en tant que ${user.name}`;
+
+  } catch(e) {
+    setStatus('lfm', 'error', '✕ Erreur');
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '✕ ' + e.message;
+  }
+};
+
+function showConnectedLFM(username, countLabel) {
+  state.lfm.connected = true;
+  state.lfm.username = username;
+  document.getElementById('lfm-username').textContent = username;
+  document.getElementById('lfm-count').textContent = countLabel;
+  document.getElementById('lfm-connected').style.display = 'flex';
+  document.getElementById('lfm-manual').classList.remove('open');
+  setStatus('lfm', 'ok', '✓ Connecté');
+  updateRunBtn();
+}
+
+async function fetchLFMTracks() {
+  const username = state.lfm.username;
+  const source   = state.lfm.source || 'loved';
+  const tracks   = [];
+  let page = 1;
+  const limit = 1000;
+
+  const methodMap = {
+    loved:  'user.getlovedtracks',
+    recent: 'user.getrecenttracks',
+    top:    'user.gettoptracks',
+  };
+  const method = methodMap[source] || 'user.getlovedtracks';
+
+  while (true) {
+    const url = `${LFM_API}?method=${method}&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json&limit=${limit}&page=${page}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    let items = [];
+    let totalPages = 1;
+
+    if (source === 'loved') {
+      items      = data.lovedtracks?.track || [];
+      totalPages = parseInt(data.lovedtracks?.['@attr']?.totalPages || '1');
+    } else if (source === 'recent') {
+      items      = (data.recenttracks?.track || []).filter(t => !t['@attr']?.nowplaying);
+      totalPages = parseInt(data.recenttracks?.['@attr']?.totalPages || '1');
+    } else {
+      items      = data.toptracks?.track || [];
+      totalPages = parseInt(data.toptracks?.['@attr']?.totalPages || '1');
+    }
+
+    tracks.push(...items);
+    addLog(`Last.fm — ${tracks.length} tracks...`);
+
+    if (page >= totalPages || page >= 10) break; // max 10 000 tracks
+    page++;
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  // Normaliser vers format SoundHub
+  return tracks.map(t => ({
+    id:          t.mbid || '',
+    title:       t.name || '',
+    artist:      t.artist?.name || t.artist?.['#text'] || '',
+    album:       t.album?.['#text'] || '',
+    genre:       '',
+    tags:        [],
+    duration:    parseInt(t.duration || '0'),
+    description: '',
+    label:       '',
+    source:      'lastfm',
+  }));
+}
+
 // ─── CLASSIFICATION ───────────────────────────────────────────────────────────
 
 const SETS_CAT = { name:'SETS', label:'Sets / Mixes', emoji:'🎚️', color:'#888888' };
@@ -900,6 +1080,15 @@ window.runClassification = async function() {
   const allTracks = [];
 
   try {
+    // ── Last.fm ──
+    if (state.lfm.connected) {
+      addLog('Last.fm — récupération des tracks...', 'info');
+      const lfmTracks = await fetchLFMTracks();
+      lfmTracks.forEach(t => allTracks.push({ raw: t, source: 'lastfm', prenormalized: true }));
+      addLog(`Last.fm — ${lfmTracks.length} tracks récupérés`, 'ok');
+      setProgress(25, 'Last.fm ✓');
+    }
+
     // ── SoundCloud likes ──
     if (state.sc.connected) {
       addLog('SoundCloud — récupération des likes...', 'info');
@@ -1123,6 +1312,8 @@ handleCallbackParams();
   const card = document.getElementById(`${service}-card`);
   if (card) card.addEventListener('click', () => toggleManual(service));
 });
+const lfmCard = document.getElementById('lfm-card');
+if (lfmCard) lfmCard.addEventListener('click', () => toggleManualLFM());
 </script>
 </body>
 </html>
