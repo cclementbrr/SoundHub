@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundHub — Trie tes likes, découvre ta musique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:   #080808;
+    --dark:    #111111;
+    --card:    #181818;
+    --border:  #2a2a2a;
+    --accent:  #ff4400;
+    --accent2: #ff8800;
+    --white:   #f0f0f0;
+    --grey:    #888888;
+    --green:   #00ff88;
+    --purple:  #aa44ff;
+    --blue:    #0088ff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── Noise texture overlay ──────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ── Grid background ────────────────────────────────────────────── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,68,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,68,0,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ────────────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    z-index: 100;
+    background: linear-gradient(var(--black), transparent);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .logo span { color: var(--accent); }
+
+  nav ul {
+    display: flex; gap: 36px; list-style: none;
+  }
+  nav a {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--grey);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--white); }
+
+  .nav-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--black) !important;
+    background: var(--accent);
+    padding: 10px 20px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--accent2) !important; }
+
+  /* ── HERO ───────────────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    z-index: 1;
+  }
+
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 12vw, 180px);
+    line-height: 0.9;
+    letter-spacing: -2px;
+    color: var(--white);
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  h1 .accent { color: var(--accent); }
+  h1 .outline {
+    -webkit-text-stroke: 2px var(--white);
+    color: transparent;
+  }
+
+  .hero-sub {
+    margin-top: 32px;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--grey);
+    max-width: 520px;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .hero-sub strong { color: var(--white); font-weight: 500; }
+
+  .hero-actions {
+    margin-top: 48px;
+    display: flex; gap: 16px; align-items: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--black);
+    background: var(--accent);
+    padding: 16px 36px;
+    text-decoration: none;
+    border: none; cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--grey);
+    background: transparent;
+    padding: 16px 36px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    display: inline-block;
+  }
+  .btn-ghost:hover { color: var(--white); border-color: var(--white); }
+
+  /* Hero deco — waveform */
+  .hero-visual {
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 45%;
+    height: 60vh;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    animation: fadeIn 1.2s 1s forwards;
+  }
+
+  .waveform {
+    display: flex; align-items: center; gap: 4px;
+    height: 200px;
+  }
+  .waveform-bar {
+    width: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: wave var(--dur, 1.2s) ease-in-out infinite alternate;
+    animation-delay: var(--delay, 0s);
+    opacity: var(--op, 0.6);
+  }
+
+  @keyframes wave {
+    from { height: var(--min, 8px); }
+    to   { height: var(--max, 80px); }
+  }
+
+  /* ── SERVICES ───────────────────────────────────────────────────── */
+  .services {
+    padding: 100px 48px;
+    position: relative; z-index: 1;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 6vw, 80px);
+    line-height: 1;
+    color: var(--white);
+    margin-bottom: 48px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 2px;
+  }
+
+  .service-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    cursor: default;
+  }
+  .service-card:hover { border-color: var(--accent); }
+  .service-card::before {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--service-color, var(--accent));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .service-card:hover::before { transform: scaleX(1); }
+
+  .service-icon { font-size: 32px; margin-bottom: 16px; }
+  .service-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .service-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .status-ready  { color: var(--green); }
+  .status-soon   { color: var(--grey); }
+
+  /* ── HOW IT WORKS ───────────────────────────────────────────────── */
+  .how {
+    padding: 100px 48px;
+    position: relative; z-index: 1;
+    background: var(--dark);
+  }
+
+  .steps-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    margin-top: 48px;
+  }
+
+  .step-block {
+    padding: 40px 32px;
+    border-top: 2px solid var(--border);
+    position: relative;
+  }
+  .step-block:first-child { border-top-color: var(--accent); }
+
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    color: var(--border);
+    margin-bottom: 16px;
+  }
+  .step-block:first-child .step-num { color: var(--accent); opacity: 0.3; }
+
+  .step-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .step-desc {
+    font-size: 14px;
+    color: var(--grey);
+    line-height: 1.6;
+  }
+
+  /* ── GENRES PREVIEW ─────────────────────────────────────────────── */
+  .genres-section {
+    padding: 100px 48px;
+    position: relative; z-index: 1;
+  }
+
+  .genres-marquee-wrap {
+    overflow: hidden;
+    margin-top: 48px;
+    position: relative;
+  }
+  .genres-marquee-wrap::before,
+  .genres-marquee-wrap::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0; width: 120px;
+    z-index: 2;
+  }
+  .genres-marquee-wrap::before { left: 0; background: linear-gradient(90deg, var(--black), transparent); }
+  .genres-marquee-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--black), transparent); }
+
+  .genres-marquee {
+    display: flex; gap: 12px;
+    animation: marquee 30s linear infinite;
+    width: max-content;
+  }
+  .genres-marquee:hover { animation-play-state: paused; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .genre-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--grey);
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .genre-pill:hover {
+    border-color: var(--pill-color, var(--accent));
+    color: var(--white);
+  }
+  .genre-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--pill-color, var(--accent));
+  }
+
+  /* ── HUB PREVIEW ────────────────────────────────────────────────── */
+  .hub-section {
+    padding: 100px 48px;
+    position: relative; z-index: 1;
+    background: var(--dark);
+  }
+
+  .hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  .hub-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hub-card-genre {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--card-color, var(--accent));
+    margin-bottom: 12px;
+  }
+  .hub-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .hub-card-meta {
+    font-size: 12px;
+    color: var(--grey);
+    margin-bottom: 16px;
+  }
+  .hub-card-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .hub-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--grey);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+  }
+  .hub-card-bar {
+    position: absolute; bottom: 0; left: 0;
+    height: 2px;
+    background: var(--card-color, var(--accent));
+    width: var(--fill, 60%);
+    opacity: 0.5;
+  }
+
+  /* ── FOOTER ─────────────────────────────────────────────────────── */
+  footer {
+    padding: 48px;
+    border-top: 1px solid var(--border);
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 24px;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 3px;
+  }
+  .footer-logo span { color: var(--accent); }
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--grey);
+    letter-spacing: 1px;
+  }
+  .footer-links {
+    display: flex; gap: 24px;
+  }
+  .footer-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--grey);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--white); }
+
+  /* ── ANIMATIONS ─────────────────────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ── RESPONSIVE ─────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    nav ul { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    .hero-visual { display: none; }
+    .services, .how, .genres-section, .hub-section { padding: 60px 24px; }
+    footer { padding: 32px 24px; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">SOUND<span>HUB</span></a>
+  <ul>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">Comment</a></li>
+    <li><a href="#genres">Genres</a></li>
+    <li><a href="/hub">Hub</a></li>
+  </ul>
+  <a href="/app" class="nav-cta">Lancer →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-tag">// Classe tes likes. Partage tes sons.</p>
+  <h1>
+    TRIE<br>
+    <span class="accent">TES</span><br>
+    <span class="outline">LIKES</span>
+  </h1>
+  <p class="hero-sub">
+    SoundHub analyse tes <strong>likes SoundCloud, Spotify, Deezer</strong> et les classe
+    automatiquement en playlists par genre — sans compte, sans données stockées.
+  </p>
+  <div class="hero-actions">
+    <a href="/app" class="btn-primary">Commencer gratuitement</a>
+    <a href="#how" class="btn-ghost">Comment ça marche</a>
+  </div>
+
+  <!-- Waveform décoratif -->
+  <div class="hero-visual">
+    <div class="waveform" id="waveform"></div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="reveal">
+    <p class="section-label">// Compatibilité</p>
+    <h2 class="section-title">TES PLATEFORMES</h2>
+  </div>
+  <div class="services-grid reveal">
+    <div class="service-card" style="--service-color:#ff5500">
+      <div class="service-icon">☁️</div>
+      <div class="service-name">SoundCloud</div>
+      <div class="service-status status-ready">● Disponible</div>
+    </div>
+    <div class="service-card" style="--service-color:#1db954">
+      <div class="service-icon">💚</div>
+      <div class="service-name">Spotify</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+    <div class="service-card" style="--service-color:#fa57c1">
+      <div class="service-icon">🎵</div>
+      <div class="service-name">Apple Music</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+    <div class="service-card" style="--service-color:#ef5466">
+      <div class="service-icon">🎶</div>
+      <div class="service-name">Deezer</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+    <div class="service-card" style="--service-color:#ff0000">
+      <div class="service-icon">▶️</div>
+      <div class="service-name">YouTube Music</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+    <div class="service-card" style="--service-color:#00bfff">
+      <div class="service-icon">🔷</div>
+      <div class="service-name">Tidal</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+    <div class="service-card" style="--service-color:#1a1aff">
+      <div class="service-icon">🎼</div>
+      <div class="service-name">Qobuz</div>
+      <div class="service-status status-soon">○ Bientôt</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="reveal">
+    <p class="section-label">// Processus</p>
+    <h2 class="section-title">COMMENT ÇA MARCHE</h2>
+  </div>
+  <div class="steps-row">
+    <div class="step-block reveal">
+      <div class="step-num">01</div>
+      <div class="step-title">Connecte ton service</div>
+      <p class="step-desc">SoundCloud via token OAuth. Spotify via OAuth officiel. Aucun mot de passe stocké.</p>
+    </div>
+    <div class="step-block reveal">
+      <div class="step-num">02</div>
+      <div class="step-title">On analyse tes likes</div>
+      <p class="step-desc">Notre moteur lit les genres, tags, labels et titres de chaque track pour le classer.</p>
+    </div>
+    <div class="step-block reveal">
+      <div class="step-num">03</div>
+      <div class="step-title">Tes playlists sont créées</div>
+      <p class="step-desc">Une playlist privée par genre, directement dans ton compte. Tu choisis les catégories.</p>
+    </div>
+    <div class="step-block reveal">
+      <div class="step-num">04</div>
+      <div class="step-title">Partage sur le Hub</div>
+      <p class="step-desc">Option : partage les liens publics de tes playlists sur le hub communautaire par genre.</p>
+    </div>
+  </div>
+</section>
+
+<!-- GENRES PREVIEW -->
+<section class="genres-section" id="genres">
+  <div class="reveal">
+    <p class="section-label">// Détection automatique</p>
+    <h2 class="section-title">50+ GENRES RECONNUS</h2>
+  </div>
+  <div class="genres-marquee-wrap reveal">
+    <div class="genres-marquee" id="genreMarquee"></div>
+  </div>
+</section>
+
+<!-- HUB PREVIEW -->
+<section class="hub-section">
+  <div class="reveal">
+    <p class="section-label">// Communauté</p>
+    <h2 class="section-title">LE HUB</h2>
+    <p style="color:var(--grey);font-size:16px;max-width:480px;line-height:1.7;margin-top:12px">
+      Des milliers de playlists partagées, classées par genre. Aucune donnée perso — juste des liens publics et des hashtags.
+    </p>
+  </div>
+  <div class="hub-grid reveal" id="hubPreview"></div>
+  <div style="text-align:center;margin-top:40px" class="reveal">
+    <a href="/hub" class="btn-primary">Explorer le Hub →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">SOUND<span>HUB</span></div>
+  <div class="footer-copy">© 2025 — Zéro donnée stockée. Open source.</div>
+  <div class="footer-links">
+    <a href="/app">App</a>
+    <a href="/hub">Hub</a>
+    <a href="#">GitHub</a>
+  </div>
+</footer>
+
+<script>
+// ── Waveform générative ──────────────────────────────────────────────────────
+const wf = document.getElementById('waveform');
+const bars = 48;
+for (let i = 0; i < bars; i++) {
+  const b = document.createElement('div');
+  b.className = 'waveform-bar';
+  const min  = 4 + Math.random() * 10;
+  const max  = 40 + Math.random() * 140;
+  const dur  = 0.8 + Math.random() * 1.6;
+  const del  = Math.random() * 2;
+  const op   = 0.3 + Math.random() * 0.7;
+  b.style.cssText = `--min:${min}px;--max:${max}px;--dur:${dur}s;--delay:${del}s;--op:${op};height:${min}px`;
+  wf.appendChild(b);
+}
+
+// ── Genres marquee ───────────────────────────────────────────────────────────
+const genres = [
+  { label: "Techno",         color: "#cc0033" },
+  { label: "Acid / Tribe",   color: "#ff2200" },
+  { label: "Trance / Psy",   color: "#8800ff" },
+  { label: "House",          color: "#ff6600" },
+  { label: "Drum & Bass",    color: "#00cc66" },
+  { label: "Dubstep",        color: "#00aaff" },
+  { label: "Hardcore",       color: "#ff0055" },
+  { label: "Rap / Hip-Hop",  color: "#ffcc00" },
+  { label: "R&B / Soul",     color: "#cc6699" },
+  { label: "Funk / Groove",  color: "#ff8800" },
+  { label: "Rock",           color: "#aa2200" },
+  { label: "Metal",          color: "#880000" },
+  { label: "Punk",           color: "#dd0055" },
+  { label: "Jazz",           color: "#886600" },
+  { label: "Classique",      color: "#997744" },
+  { label: "Afrobeats",      color: "#ff9900" },
+  { label: "Latin / Reggaeton", color: "#ff4400" },
+  { label: "Reggae",         color: "#00aa44" },
+  { label: "Musiques du monde", color: "#cc8800" },
+  { label: "Ambient",        color: "#4466aa" },
+  { label: "EDM",            color: "#ff00aa" },
+  { label: "Ghetto / Bass",  color: "#ff9900" },
+  { label: "Pop",            color: "#ff66bb" },
+  { label: "Folk / Country", color: "#cc8844" },
+];
+
+const marquee = document.getElementById('genreMarquee');
+// Double pour effet infini
+[...genres, ...genres].forEach(g => {
+  const pill = document.createElement('div');
+  pill.className = 'genre-pill';
+  pill.style.setProperty('--pill-color', g.color);
+  pill.innerHTML = `<span class="genre-dot"></span>${g.label}`;
+  marquee.appendChild(pill);
+});
+
+// ── Hub preview cards ────────────────────────────────────────────────────────
+const hubData = [
+  { genre: "Techno", color: "#cc0033", title: "Berlin Basement Selections", meta: "247 tracks · SoundCloud", tags: ["#hardtechno","#industrial","#rawrave"], fill: "80%" },
+  { genre: "Drum & Bass", color: "#00cc66", title: "Liquid Sunday Morning", meta: "183 tracks · Spotify", tags: ["#liquiddnb","#atmospheric"], fill: "65%" },
+  { genre: "Afrobeats", color: "#ff9900", title: "Naija Heat 2025", meta: "312 tracks · Deezer", tags: ["#afropop","#afroswing","#naija"], fill: "90%" },
+  { genre: "Jazz", color: "#886600", title: "Spiritual Jazz Explorations", meta: "94 tracks · Tidal", tags: ["#spiritualjazz","#freejazz"], fill: "50%" },
+  { genre: "Trance / Psy", color: "#8800ff", title: "Goa Transmissions Vol.3", meta: "156 tracks · SoundCloud", tags: ["#psytrance","#goa","#darkpsy"], fill: "70%" },
+  { genre: "Rap", color: "#ffcc00", title: "Rap FR Essentiels", meta: "401 tracks · Spotify", tags: ["#rapfr","#boombap","#drill"], fill: "85%" },
+];
+
+const hubEl = document.getElementById('hubPreview');
+hubData.forEach(c => {
+  const card = document.createElement('div');
+  card.className = 'hub-card';
+  card.style.setProperty('--card-color', c.color);
+  card.style.setProperty('--fill', c.fill);
+  card.innerHTML = `
+    <div class="hub-card-genre">${c.genre}</div>
+    <div class="hub-card-title">${c.title}</div>
+    <div class="hub-card-meta">${c.meta}</div>
+    <div class="hub-card-tags">${c.tags.map(t => `<span class="hub-tag">${t}</span>`).join('')}</div>
+    <div class="hub-card-bar"></div>
+  `;
+  hubEl.appendChild(card);
+});
+
+// ── Scroll reveal ────────────────────────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

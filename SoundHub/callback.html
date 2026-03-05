@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundHub — Connexion...</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:  #080808;
+    --dark:   #111111;
+    --border: #222222;
+    --accent: #ff4400;
+    --white:  #f0f0f0;
+    --grey:   #666666;
+    --green:  #00e676;
+    --red:    #ff3355;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: var(--black);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* grid bg */
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,68,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,68,0,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .card {
+    position: relative; z-index: 1;
+    width: min(480px, calc(100vw - 48px));
+    border: 1px solid var(--border);
+    background: #111;
+    padding: 48px 40px;
+    text-align: center;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 3px;
+    color: var(--white); text-decoration: none;
+    display: block; margin-bottom: 40px;
+  }
+  .logo span { color: var(--accent); }
+
+  /* ── States ── */
+  .state { display: none; flex-direction: column; align-items: center; gap: 20px; }
+  .state.active { display: flex; }
+
+  /* LOADING */
+  .spinner {
+    width: 48px; height: 48px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--grey);
+  }
+  .status-service {
+    font-size: 28px; font-family: 'Bebas Neue'; letter-spacing: 2px;
+    color: var(--white);
+  }
+  .status-detail {
+    font-size: 10px; letter-spacing: 1px; color: var(--grey);
+    line-height: 1.8; max-width: 320px;
+  }
+
+  /* SUCCESS */
+  .success-icon { font-size: 48px; }
+  .success-title { font-family: 'Bebas Neue'; font-size: 36px; letter-spacing: 2px; color: var(--green); }
+  .success-sub { font-size: 9px; letter-spacing: 2px; color: var(--grey); }
+  .progress-bar-wrap {
+    width: 100%; height: 2px; background: var(--border);
+    position: relative; overflow: hidden;
+  }
+  .progress-bar-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: var(--green);
+    animation: fillbar 2.5s ease forwards;
+  }
+  @keyframes fillbar { from { width: 0% } to { width: 100% } }
+
+  /* ERROR */
+  .error-icon { font-size: 48px; }
+  .error-title { font-family: 'Bebas Neue'; font-size: 36px; letter-spacing: 2px; color: var(--red); }
+  .error-msg {
+    font-size: 10px; letter-spacing: 1px; color: var(--grey);
+    line-height: 1.8; max-width: 320px;
+    border: 1px solid #331122; background: #1a0008;
+    padding: 12px 16px; text-align: left;
+  }
+  .retry-btn {
+    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 12px 24px;
+    background: var(--accent); color: var(--black); border: none;
+    cursor: pointer; text-decoration: none; display: inline-block;
+    transition: background .2s;
+  }
+  .retry-btn:hover { background: #ff8800; }
+
+  /* Log terminal */
+  .log {
+    width: 100%; text-align: left;
+    background: #0a0a0a; border: 1px solid var(--border);
+    padding: 14px 16px; max-height: 120px; overflow-y: auto;
+    font-size: 9px; letter-spacing: 0.5px; line-height: 2;
+    color: var(--grey);
+  }
+  .log .ok  { color: var(--green); }
+  .log .err { color: var(--red); }
+  .log .info { color: #4488ff; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <a href="/app" class="logo">SOUND<span>HUB</span></a>
+
+  <!-- STATE: Loading -->
+  <div class="state active" id="state-loading">
+    <div class="spinner"></div>
+    <div class="status-label">Connexion en cours</div>
+    <div class="status-service" id="service-name">—</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- STATE: Success -->
+  <div class="state" id="state-success">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Connecté !</div>
+    <div class="success-sub" id="success-detail">Redirection automatique...</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+    <div class="status-detail">Tu vas être redirigé vers l'app dans quelques secondes.</div>
+  </div>
+
+  <!-- STATE: Error -->
+  <div class="state" id="state-error">
+    <div class="error-icon">✕</div>
+    <div class="error-title">Erreur</div>
+    <div class="error-msg" id="error-msg">Une erreur est survenue.</div>
+    <a href="/app" class="retry-btn">← Retour à l'app</a>
+  </div>
+</div>
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function showState(name) {
+  ['loading','success','error'].forEach(s => {
+    document.getElementById(`state-${s}`).classList.toggle('active', s === name);
+  });
+}
+
+function log(msg, type = 'info') {
+  const el   = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${new Date().toLocaleTimeString('fr')}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  showState('error');
+}
+
+function setSuccess(detail) {
+  document.getElementById('success-detail').textContent = detail || 'Redirection automatique...';
+  showState('success');
+  // Redirect après 2.5s (durée de la barre de progression)
+  setTimeout(() => { window.location.href = '/app'; }, 2600);
+}
+
+// ─── CONFIG (doit correspondre à app.html) ────────────────────────────────────
+// Les client_ids sont lus depuis sessionStorage pour ne pas les dupliquer.
+// app.html les stocke avant le redirect.
+const CONFIG = {
+  soundcloud: {
+    client_id:    sessionStorage.getItem('sh_sc_client_id')    || 'YOUR_SC_CLIENT_ID',
+    redirect_uri: 'https://s0undhub.netlify.app/callback',
+  },
+  spotify: {
+    client_id:    sessionStorage.getItem('sh_sp_client_id')    || 'YOUR_SPOTIFY_CLIENT_ID',
+    redirect_uri: 'https://s0undhub.netlify.app/callback',
+  },
+  deezer: {
+    redirect_uri: 'https://s0undhub.netlify.app/callback',
+  },
+};
+
+// ─── Parse URL — lire PUIS nettoyer immédiatement ────────────────────────────
+// On lit les params une seule fois, puis on remplace l'URL proprement.
+// Ainsi un reload ne retente pas l'échange avec un code déjà consommé.
+const params   = new URLSearchParams(window.location.search);
+const fragment = new URLSearchParams(window.location.hash.substring(1));
+
+const code       = params.get('code');
+const stateParam = params.get('state');
+const errorParam = params.get('error');
+const dzToken    = fragment.get('access_token');
+const dzExpires  = fragment.get('expires');
+
+// Nettoyer l'URL tout de suite
+if (code || dzToken || errorParam) {
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+// ─── Error from provider ──────────────────────────────────────────────────────
+if (errorParam) {
+  const desc = params.get('error_description') || errorParam;
+  setError(`Le service a refusé la connexion :\n${desc}`);
+  // Nettoyer les pending flags
+  ['sc','sp','dz'].forEach(s => sessionStorage.removeItem(`${s}_oauth_pending`));
+}
+
+// ─── Detect which service ─────────────────────────────────────────────────────
+else if (dzToken && sessionStorage.getItem('dz_oauth_pending')) {
+  // ── DEEZER (Implicit flow — token dans le fragment) ────────────────────────
+  document.getElementById('service-name').textContent = 'DEEZER';
+  log('Token Deezer reçu', 'ok');
+  handleDeezer(dzToken);
+}
+
+else if (code && sessionStorage.getItem('sp_oauth_pending')) {
+  // ── SPOTIFY (PKCE) ─────────────────────────────────────────────────────────
+  document.getElementById('service-name').textContent = 'SPOTIFY';
+  const storedState = sessionStorage.getItem('sp_state');
+  if (storedState && stateParam !== storedState) {
+    setError('Paramètre "state" invalide — possible attaque CSRF. Réessaie.');
+  } else {
+    log('Code Spotify reçu', 'ok');
+    handleSpotify(code);
+  }
+}
+
+else if (code && sessionStorage.getItem('sc_oauth_pending')) {
+  // ── SOUNDCLOUD (PKCE) ──────────────────────────────────────────────────────
+  document.getElementById('service-name').textContent = 'SOUNDCLOUD';
+  const storedState = sessionStorage.getItem('sc_state');
+  if (storedState && stateParam !== storedState) {
+    setError('Paramètre "state" invalide — possible attaque CSRF. Réessaie.');
+  } else {
+    log('Code SoundCloud reçu', 'ok');
+    handleSoundCloud(code);
+  }
+}
+
+else if (!errorParam) {
+  // Aucun paramètre reconnu — accès direct à la page
+  setError('Aucun paramètre OAuth détecté.\nCette page est le redirect URI de SoundHub — accède-y via l\'app.');
+}
+
+// ─── SPOTIFY handler ──────────────────────────────────────────────────────────
+async function handleSpotify(code) {
+  try {
+    const verifier = sessionStorage.getItem('sp_pkce_verifier');
+    if (!verifier) throw new Error('PKCE verifier manquant — relance la connexion depuis l\'app.');
+
+    log('Échange code → token...', 'info');
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     CONFIG.spotify.client_id,
+        grant_type:    'authorization_code',
+        code,
+        redirect_uri:  CONFIG.spotify.redirect_uri,
+        code_verifier: verifier,
+      }),
+    });
+
+    // Spotify peut renvoyer du texte brut en cas d'erreur — on sécurise le parsing
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Réponse Spotify invalide : ${raw.slice(0, 120)}`); }
+    if (!data.access_token) throw new Error(data.error_description || data.error || 'Token Spotify invalide');
+
+    log('Token obtenu ✓', 'ok');
+
+    // Stocker pour app.html
+    localStorage.setItem('sp_access_token',  data.access_token);
+    localStorage.setItem('sp_refresh_token', data.refresh_token || '');
+    localStorage.setItem('sp_token_expires', String(Date.now() + (data.expires_in || 3600) * 1000));
+
+    // Récupérer profil
+    log('Récupération du profil...', 'info');
+    const me = await (await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${data.access_token}` }
+    })).json();
+
+    localStorage.setItem('sp_user_id',      me.id);
+    localStorage.setItem('sp_display_name', me.display_name || me.id);
+    localStorage.setItem('sp_avatar',       me.images?.[0]?.url || '');
+
+    // Nombre de likes
+    const saved = await (await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
+      headers: { Authorization: `Bearer ${data.access_token}` }
+    })).json();
+    localStorage.setItem('sp_like_count', String(saved.total || 0));
+
+    // Nettoyer
+    sessionStorage.removeItem('sp_oauth_pending');
+    sessionStorage.removeItem('sp_pkce_verifier');
+    sessionStorage.removeItem('sp_state');
+
+    log(`Connecté : ${me.display_name || me.id} (${saved.total} likes)`, 'ok');
+    setSuccess(`Spotify — ${me.display_name || me.id}`);
+
+  } catch (err) {
+    log(`Erreur : ${err.message}`, 'err');
+    setError(err.message);
+  }
+}
+
+// ─── SOUNDCLOUD handler ───────────────────────────────────────────────────────
+async function handleSoundCloud(code) {
+  try {
+    const verifier = sessionStorage.getItem('sc_pkce_verifier');
+    if (!verifier) throw new Error('PKCE verifier manquant — relance la connexion depuis l\'app.');
+
+    log('Échange code → token...', 'info');
+    const res = await fetch('https://api.soundcloud.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     CONFIG.soundcloud.client_id,
+        grant_type:    'authorization_code',
+        code,
+        redirect_uri:  CONFIG.soundcloud.redirect_uri,
+        code_verifier: verifier,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.access_token) throw new Error(data.error_description || data.error || 'Token SC invalide');
+
+    log('Token obtenu ✓', 'ok');
+    localStorage.setItem('sc_access_token',  data.access_token);
+    localStorage.setItem('sc_refresh_token', data.refresh_token || '');
+    localStorage.setItem('sc_token_expires', String(Date.now() + (data.expires_in || 3600) * 1000));
+
+    log('Récupération du profil...', 'info');
+    const me = await (await fetch('https://api-v2.soundcloud.com/me', {
+      headers: { Authorization: `OAuth ${data.access_token}` }
+    })).json();
+
+    localStorage.setItem('sc_user_id',      String(me.id));
+    localStorage.setItem('sc_display_name', me.username || me.full_name || String(me.id));
+    localStorage.setItem('sc_avatar',       me.avatar_url || '');
+
+    const likesRes = await (await fetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, {
+      headers: { Authorization: `OAuth ${data.access_token}` }
+    })).json();
+    localStorage.setItem('sc_like_count', String(likesRes.total_results || 0));
+
+    sessionStorage.removeItem('sc_oauth_pending');
+    sessionStorage.removeItem('sc_pkce_verifier');
+    sessionStorage.removeItem('sc_state');
+
+    log(`Connecté : ${me.username} (${likesRes.total_results || 0} likes)`, 'ok');
+    setSuccess(`SoundCloud — ${me.username}`);
+
+  } catch (err) {
+    log(`Erreur : ${err.message}`, 'err');
+    setError(err.message);
+  }
+}
+
+// ─── DEEZER handler ───────────────────────────────────────────────────────────
+async function handleDeezer(token) {
+  try {
+    log('Token Deezer reçu, récupération du profil...', 'info');
+
+    localStorage.setItem('dz_access_token', token);
+    if (dzExpires) {
+      localStorage.setItem('dz_token_expires', String(Date.now() + parseInt(dzExpires) * 1000));
+    }
+
+    const me = await (await fetch(`https://api.deezer.com/user/me?access_token=${token}`)).json();
+    if (me.error) throw new Error(me.error.message || 'Erreur API Deezer');
+
+    localStorage.setItem('dz_user_id',      String(me.id));
+    localStorage.setItem('dz_display_name', me.name || me.login);
+    localStorage.setItem('dz_avatar',       me.picture_medium || '');
+
+    const favs = await (await fetch(`https://api.deezer.com/user/${me.id}/tracks?access_token=${token}&limit=1`)).json();
+    localStorage.setItem('dz_like_count', String(favs.total || 0));
+
+    sessionStorage.removeItem('dz_oauth_pending');
+
+    log(`Connecté : ${me.name} (${favs.total || 0} favoris)`, 'ok');
+    setSuccess(`Deezer — ${me.name}`);
+
+  } catch (err) {
+    log(`Erreur : ${err.message}`, 'err');
+    setError(err.message);
+  }
+}
+</script>
+</body>
+</html>
