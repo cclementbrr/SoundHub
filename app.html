@@ -272,8 +272,8 @@
 <body>
 
 <nav>
-  <a href="/SoundHub/index.html" class="logo">SOUND<span>HUB</span></a>
-  <a href="/SoundHub/index.html" class="nav-back">← Accueil</a>
+  <a href="index.html" class="logo">SOUND<span>HUB</span></a>
+  <a href="index.html" class="nav-back">← Accueil</a>
 </nav>
 
 <div class="app-layout">
@@ -445,17 +445,17 @@ import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet } from './soundh
 const CONFIG = {
   soundcloud: {
     client_id:     'YOUR_SC_CLIENT_ID',   // À obtenir via chatbot Otto sur help.soundcloud.com
-    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
+    redirect_uri:  'https://s0undhub.netlify.app/callback',
     // En attendant l'approbation SoundCloud, on utilise le token manuel
   },
   spotify: {
     client_id:     'b2cf3a851fa247f0b13f2c8f7f3eaa34',  // Sur developer.spotify.com (gratuit, immédiat)
-    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
+    redirect_uri:  'https://s0undhub.netlify.app/callback',
     scopes:        'user-read-private user-read-email user-library-read playlist-modify-private playlist-modify-public',
   },
   deezer: {
     app_id:        'YOUR_DEEZER_APP_ID',       // Sur developers.deezer.com (gratuit, immédiat)
-    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
+    redirect_uri:  'https://s0undhub.netlify.app/callback',
     perms:         'basic_access,manage_library,manage_playlist,offline_access',
   },
 };
@@ -479,6 +479,17 @@ async function generatePKCE() {
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
+
+// ─── SoundCloud proxy (contourne CORS) ───────────────────────────────────────
+async function scFetch(endpoint, token) {
+  const res = await fetch('https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, token }),
+  });
+  if (!res.ok) throw new Error(`Proxy SC erreur ${res.status}`);
+  return res.json();
+}
 window.toggleManual = function(service) {
   if (state[service].connected) return;
   const el = document.getElementById(`${service}-manual`);
@@ -556,18 +567,13 @@ window.connectSC = async function() {
   setStatus('sc', 'loading', '⟳ Vérification...');
   try {
     // Essayer d'abord l'API v2 (non officielle, validée)
-    const res = await fetch('https://api-v2.soundcloud.com/me', {
-      headers: { 'Authorization': `OAuth ${token}` }
-    });
-    if (!res.ok) throw new Error('Token invalide');
-    const me = await res.json();
+    const me = await scFetch('https://api-v2.soundcloud.com/me', token);
+    if (!me || me.error) throw new Error('Token invalide');
     state.sc.token = token;
     state.sc.userId = me.id;
 
     // Compter les likes
-    const likesRes = await fetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, {
-      headers: { 'Authorization': `OAuth ${token}` }
-    });
+    const likesRes = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, token);
     const likesData = await likesRes.json();
     const total = likesData.total_results || likesData.collection?.length || 0;
 
@@ -871,13 +877,9 @@ async function completeSCAuth(code) {
   const data = await res.json();
   if (!data.access_token) throw new Error(data.error || 'Token SC invalide');
   state.sc.token = data.access_token;
-  const me = await (await fetch('https://api-v2.soundcloud.com/me', {
-    headers: { Authorization: `OAuth ${data.access_token}` }
-  })).json();
+  const me = await scFetch('https://api-v2.soundcloud.com/me', data.access_token);
   state.sc.userId = me.id;
-  const likesRes = await (await fetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, {
-    headers: { Authorization: `OAuth ${data.access_token}` }
-  })).json();
+  const likesRes = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, data.access_token);
   showConnected('sc', me.username, likesRes.total_results || 0);
 }
 
@@ -958,10 +960,10 @@ window.runClassification = async function() {
 // ─── Fetchers ─────────────────────────────────────────────────────────────────
 async function fetchSCLikes() {
   const tracks = [];
+  const PROXY_BASE = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
   let url = `https://api-v2.soundcloud.com/users/${state.sc.userId}/likes/tracks?limit=200`;
   while (url) {
-    const res = await fetch(url, { headers: { Authorization: `OAuth ${state.sc.token}` } });
-    const data = await res.json();
+    const data = await scFetch(url, state.sc.token);
     tracks.push(...(data.collection || []));
     url = data.next_href || null;
     addLog(`SC — ${tracks.length} tracks...`);
