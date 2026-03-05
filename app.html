@@ -9,22 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:   #080808;
-    --dark:    #111111;
-    --card:    #161616;
-    --border:  #252525;
-    --border2: #333333;
-    --accent:  #ff4400;
-    --accent2: #ff8800;
-    --white:   #f0f0f0;
-    --grey:    #666666;
-    --grey2:   #444444;
-    --green:   #00e676;
-    --red:     #ff3333;
-    --sc:      #ff5500;
-    --sp:      #1db954;
-    --dz:      #ef5466;
-    --lfm:     #d51007;
+    --black:  #080808;
+    --dark:   #111111;
+    --card:   #161616;
+    --border: #252525;
+    --border2:#333333;
+    --accent: #ff4400;
+    --accent2:#ff8800;
+    --white:  #f0f0f0;
+    --grey:   #666666;
+    --grey2:  #444444;
+    --green:  #00e676;
+    --red:    #ff3333;
+    --lfm:    #d51007;
+    --sc:     #ff5500;
+    --sp:     #1db954;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -35,14 +34,13 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
-  /* noise */
   body::before {
     content: ''; position: fixed; inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     pointer-events: none; z-index: 9999; opacity: 0.35;
   }
 
-  /* ── NAV ── */
+  /* NAV */
   nav {
     display: flex; align-items: center; justify-content: space-between;
     padding: 20px 40px;
@@ -54,215 +52,176 @@
   .nav-back { font-family: 'Space Mono'; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--grey); text-decoration: none; transition: color .2s; }
   .nav-back:hover { color: var(--white); }
 
-  /* ── LAYOUT ── */
+  /* LAYOUT */
   .app-layout {
     display: grid;
     grid-template-columns: 360px 1fr;
     min-height: calc(100vh - 65px);
   }
 
-  /* ── SIDEBAR ── */
+  /* SIDEBAR */
   .sidebar {
     border-right: 1px solid var(--border);
     padding: 32px 28px;
-    display: flex; flex-direction: column; gap: 32px;
+    display: flex; flex-direction: column; gap: 24px;
     position: sticky; top: 65px; height: calc(100vh - 65px);
     overflow-y: auto;
   }
-
   .sidebar-title {
     font-family: 'Space Mono'; font-size: 10px; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--grey); margin-bottom: 16px;
+    text-transform: uppercase; color: var(--grey); margin-bottom: 8px;
   }
 
-  /* ── SERVICE CARDS ── */
-  .service-btn {
-    width: 100%;
+  /* SERVICE CARD */
+  .service-card {
     background: var(--card);
     border: 1px solid var(--border);
     padding: 20px;
     cursor: pointer;
-    text-align: left;
     transition: border-color .2s, background .2s;
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
-  .service-btn:hover { border-color: var(--service-color); background: #1a1a1a; }
-  .service-btn.connected { border-color: var(--service-color); }
-  .service-btn.connected::after {
-    content: '';
-    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-    background: var(--service-color);
+  .service-card:hover { border-color: var(--c); background: #1a1a1a; }
+  .service-card.connected { border-color: var(--c); cursor: default; }
+  .service-card.connected::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: var(--c);
   }
 
-  .service-header { display: flex; align-items: center; justify-content: space-between; }
-  .service-left { display: flex; align-items: center; gap: 12px; }
-  .service-icon { font-size: 22px; }
-  .service-name { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; color: var(--white); }
-  .service-status {
+  .card-header { display: flex; align-items: center; gap: 12px; }
+  .card-icon { font-size: 22px; line-height: 1; }
+  .card-name { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; }
+  .card-status {
     font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px;
     text-transform: uppercase; margin-top: 2px;
+    color: var(--grey);
   }
-  .status-idle    { color: var(--grey); }
-  .status-ok      { color: var(--green); }
-  .status-loading { color: var(--accent2); }
-  .status-error   { color: var(--red); }
+  .card-status.ok    { color: var(--green); }
+  .card-status.loading { color: var(--accent2); }
+  .card-status.error { color: var(--red); }
 
-  /* token manual input */
-  .manual-input {
-    margin-top: 16px;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .manual-input.open { display: flex; }
-  .manual-input label { font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--grey); }
-  .manual-input input, .manual-input textarea {
-    background: #0d0d0d;
-    border: 1px solid var(--border2);
-    color: var(--white);
-    font-family: 'Space Mono'; font-size: 10px;
-    padding: 10px 12px;
-    outline: none;
-    resize: none;
-    transition: border-color .2s;
-  }
-  .manual-input input:focus, .manual-input textarea:focus { border-color: var(--grey2); }
-  .input-row { display: flex; gap: 6px; }
-  .btn-sm {
-    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px;
-    text-transform: uppercase; padding: 8px 14px;
-    border: 1px solid var(--border2); background: transparent;
-    color: var(--grey); cursor: pointer; transition: all .2s; white-space: nowrap;
-  }
-  .btn-sm:hover { color: var(--white); border-color: var(--white); }
-  .btn-sm.primary { background: var(--service-color); color: #000; border-color: var(--service-color); }
-  .btn-sm.primary:hover { opacity: 0.85; }
-
-  .oauth-btn {
-    width: 100%; margin-top: 12px;
-    font-family: 'Space Mono'; font-size: 10px; letter-spacing: 2px;
-    text-transform: uppercase; padding: 12px;
-    border: 1px solid var(--service-color); background: transparent;
-    color: var(--service-color); cursor: pointer; transition: all .2s;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .oauth-btn:hover { background: var(--service-color); color: #000; }
-
-  .help-link {
-    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 1px;
-    color: var(--grey); text-decoration: none; margin-top: 4px; display: inline-block;
-    transition: color .2s;
-  }
-  .help-link:hover { color: var(--white); }
-
-  .connected-info {
-    margin-top: 12px;
-    display: none;
+  /* connected row */
+  .connected-row {
+    display: none; margin-top: 14px;
     align-items: center; gap: 10px;
   }
-  .connected-info.show { display: flex; }
+  .connected-row.show { display: flex; }
   .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border2); }
-  .avatar-placeholder { width: 32px; height: 32px; border-radius: 50%; background: var(--border2); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .connected-name { font-size: 13px; font-weight: 500; }
-  .connected-count { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); margin-top: 2px; }
-  .disconnect-btn { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); background: none; border: none; cursor: pointer; transition: color .2s; margin-left: auto; }
-  .disconnect-btn:hover { color: var(--red); }
+  .avatar-ph { width: 32px; height: 32px; border-radius: 50%; background: var(--border2); display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .conn-name { font-size: 13px; font-weight: 500; }
+  .conn-count { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); margin-top: 2px; }
+  .disc-btn { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); background: none; border: none; cursor: pointer; transition: color .2s; margin-left: auto; padding: 4px; }
+  .disc-btn:hover { color: var(--red); }
 
-  /* ── RUN BUTTON ── */
+  /* expandable form */
+  .card-form {
+    display: none; flex-direction: column; gap: 10px;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .card-form.open { display: flex; }
+  .form-label {
+    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--grey);
+  }
+  .form-hint { font-size: 11px; color: var(--grey); line-height: 1.6; }
+  .form-input {
+    background: #0d0d0d; border: 1px solid var(--border2);
+    color: var(--white); font-family: 'Space Mono'; font-size: 10px;
+    padding: 10px 12px; outline: none; transition: border-color .2s; width: 100%;
+  }
+  .form-input:focus { border-color: var(--grey2); }
+  .form-btn {
+    width: 100%; margin-top: 4px;
+    font-family: 'Space Mono'; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 12px; border: 1px solid var(--c); background: transparent;
+    color: var(--c); cursor: pointer; transition: all .2s;
+  }
+  .form-btn:hover { background: var(--c); color: #000; }
+  .form-msg { font-family: 'Space Mono'; font-size: 9px; color: var(--grey2); min-height: 14px; }
+
+  /* radio group */
+  .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .radio-opt {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--grey); cursor: pointer;
+  }
+  .radio-opt input { accent-color: var(--lfm); cursor: pointer; }
+
+  /* secondary cards (SC / SP) */
+  .secondary-label {
+    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--grey2); margin-top: 8px;
+  }
+
+  /* RUN */
   .run-section { margin-top: auto; }
   .run-btn {
-    width: 100%;
-    font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 3px;
-    padding: 18px;
-    background: var(--accent); color: #000; border: none; cursor: pointer;
+    width: 100%; font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 3px;
+    padding: 18px; background: var(--accent); color: #000; border: none; cursor: pointer;
     transition: background .15s, transform .1s;
   }
   .run-btn:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); }
-  .run-btn:disabled { background: var(--border2); color: var(--grey2); cursor: not-allowed; transform: none; }
+  .run-btn:disabled { background: var(--border2); color: var(--grey2); cursor: not-allowed; }
   .run-info { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); margin-top: 10px; text-align: center; letter-spacing: 1px; }
 
-  /* ── MAIN AREA ── */
+  /* MAIN */
   .main-area { padding: 32px 40px; }
 
-  /* empty state */
   .empty-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     height: 60vh; text-align: center; gap: 16px;
   }
   .empty-icon { font-size: 48px; opacity: .3; }
   .empty-title { font-family: 'Bebas Neue'; font-size: 32px; color: var(--grey); letter-spacing: 2px; }
-  .empty-sub { font-family: 'Space Mono'; font-size: 10px; color: var(--grey2); letter-spacing: 1px; max-width: 300px; line-height: 1.8; }
+  .empty-sub { font-family: 'Space Mono'; font-size: 10px; color: var(--grey2); letter-spacing: 1px; max-width: 320px; line-height: 1.8; }
 
-  /* progress */
+  /* PROGRESS */
   .progress-wrap { display: none; margin-bottom: 32px; }
   .progress-wrap.show { display: block; }
   .progress-label { font-family: 'Space Mono'; font-size: 10px; color: var(--grey); letter-spacing: 2px; margin-bottom: 10px; display: flex; justify-content: space-between; }
-  .progress-track { height: 2px; background: var(--border); position: relative; }
+  .progress-track { height: 2px; background: var(--border); }
   .progress-bar { height: 100%; background: var(--accent); transition: width .3s; width: 0%; }
   .progress-log { margin-top: 16px; max-height: 120px; overflow-y: auto; }
-  .log-line { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); letter-spacing: 1px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .log-line { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); padding: 3px 0; border-bottom: 1px solid var(--border); }
   .log-line.ok    { color: var(--green); }
   .log-line.error { color: var(--red); }
   .log-line.info  { color: var(--accent2); }
 
-  /* results */
+  /* RESULTS */
   .results-wrap { display: none; }
   .results-wrap.show { display: block; }
   .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .results-title { font-family: 'Bebas Neue'; font-size: 36px; letter-spacing: 2px; }
   .results-meta { font-family: 'Space Mono'; font-size: 10px; color: var(--grey); letter-spacing: 1px; }
 
-  .share-toggle {
-    display: flex; align-items: center; gap: 10px;
-    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 1px; color: var(--grey);
-  }
+  .share-toggle { display: flex; align-items: center; gap: 10px; font-family: 'Space Mono'; font-size: 9px; letter-spacing: 1px; color: var(--grey); }
   .toggle { position: relative; width: 36px; height: 20px; }
   .toggle input { display: none; }
-  .toggle-slider {
-    position: absolute; inset: 0; background: var(--border2);
-    border-radius: 10px; cursor: pointer; transition: background .2s;
-  }
-  .toggle-slider::after {
-    content: ''; position: absolute; left: 3px; top: 3px;
-    width: 14px; height: 14px; border-radius: 50%;
-    background: var(--grey); transition: transform .2s, background .2s;
-  }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border2); border-radius: 10px; cursor: pointer; transition: background .2s; }
+  .toggle-slider::after { content:''; position:absolute; left:3px; top:3px; width:14px; height:14px; border-radius:50%; background:var(--grey); transition: transform .2s, background .2s; }
   .toggle input:checked + .toggle-slider { background: var(--accent); }
   .toggle input:checked + .toggle-slider::after { transform: translateX(16px); background: #000; }
 
-  /* categories grid */
-  .cats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 2px;
-  }
-  .cat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 20px;
-    position: relative; overflow: hidden;
-    cursor: default;
-    transition: border-color .2s;
-  }
-  .cat-card:hover { border-color: var(--cat-color, var(--accent)); }
+  .btn-sm { font-family: 'Space Mono'; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 8px 14px; border: 1px solid var(--border2); background: transparent; color: var(--grey); cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .btn-sm:hover { color: var(--white); border-color: var(--white); }
+  .btn-sm.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+  .btn-sm.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* CATS GRID */
+  .cats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px; }
+  .cat-card { background: var(--card); border: 1px solid var(--border); padding: 20px; position: relative; overflow: hidden; transition: border-color .2s; }
+  .cat-card:hover { border-color: var(--cc, var(--accent)); }
   .cat-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .cat-emoji { font-size: 22px; }
-  .cat-count { font-family: 'Bebas Neue'; font-size: 28px; color: var(--cat-color, var(--white)); }
-  .cat-name { font-family: 'Bebas Neue'; font-size: 16px; letter-spacing: 1px; color: var(--white); margin-bottom: 4px; }
-  .cat-service { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); letter-spacing: 1px; }
-  .cat-bar { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--cat-color, var(--accent)); transition: width .5s .1s; width: 0; }
-  .cat-playlist-btn {
-    margin-top: 12px; width: 100%;
-    font-family: 'Space Mono'; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-    padding: 7px; border: 1px solid var(--border2); background: transparent;
-    color: var(--grey); cursor: pointer; transition: all .2s; text-decoration: none;
-    display: block; text-align: center;
-  }
-  .cat-playlist-btn:hover { color: var(--white); border-color: var(--white); }
-  .cat-playlist-btn.created { border-color: var(--cat-color); color: var(--cat-color); }
+  .cat-count { font-family: 'Bebas Neue'; font-size: 28px; color: var(--cc, var(--white)); }
+  .cat-name { font-family: 'Bebas Neue'; font-size: 16px; letter-spacing: 1px; margin-bottom: 4px; }
+  .cat-src { font-family: 'Space Mono'; font-size: 9px; color: var(--grey); letter-spacing: 1px; }
+  .cat-bar { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--cc, var(--accent)); transition: width .5s .1s; width: 0; }
+  .cat-btn { margin-top: 12px; width: 100%; font-family: 'Space Mono'; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 7px; border: 1px solid var(--border2); background: transparent; color: var(--grey); cursor: pointer; transition: all .2s; display: block; text-align: center; text-decoration: none; }
+  .cat-btn:hover { color: var(--white); border-color: var(--white); }
+  .cat-btn.done { border-color: var(--cc); color: var(--cc); }
 
-  /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     .app-layout { grid-template-columns: 1fr; }
     .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
@@ -273,8 +232,8 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo">SOUND<span>HUB</span></a>
-  <a href="index.html" class="nav-back">← Accueil</a>
+  <a href="./index.html" class="logo">SOUND<span>HUB</span></a>
+  <a href="./index.html" class="nav-back">← Accueil</a>
 </nav>
 
 <div class="app-layout">
@@ -284,156 +243,143 @@
     <div>
       <div class="sidebar-title">// Connexion</div>
 
-      <!-- ── Last.fm ── -->
-      <div class="service-btn" id="lfm-card" style="--service-color: var(--lfm)">
-        <div class="service-header">
-          <div class="service-left">
-            <span class="service-icon">🎵</span>
-            <div>
-              <div class="service-name">Last.fm</div>
-              <div class="service-status status-idle" id="lfm-status">Non connecté</div>
-            </div>
+      <!-- ══ LAST.FM (principal) ══ -->
+      <div class="service-card" id="lfm-card" style="--c: var(--lfm)">
+        <div class="card-header">
+          <span class="card-icon">🎵</span>
+          <div>
+            <div class="card-name">Last.fm</div>
+            <div class="card-status" id="lfm-status">Non connecté</div>
           </div>
         </div>
-        <div class="connected-info" id="lfm-connected">
+
+        <!-- connecté -->
+        <div class="connected-row" id="lfm-connected">
           <img class="avatar" id="lfm-avatar" style="display:none" src="" alt="">
-          <div class="avatar-placeholder" id="lfm-avatar-ph">🎵</div>
+          <div class="avatar-ph" id="lfm-avatar-ph">🎵</div>
           <div>
-            <div class="connected-name" id="lfm-username">—</div>
-            <div class="connected-count" id="lfm-count">— loved tracks</div>
+            <div class="conn-name" id="lfm-name">—</div>
+            <div class="conn-count" id="lfm-count">—</div>
           </div>
-          <button class="disconnect-btn" onclick="disconnectLFM();event.stopPropagation()">✕</button>
+          <button class="disc-btn" id="lfm-disc">✕</button>
         </div>
-        <div class="manual-input" id="lfm-manual" style="--service-color: var(--lfm)" onclick="event.stopPropagation()">
-          <div style="font-size:11px;color:var(--grey);line-height:1.6;margin-bottom:10px">
-            Fonctionne avec Spotify, SoundCloud, Deezer et +30 services.<br>
-            <a href="https://www.last.fm/join" target="_blank"
+
+        <!-- formulaire -->
+        <div class="card-form open" id="lfm-form" onclick="event.stopPropagation()">
+          <div class="form-hint">
+            Compatible Spotify, SoundCloud, Deezer et +30 services via scrobbling.
+            <br><a href="https://www.last.fm/join" target="_blank"
                style="color:var(--lfm);font-family:'Space Mono';font-size:9px"
-               onclick="event.stopPropagation()">
-              Créer un compte Last.fm gratuit →
-            </a>
+               onclick="event.stopPropagation()">Créer un compte Last.fm gratuit →</a>
           </div>
-          <label style="font-family:'Space Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--grey)">
-            Pseudo Last.fm
-          </label>
-          <input id="lfm-username-input" type="text" placeholder="ton_pseudo"
-                 style="margin-top:6px"
-                 onkeydown="if(event.key==='Enter'){connectLFM();event.stopPropagation()}"
-                 onclick="event.stopPropagation()">
-          <div style="margin-top:8px;display:flex;gap:8px;flex-direction:column">
-            <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2)">
-              Source des tracks :
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
-                <input type="radio" name="lfm-source" value="loved" checked onclick="event.stopPropagation()"> Loved tracks
+          <div>
+            <div class="form-label">Pseudo Last.fm</div>
+            <input class="form-input" id="lfm-input" type="text" placeholder="ton_pseudo"
+                   style="margin-top:6px"
+                   onclick="event.stopPropagation()">
+          </div>
+          <div>
+            <div class="form-label" style="margin-bottom:8px">Source des tracks</div>
+            <div class="radio-group">
+              <label class="radio-opt" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-src" value="loved" checked> Loved tracks
               </label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
-                <input type="radio" name="lfm-source" value="recent" onclick="event.stopPropagation()"> Écoutes récentes
+              <label class="radio-opt" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-src" value="recent"> Écoutes récentes
               </label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;color:var(--grey)" onclick="event.stopPropagation()">
-                <input type="radio" name="lfm-source" value="top" onclick="event.stopPropagation()"> Top tracks
+              <label class="radio-opt" onclick="event.stopPropagation()">
+                <input type="radio" name="lfm-src" value="top"> Top tracks
               </label>
             </div>
           </div>
-          <button class="oauth-btn" style="--service-color:var(--lfm);margin-top:10px;width:100%"
-                  onclick="connectLFM();event.stopPropagation()">
-            🔴 Connecter Last.fm
-          </button>
-          <div id="lfm-status-msg" style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:6px;min-height:14px"></div>
+          <button class="form-btn" id="lfm-btn">🔴 Connecter Last.fm</button>
+          <div class="form-msg" id="lfm-msg"></div>
         </div>
       </div>
 
-      <!-- ── SoundCloud (import token manuel) ── -->
-      <div class="service-btn" id="sc-card" style="--service-color: var(--sc); margin-top:2px">
-        <div class="service-header">
-          <div class="service-left">
-            <span class="service-icon">☁️</span>
-            <div>
-              <div class="service-name">SoundCloud</div>
-              <div class="service-status status-idle" id="sc-status">Non connecté</div>
-            </div>
-          </div>
-        </div>
-        <div class="connected-info" id="sc-connected">
-          <div class="avatar-placeholder">☁️</div>
+      <!-- ══ SECONDAIRES ══ -->
+      <div class="secondary-label" style="margin-top:20px">Optionnel — sources supplémentaires</div>
+
+      <!-- SoundCloud -->
+      <div class="service-card" id="sc-card" style="--c: var(--sc); margin-top:8px">
+        <div class="card-header">
+          <span class="card-icon">☁️</span>
           <div>
-            <div class="connected-name" id="sc-username">—</div>
-            <div class="connected-count" id="sc-count">— likes</div>
+            <div class="card-name">SoundCloud</div>
+            <div class="card-status" id="sc-status">Non connecté</div>
           </div>
-          <button class="disconnect-btn" onclick="disconnect('sc');event.stopPropagation()">✕</button>
         </div>
-        <div class="manual-input" id="sc-manual" style="--service-color: var(--sc)" onclick="event.stopPropagation()">
-          <label>Token OAuth (depuis DevTools)</label>
-          <textarea id="sc-token" rows="2" placeholder="2-abc123..."></textarea>
-          <div style="font-size:11px;color:var(--grey);line-height:1.5">
-            SoundCloud → DevTools → Network → chercher <code style="color:var(--accent)">Authorization: OAuth</code>
+        <div class="connected-row" id="sc-connected">
+          <div class="avatar-ph">☁️</div>
+          <div>
+            <div class="conn-name" id="sc-name">—</div>
+            <div class="conn-count" id="sc-count">—</div>
           </div>
-          <div class="input-row" style="margin-top:8px">
-            <button class="btn-sm primary" onclick="connectSC();event.stopPropagation()">Connecter</button>
+          <button class="disc-btn" id="sc-disc">✕</button>
+        </div>
+        <div class="card-form" id="sc-form" onclick="event.stopPropagation()">
+          <div class="form-hint">
+            Depuis DevTools → Network → cherche
+            <code style="color:var(--accent)">Authorization: OAuth</code>
           </div>
+          <div>
+            <div class="form-label">Token OAuth</div>
+            <textarea class="form-input" id="sc-token" rows="2"
+                      placeholder="2-abc123..." style="margin-top:6px;resize:none"
+                      onclick="event.stopPropagation()"></textarea>
+          </div>
+          <button class="form-btn" id="sc-btn">☁️ Connecter SoundCloud</button>
+          <div class="form-msg" id="sc-msg"></div>
         </div>
       </div>
 
-      <!-- ── Spotify (import JSON) ── -->
-      <div class="service-btn" id="sp-card" style="--service-color: var(--sp); margin-top: 2px">
-        <div class="service-header">
-          <div class="service-left">
-            <span class="service-icon">💚</span>
-            <div>
-              <div class="service-name">Spotify</div>
-              <div class="service-status status-idle" id="sp-status">Non connecté</div>
-            </div>
-          </div>
-        </div>
-        <div class="connected-info" id="sp-connected">
-          <div class="avatar-placeholder" id="sp-avatar-ph">💚</div>
+      <!-- Spotify -->
+      <div class="service-card" id="sp-card" style="--c: var(--sp); margin-top:8px">
+        <div class="card-header">
+          <span class="card-icon">💚</span>
           <div>
-            <div class="connected-name" id="sp-username">—</div>
-            <div class="connected-count" id="sp-count">— tracks</div>
+            <div class="card-name">Spotify</div>
+            <div class="card-status" id="sp-status">Non connecté</div>
           </div>
-          <button class="disconnect-btn" onclick="disconnect('sp');event.stopPropagation()">✕</button>
         </div>
-        <div class="manual-input" id="sp-manual" style="--service-color: var(--sp)" onclick="event.stopPropagation()">
-          <div style="font-size:11px;color:var(--grey);line-height:1.6;margin-bottom:8px">
-            Import <strong style="color:var(--white)">YourLibrary.json</strong> depuis ton export Spotify.<br>
+        <div class="connected-row" id="sp-connected">
+          <div class="avatar-ph" id="sp-avatar-ph">💚</div>
+          <div>
+            <div class="conn-name" id="sp-name">—</div>
+            <div class="conn-count" id="sp-count">—</div>
+          </div>
+          <button class="disc-btn" id="sp-disc">✕</button>
+        </div>
+        <div class="card-form" id="sp-form" onclick="event.stopPropagation()">
+          <div class="form-hint">
+            Import <strong style="color:var(--white)">YourLibrary.json</strong> depuis
             <a href="https://www.spotify.com/account/privacy" target="_blank"
                style="color:var(--sp);font-family:'Space Mono';font-size:9px"
-               onclick="event.stopPropagation()">
-              spotify.com/account/privacy →
-            </a>
+               onclick="event.stopPropagation()">spotify.com/account/privacy →</a>
           </div>
-          <button class="oauth-btn" style="--service-color:var(--sp);width:100%"
-                  onclick="event.stopPropagation();document.getElementById('sp-file-input').click()">
-            📂 Importer YourLibrary.json
-          </button>
-          <input type="file" id="sp-file-input" accept=".json" style="display:none"
-                 onchange="importSpotifyJSON(event)">
-          <div id="sp-import-status" style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:6px;min-height:14px"></div>
+          <button class="form-btn" id="sp-btn">📂 Importer YourLibrary.json</button>
+          <input type="file" id="sp-file" accept=".json" style="display:none">
+          <div class="form-msg" id="sp-msg"></div>
         </div>
       </div>
     </div>
 
-    <!-- Run -->
+    <!-- RUN -->
     <div class="run-section">
-      <button class="run-btn" id="run-btn" disabled onclick="runClassification()">
-        LANCER LA CLASSIFICATION
-      </button>
-      <div class="run-info" id="run-info">Connecte au moins un service pour commencer</div>
+      <button class="run-btn" id="run-btn" disabled>LANCER LA CLASSIFICATION</button>
+      <div class="run-info" id="run-info">Connecte au moins un service</div>
     </div>
   </aside>
 
   <!-- MAIN -->
   <main class="main-area">
 
-    <!-- Empty state -->
     <div class="empty-state" id="empty-state">
       <div class="empty-icon">🎛️</div>
       <div class="empty-title">Prêt à classifier</div>
-      <div class="empty-sub">Connecte ton compte Last.fm (ou SoundCloud/Spotify) à gauche, puis lance l'analyse.</div>
+      <div class="empty-sub">Entre ton pseudo Last.fm à gauche et lance l'analyse de ta bibliothèque musicale.</div>
     </div>
 
-    <!-- Progress -->
     <div class="progress-wrap" id="progress-wrap">
       <div class="progress-label">
         <span id="progress-text">Initialisation...</span>
@@ -443,7 +389,6 @@
       <div class="progress-log" id="progress-log"></div>
     </div>
 
-    <!-- Results -->
     <div class="results-wrap" id="results-wrap">
       <div class="results-header">
         <div>
@@ -458,8 +403,7 @@
             </label>
             Partager sur le Hub
           </label>
-          <button class="btn-sm" onclick="exportJSON()">Exporter JSON</button>
-          <button class="btn-sm primary" style="--service-color:var(--accent)" onclick="createAllPlaylists()">Créer toutes les playlists</button>
+          <button class="btn-sm" id="export-btn">Exporter JSON</button>
         </div>
       </div>
       <div class="cats-grid" id="cats-grid"></div>
@@ -470,660 +414,311 @@
 
 <script type="module">
 import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet } from './soundhub-genres.js';
-// ─── Config (à remplir avec les vrais client IDs) ──────────────────────────────
-const CONFIG = {
-  soundcloud: {
-    client_id:     'YOUR_SC_CLIENT_ID',   // À obtenir via chatbot Otto sur help.soundcloud.com
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
-    // En attendant l'approbation SoundCloud, on utilise le token manuel
-  },
-  spotify: {
-    client_id:     'b2cf3a851fa247f0b13f2c8f7f3eaa34',  // Sur developer.spotify.com (gratuit, immédiat)
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
-    scopes:        'user-read-private user-read-email user-library-read playlist-modify-private playlist-modify-public',
-  },
-  deezer: {
-    app_id:        'YOUR_DEEZER_APP_ID',       // Sur developers.deezer.com (gratuit, immédiat)
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
-    perms:         'basic_access,manage_library,manage_playlist,offline_access',
-  },
-};
 
 // ─── State ────────────────────────────────────────────────────────────────────
-const state = {
-  lfm: { connected: false, username: null, likeCount: 0, tracks: [] },
-  sc:  { connected: false, token: null, userId: null, username: null, likeCount: 0 },
-  sp:  { connected: false, token: null, userId: null, username: null, likeCount: 0, importedTracks: [] },
-  dz:  { connected: false, token: null, userId: null, username: null, likeCount: 0 },
+const S = {
+  lfm: { connected: false, username: null, source: 'loved', tracks: [] },
+  sc:  { connected: false, token: null, userId: null },
+  sp:  { connected: false, importedTracks: [] },
   results: null,
 };
 
-// ─── PKCE utils ───────────────────────────────────────────────────────────────
-async function generatePKCE() {
-  const verifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  return { verifier, challenge };
+// ─── Last.fm ──────────────────────────────────────────────────────────────────
+const LFM   = 'https://ws.audioscrobbler.com/2.0/';
+const LFMK  = 'b25b959554ed76058ac220b7b2e0a026';
+
+async function lfmFetch(params) {
+  const url = LFM + '?' + new URLSearchParams({ ...params, api_key: LFMK, format: 'json' });
+  const r = await fetch(url);
+  return r.json();
 }
 
-// ─── UI helpers ───────────────────────────────────────────────────────────────
+async function connectLFM() {
+  const username = document.getElementById('lfm-input').value.trim();
+  if (!username) { setMsg('lfm', 'Entre ton pseudo Last.fm', 'var(--red)'); return; }
+  const source = document.querySelector('input[name="lfm-src"]:checked')?.value || 'loved';
 
-// ─── SoundCloud proxy (contourne CORS) ───────────────────────────────────────
-async function scFetch(endpoint, token) {
-  const res = await fetch('https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint, token }),
-  });
-  if (!res.ok) throw new Error(`Proxy SC erreur ${res.status}`);
-  return res.json();
-}
-window.toggleManual = function(service) {
-  if (state[service].connected) return;
-  const el = document.getElementById(`${service}-manual`);
-  el.classList.toggle('open');
-};
-
-function toggleManualLFM() {
-  if (state.lfm.connected) return;
-  document.getElementById('lfm-manual').classList.toggle('open');
-}
-
-function setStatus(service, type, text) {
-  const el = document.getElementById(`${service}-status`);
-  el.className = `service-status status-${type}`;
-  el.textContent = text;
-}
-
-function showConnected(service, username, count) {
-  state[service].connected = true;
-  state[service].username  = username;
-  state[service].likeCount = count;
-  document.getElementById(`${service}-card`).classList.add('connected');
-  document.getElementById(`${service}-manual`).classList.remove('open');
-  document.getElementById(`${service}-connected`).classList.add('show');
-  document.getElementById(`${service}-username`).textContent = username;
-  document.getElementById(`${service}-count`).textContent = `${count.toLocaleString()} likes`;
-  setStatus(service, 'ok', '● Connecté');
-  updateRunBtn();
-}
-
-window.disconnect = function(service) {
-  state[service].connected = false;
-  state[service].token = null;
-  // Nettoyer localStorage
-  const keys = { sp: ['sp_access_token','sp_refresh_token','sp_token_expires','sp_user_id','sp_display_name','sp_avatar','sp_like_count'],
-                 sc: ['sc_access_token','sc_refresh_token','sc_token_expires','sc_user_id','sc_display_name','sc_avatar','sc_like_count'],
-                 dz: ['dz_access_token','dz_token_expires','dz_user_id','dz_display_name','dz_avatar','dz_like_count'] };
-  (keys[service] || []).forEach(k => localStorage.removeItem(k));
-  document.getElementById(`${service}-card`).classList.remove('connected');
-  document.getElementById(`${service}-connected`).classList.remove('show');
-  setStatus(service, 'idle', 'Non connecté');
-  updateRunBtn();
-};
-
-function updateRunBtn() {
-  const btn  = document.getElementById('run-btn');
-  const info = document.getElementById('run-info');
-  const any  = state.sc.connected || state.sp.connected || state.dz.connected;
-  btn.disabled = !any;
-  if (any) {
-    const services = ['sc','sp','dz'].filter(s => state[s].connected)
-      .map(s => ({sc:'SoundCloud',sp:'Spotify',dz:'Deezer'}[s])).join(', ');
-    const total = (state.sc.likeCount||0) + (state.sp.likeCount||0) + (state.dz.likeCount||0);
-    info.textContent = `${total.toLocaleString()} tracks à analyser — ${services}`;
-  } else {
-    info.textContent = 'Connecte au moins un service pour commencer';
-  }
-}
-
-function addLog(text, type = '') {
-  const log = document.getElementById('progress-log');
-  const line = document.createElement('div');
-  line.className = `log-line ${type}`;
-  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-  log.appendChild(line);
-  log.scrollTop = log.scrollHeight;
-}
-
-function setProgress(pct, text) {
-  document.getElementById('progress-bar').style.width = pct + '%';
-  document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
-  if (text) document.getElementById('progress-text').textContent = text;
-}
-
-// ─── SOUNDCLOUD ───────────────────────────────────────────────────────────────
-
-window.connectSC = async function() {
-  const token = document.getElementById('sc-token').value.trim();
-  if (!token) return;
-  setStatus('sc', 'loading', '⟳ Vérification...');
-  try {
-    // Essayer d'abord l'API v2 (non officielle, validée)
-    const me = await scFetch('https://api-v2.soundcloud.com/me', token);
-    if (!me || me.error) throw new Error('Token invalide');
-    state.sc.token = token;
-    state.sc.userId = me.id;
-
-    // Compter les likes
-    const likesRes = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, token);
-    const likesData = await likesRes.json();
-    const total = likesData.total_results || likesData.collection?.length || 0;
-
-    showConnected('sc', me.username, total);
-  } catch(e) {
-    setStatus('sc', 'error', `✕ ${e.message}`);
-  }
-};
-
-window.oauthSC = async function() {
-  if (CONFIG.soundcloud.client_id === 'YOUR_SC_CLIENT_ID') {
-    alert('Client ID SoundCloud non configuré.\n\nDemande un accès via help.soundcloud.com (chatbot Otto) ou utilise le token manuel.');
-    return;
-  }
-  const { verifier, challenge } = await generatePKCE();
-  sessionStorage.setItem('sc_pkce_verifier', verifier);
-  sessionStorage.setItem('sc_oauth_pending', '1');
-  const state_param = crypto.randomUUID();
-  sessionStorage.setItem('sc_state', state_param);
-  sessionStorage.setItem('sh_sc_client_id', CONFIG.soundcloud.client_id);
-
-  const url = `https://secure.soundcloud.com/connect?` + new URLSearchParams({
-    client_id:             CONFIG.soundcloud.client_id,
-    redirect_uri:          CONFIG.soundcloud.redirect_uri,
-    response_type:         'code',
-    scope:                 'non-expiring',
-    code_challenge:        challenge,
-    code_challenge_method: 'S256',
-    state:                 state_param,
-  });
-  window.location.href = url;
-};
-
-// ─── SPOTIFY ──────────────────────────────────────────────────────────────────
-
-// ─── SPOTIFY — Import JSON local ─────────────────────────────────────────────
-// Spotify exporte YourLibrary.json avec cette structure :
-// { "tracks": [{ "artist":"...", "album":"...", "track":"...", "uri":"..." }] }
-// On normalise vers le même format que l'API pour réutiliser le pipeline.
-
-window.importSpotifyJSON = async function(event) {
-  event.stopPropagation();
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const statusEl = document.getElementById('sp-import-status');
-  statusEl.style.color = 'var(--grey)';
-  statusEl.textContent = '⟳ Lecture du fichier...';
+  setStatus('lfm', 'loading', '⟳ Vérification...');
+  setMsg('lfm', '⟳ Connexion en cours...', 'var(--grey)');
 
   try {
-    const text = await file.text();
-    let json;
-    try { json = JSON.parse(text); }
-    catch (e2) { throw new Error(`Fichier JSON invalide - verifie que c'est bien YourLibrary.json`); }
+    const info = await lfmFetch({ method: 'user.getinfo', user: username });
+    if (info.error) throw new Error(info.message);
 
-    // YourLibrary.json : { tracks: [{artist, album, track, uri}] }
-    // ExtendedStreamingHistoryX.json : [{ts, master_metadata_track_name, ...}]
-    let rawTracks = [];
-
-    if (json.tracks && Array.isArray(json.tracks)) {
-      // Format YourLibrary.json (bibliothèque / likes)
-      rawTracks = json.tracks;
-    } else if (Array.isArray(json)) {
-      // Format streaming history
-      rawTracks = json.filter(e => e.master_metadata_track_name);
-    } else {
-      throw new Error('Format non reconnu. Utilise YourLibrary.json (dans le dossier Spotify du zip).');
-    }
-
-    if (!rawTracks.length) throw new Error('Aucun track trouvé dans ce fichier.');
-
-    // Normaliser vers le format attendu par classifyTrack / normalizeTrack
-    state.sp.importedTracks = rawTracks.map(t => {
-      if (t.track && t.artist) {
-        // YourLibrary format
-        return {
-          id:          t.uri?.split(':').pop() || '',
-          title:       t.track   || '',
-          artist:      t.artist  || '',
-          album:       t.album   || '',
-          genre:       '',
-          tags:        [],
-          duration:    0,
-          description: '',
-          label:       '',
-          source:      'spotify',
-        };
-      } else {
-        // Streaming history format
-        return {
-          id:          t.spotify_track_uri?.split(':').pop() || '',
-          title:       t.master_metadata_track_name         || '',
-          artist:      t.master_metadata_album_artist_name  || '',
-          album:       t.master_metadata_album_album_name   || '',
-          genre:       '',
-          tags:        [],
-          duration:    Math.round((t.ms_played || 0) / 1000),
-          description: '',
-          label:       '',
-          source:      'spotify',
-        };
-      }
-    });
-
-    // Dédupliquer par id si dispo
-    const seen = new Set();
-    state.sp.importedTracks = state.sp.importedTracks.filter(t => {
-      if (!t.id) return true;
-      if (seen.has(t.id)) return false;
-      seen.add(t.id); return true;
-    });
-
-    const count = state.sp.importedTracks.length;
-    state.sp.connected = true;
-    state.sp.likeCount = count;
-    showConnected('sp', file.name, count);
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = `✓ ${count.toLocaleString('fr')} tracks importés`;
-
-  } catch (err) {
-    statusEl.style.color = '#ff3355';
-    statusEl.textContent = '✕ ' + err.message;
-  }
-
-  // Reset input pour permettre de re-importer
-  event.target.value = '';
-};
-
-window.oauthSpotify = async function() {
-  if (CONFIG.spotify.client_id === 'YOUR_SPOTIFY_CLIENT_ID') {
-    alert('Client ID Spotify non configuré.\n\nCrée une app sur developer.spotify.com (gratuit, immédiat).');
-    return;
-  }
-  const { verifier, challenge } = await generatePKCE();
-  sessionStorage.setItem('sp_pkce_verifier', verifier);
-  sessionStorage.setItem('sp_oauth_pending', '1');
-  const state_param = crypto.randomUUID();
-  sessionStorage.setItem('sp_state', state_param);
-  sessionStorage.setItem('sh_sp_client_id', CONFIG.spotify.client_id);
-
-  const url = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
-    client_id:             CONFIG.spotify.client_id,
-    response_type:         'code',
-    redirect_uri:          CONFIG.spotify.redirect_uri,
-    scope:                 CONFIG.spotify.scopes,
-    code_challenge_method: 'S256',
-    code_challenge:        challenge,
-    state:                 state_param,
-  });
-  window.location.href = url;
-};
-
-async function completeSpotifyAuth(code) {
-  setStatus('sp', 'loading', '⟳ Authentification...');
-  const verifier = sessionStorage.getItem('sp_pkce_verifier');
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id:     CONFIG.spotify.client_id,
-      grant_type:    'authorization_code',
-      code,
-      redirect_uri:  CONFIG.spotify.redirect_uri,
-      code_verifier: verifier,
-    })
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error(data.error || 'Token Spotify invalide');
-  state.sp.token = data.access_token;
-
-  // Infos utilisateur
-  const me = await (await fetch('https://api.spotify.com/v1/me', {
-    headers: { Authorization: `Bearer ${data.access_token}` }
-  })).json();
-  state.sp.userId = me.id;
-
-  // Nombre de likes (saved tracks)
-  const saved = await (await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
-    headers: { Authorization: `Bearer ${data.access_token}` }
-  })).json();
-
-  if (me.images?.[0]) {
-    const img = document.getElementById('sp-avatar');
-    img.src = me.images[0].url;
-    img.style.display = 'block';
-    document.getElementById('sp-avatar-ph').style.display = 'none';
-  }
-  showConnected('sp', me.display_name || me.id, saved.total || 0);
-}
-
-// ─── DEEZER ───────────────────────────────────────────────────────────────────
-// Note : Deezer impose une contrainte CORS sur son OAuth — en prod, il faut
-// un petit backend ou un proxy. Pour la démo, on simule le flux.
-
-window.oauthDeezer = async function() {
-  const appId = document.getElementById('dz-appid').value.trim() || CONFIG.deezer.app_id;
-  if (appId === 'YOUR_DEEZER_APP_ID') {
-    alert('App ID Deezer non configuré.\n\nCrée une app gratuite sur developers.deezer.com.\nLe CORS Deezer nécessite aussi un petit backend ou proxy pour l\'échange de token.');
-    return;
-  }
-  sessionStorage.setItem('dz_oauth_pending', '1');
-  sessionStorage.setItem('dz_app_id', appId);
-
-  const url = `https://connect.deezer.com/oauth/auth.php?` + new URLSearchParams({
-    app_id:       appId,
-    redirect_uri: CONFIG.deezer.redirect_uri,
-    perms:        CONFIG.deezer.perms,
-  });
-  // Deezer retourne le token directement dans le fragment URL (#access_token=...)
-  // après redirect, pas besoin d'échange de code côté serveur (Implicit flow)
-  window.location.href = url;
-};
-
-async function completeDeezerAuth(token) {
-  setStatus('dz', 'loading', '⟳ Authentification...');
-  state.dz.token = token;
-  // Deezer API — /user/me
-  const me = await (await fetch(`https://api.deezer.com/user/me?access_token=${token}`)).json();
-  // Nombre de favoris
-  const favs = await (await fetch(`https://api.deezer.com/user/${me.id}/tracks?access_token=${token}&limit=1`)).json();
-  if (me.picture_medium) {
-    const img = document.getElementById('dz-avatar');
-    img.src = me.picture_medium;
-    img.style.display = 'block';
-    document.getElementById('dz-avatar-ph').style.display = 'none';
-  }
-  showConnected('dz', me.name || me.login, favs.total || 0);
-}
-
-// ─── OAuth callback handling ─────────────────────────────────────────────────
-// Le vrai travail OAuth se passe dans callback.html.
-// Quand l'utilisateur revient sur app.html, on lit les tokens depuis sessionStorage.
-function handleCallbackParams() {
-  // Last.fm — username sauvegardé
-  const lfmUser = localStorage.getItem('lfm_username');
-  if (lfmUser) {
-    state.lfm.username = lfmUser;
-    state.lfm.source   = localStorage.getItem('lfm_source') || 'loved';
-    showConnectedLFM(lfmUser, 'chargé depuis cache');
-    // Ouvrir le panneau pour forcer refresh si besoin
-  }
-
-  // Spotify — token stocké par callback.html
-  if (localStorage.getItem('sp_access_token') && !state.sp.connected) {
-    const token   = localStorage.getItem('sp_access_token');
-    const name    = localStorage.getItem('sp_display_name') || 'Utilisateur';
-    const count   = parseInt(localStorage.getItem('sp_like_count') || '0');
-    const avatar  = localStorage.getItem('sp_avatar') || '';
-    state.sp.token  = token;
-    state.sp.userId = localStorage.getItem('sp_user_id') || '';
-    if (avatar) {
-      const img = document.getElementById('sp-avatar');
-      if (img) { img.src = avatar; img.style.display = 'block'; }
-      const ph = document.getElementById('sp-avatar-ph');
-      if (ph) ph.style.display = 'none';
-    }
-    showConnected('sp', name, count);
-  }
-
-  // SoundCloud — token stocké par callback.html
-  if (localStorage.getItem('sc_access_token') && !state.sc.connected) {
-    const token  = localStorage.getItem('sc_access_token');
-    const name   = localStorage.getItem('sc_display_name') || 'Utilisateur';
-    const count  = parseInt(localStorage.getItem('sc_like_count') || '0');
-    const avatar = localStorage.getItem('sc_avatar') || '';
-    state.sc.token  = token;
-    state.sc.userId = localStorage.getItem('sc_user_id') || '';
-    if (avatar) {
-      const img = document.getElementById('sc-avatar');
-      if (img) { img.src = avatar; img.style.display = 'block'; }
-      const ph = document.getElementById('sc-avatar-ph');
-      if (ph) ph.style.display = 'none';
-    }
-    showConnected('sc', name, count);
-  }
-
-  // Deezer — token stocké par callback.html
-  if (localStorage.getItem('dz_access_token') && !state.dz.connected) {
-    const token  = localStorage.getItem('dz_access_token');
-    const name   = localStorage.getItem('dz_display_name') || 'Utilisateur';
-    const count  = parseInt(localStorage.getItem('dz_like_count') || '0');
-    const avatar = localStorage.getItem('dz_avatar') || '';
-    state.dz.token  = token;
-    state.dz.userId = localStorage.getItem('dz_user_id') || '';
-    if (avatar) {
-      const img = document.getElementById('dz-avatar');
-      if (img) { img.src = avatar; img.style.display = 'block'; }
-      const ph = document.getElementById('dz-avatar-ph');
-      if (ph) ph.style.display = 'none';
-    }
-    showConnected('dz', name, count);
-  }
-}
-
-// completeSCAuth gardé pour compatibilité (utilisé si redirect_uri = app.html)
-async function completeSCAuth(code) {
-  setStatus('sc', 'loading', '⟳ Authentification...');
-  const verifier = sessionStorage.getItem('sc_pkce_verifier');
-  const res = await fetch('https://api.soundcloud.com/oauth2/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id:     CONFIG.soundcloud.client_id,
-      grant_type:    'authorization_code',
-      code,
-      redirect_uri:  CONFIG.soundcloud.redirect_uri,
-      code_verifier: verifier,
-    })
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error(data.error || 'Token SC invalide');
-  state.sc.token = data.access_token;
-  const me = await scFetch('https://api-v2.soundcloud.com/me', data.access_token);
-  state.sc.userId = me.id;
-  const likesRes = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, data.access_token);
-  showConnected('sc', me.username, likesRes.total_results || 0);
-}
-
-window.disconnectLFM = function() {
-  state.lfm.connected = false;
-  state.lfm.tracks = [];
-  state.lfm.username = null;
-  localStorage.removeItem('lfm_username');
-  localStorage.removeItem('lfm_source');
-  document.getElementById('lfm-connected').style.display = 'none';
-  document.getElementById('lfm-manual').classList.add('open');
-  setStatus('lfm', 'idle', 'Non connecté');
-  updateRunBtn();
-};
-
-
-// ─── LAST.FM ──────────────────────────────────────────────────────────────────
-const LFM_API  = 'https://ws.audioscrobbler.com/2.0/';
-const LFM_KEY  = 'b25b959554ed76058ac220b7b2e0a026'; // clé publique demo Last.fm
-
-window.connectLFM = async function() {
-  const username = document.getElementById('lfm-username-input').value.trim();
-  if (!username) return;
-  const source = document.querySelector('input[name="lfm-source"]:checked')?.value || 'loved';
-  const msgEl = document.getElementById('lfm-status-msg');
-
-  setStatus('lfm', 'loading', '⟳ Connexion...');
-  msgEl.style.color = 'var(--grey)';
-  msgEl.textContent = '⟳ Vérification du profil...';
-
-  try {
-    // Vérifier que le user existe
-    const infoRes = await fetch(`${LFM_API}?method=user.getinfo&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json`);
-    const info = await infoRes.json();
-    if (info.error) throw new Error(info.message || 'Utilisateur introuvable');
-
-    const user = info.user;
+    const user   = info.user;
     const avatar = user.image?.find(i => i.size === 'large')?.['#text'] || '';
-    const playcount = parseInt(user.playcount || '0');
 
-    // Compter les loved tracks
-    const countRes = await fetch(`${LFM_API}?method=user.getlovedtracks&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json&limit=1`);
-    const countData = await countRes.json();
-    const total = parseInt(countData.lovedtracks?.['@attr']?.total || '0');
+    // Compter
+    let countLabel = '';
+    if (source === 'loved') {
+      const d = await lfmFetch({ method: 'user.getlovedtracks', user: username, limit: 1 });
+      const n = parseInt(d.lovedtracks?.['@attr']?.total || '0');
+      countLabel = `${n.toLocaleString('fr')} loved tracks`;
+    } else if (source === 'recent') {
+      countLabel = `${parseInt(user.playcount||0).toLocaleString('fr')} scrobbles`;
+    } else {
+      countLabel = 'top tracks';
+    }
 
-    state.lfm.username = user.name;
-    state.lfm.source   = source;
-    state.lfm.likeCount = source === 'loved' ? total : playcount;
-
-    localStorage.setItem('lfm_username', user.name);
-    localStorage.setItem('lfm_source', source);
+    S.lfm.connected = true;
+    S.lfm.username  = user.name;
+    S.lfm.source    = source;
+    localStorage.setItem('lfm_user', user.name);
+    localStorage.setItem('lfm_src',  source);
 
     if (avatar) {
       const img = document.getElementById('lfm-avatar');
       img.src = avatar; img.style.display = 'block';
       document.getElementById('lfm-avatar-ph').style.display = 'none';
     }
-
-    const countLabel = source === 'loved' ? `${total.toLocaleString('fr')} loved tracks`
-                     : source === 'recent' ? `${playcount.toLocaleString('fr')} scrobbles`
-                     : `top tracks`;
-    showConnectedLFM(user.name, countLabel);
-    msgEl.style.color = 'var(--green)';
-    msgEl.textContent = `✓ Connecté en tant que ${user.name}`;
+    document.getElementById('lfm-name').textContent  = user.name;
+    document.getElementById('lfm-count').textContent = countLabel;
+    document.getElementById('lfm-connected').classList.add('show');
+    document.getElementById('lfm-form').classList.remove('open');
+    document.getElementById('lfm-card').classList.add('connected');
+    setStatus('lfm', 'ok', '✓ Connecté');
+    setMsg('lfm', '', '');
+    updateRun();
 
   } catch(e) {
     setStatus('lfm', 'error', '✕ Erreur');
-    msgEl.style.color = 'var(--red)';
-    msgEl.textContent = '✕ ' + e.message;
+    setMsg('lfm', '✕ ' + e.message, 'var(--red)');
   }
-};
-
-function showConnectedLFM(username, countLabel) {
-  state.lfm.connected = true;
-  state.lfm.username = username;
-  document.getElementById('lfm-username').textContent = username;
-  document.getElementById('lfm-count').textContent = countLabel;
-  document.getElementById('lfm-connected').style.display = 'flex';
-  document.getElementById('lfm-manual').classList.remove('open');
-  setStatus('lfm', 'ok', '✓ Connecté');
-  updateRunBtn();
 }
 
 async function fetchLFMTracks() {
-  const username = state.lfm.username;
-  const source   = state.lfm.source || 'loved';
-  const tracks   = [];
+  const u   = S.lfm.username;
+  const src = S.lfm.source;
+  const methodMap = { loved:'user.getlovedtracks', recent:'user.getrecenttracks', top:'user.gettoptracks' };
+  const method = methodMap[src] || 'user.getlovedtracks';
+  const tracks = [];
   let page = 1;
-  const limit = 1000;
-
-  const methodMap = {
-    loved:  'user.getlovedtracks',
-    recent: 'user.getrecenttracks',
-    top:    'user.gettoptracks',
-  };
-  const method = methodMap[source] || 'user.getlovedtracks';
 
   while (true) {
-    const url = `${LFM_API}?method=${method}&user=${encodeURIComponent(username)}&api_key=${LFM_KEY}&format=json&limit=${limit}&page=${page}`;
-    const res  = await fetch(url);
-    const data = await res.json();
+    const data = await lfmFetch({ method, user: u, limit: 1000, page });
+    let items = [], totalPages = 1;
 
-    let items = [];
-    let totalPages = 1;
-
-    if (source === 'loved') {
+    if (src === 'loved') {
       items      = data.lovedtracks?.track || [];
-      totalPages = parseInt(data.lovedtracks?.['@attr']?.totalPages || '1');
-    } else if (source === 'recent') {
+      totalPages = parseInt(data.lovedtracks?.['@attr']?.totalPages || 1);
+    } else if (src === 'recent') {
       items      = (data.recenttracks?.track || []).filter(t => !t['@attr']?.nowplaying);
-      totalPages = parseInt(data.recenttracks?.['@attr']?.totalPages || '1');
+      totalPages = parseInt(data.recenttracks?.['@attr']?.totalPages || 1);
     } else {
       items      = data.toptracks?.track || [];
-      totalPages = parseInt(data.toptracks?.['@attr']?.totalPages || '1');
+      totalPages = parseInt(data.toptracks?.['@attr']?.totalPages || 1);
     }
 
     tracks.push(...items);
-    addLog(`Last.fm — ${tracks.length} tracks...`);
-
-    if (page >= totalPages || page >= 10) break; // max 10 000 tracks
+    addLog(`Last.fm — ${tracks.length} tracks récupérés...`);
+    if (page >= totalPages || page >= 10) break;
     page++;
     await new Promise(r => setTimeout(r, 250));
   }
 
-  // Normaliser vers format SoundHub
   return tracks.map(t => ({
     id:          t.mbid || '',
     title:       t.name || '',
     artist:      t.artist?.name || t.artist?.['#text'] || '',
     album:       t.album?.['#text'] || '',
-    genre:       '',
-    tags:        [],
-    duration:    parseInt(t.duration || '0'),
-    description: '',
-    label:       '',
-    source:      'lastfm',
+    genre: '', tags: [], duration: parseInt(t.duration||0),
+    description: '', label: '', source: 'lastfm',
   }));
 }
 
-// ─── CLASSIFICATION ───────────────────────────────────────────────────────────
+// ─── SoundCloud ───────────────────────────────────────────────────────────────
+const SC_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
 
+async function scFetch(endpoint, token) {
+  const r = await fetch(SC_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, token }),
+  });
+  if (!r.ok) throw new Error(`Proxy SC ${r.status}`);
+  return r.json();
+}
+
+async function connectSC() {
+  const token = document.getElementById('sc-token').value.trim();
+  if (!token) { setMsg('sc', 'Entre ton token OAuth', 'var(--red)'); return; }
+  setStatus('sc', 'loading', '⟳ Vérification...');
+  try {
+    const me = await scFetch('https://api-v2.soundcloud.com/me', token);
+    if (!me || me.error) throw new Error('Token invalide');
+    const likes = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`, token);
+    S.sc.token  = token;
+    S.sc.userId = me.id;
+    S.sc.connected = true;
+    document.getElementById('sc-name').textContent  = me.username;
+    document.getElementById('sc-count').textContent = `${(likes.total_results||0).toLocaleString('fr')} likes`;
+    document.getElementById('sc-connected').classList.add('show');
+    document.getElementById('sc-form').classList.remove('open');
+    document.getElementById('sc-card').classList.add('connected');
+    setStatus('sc', 'ok', '✓ Connecté');
+    setMsg('sc', '', '');
+    updateRun();
+  } catch(e) {
+    setStatus('sc', 'error', '✕ Erreur');
+    setMsg('sc', '✕ ' + e.message, 'var(--red)');
+  }
+}
+
+async function fetchSCLikes() {
+  const tracks = [];
+  let url = `https://api-v2.soundcloud.com/users/${S.sc.userId}/likes/tracks?limit=200`;
+  while (url) {
+    const data = await scFetch(url, S.sc.token);
+    tracks.push(...(data.collection || []));
+    url = data.next_href || null;
+    addLog(`SC — ${tracks.length} tracks...`);
+    await new Promise(r => setTimeout(r, 200));
+  }
+  return tracks;
+}
+
+// ─── Spotify ──────────────────────────────────────────────────────────────────
+function importSpotifyFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  setMsg('sp', '⟳ Lecture...', 'var(--grey)');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const json = JSON.parse(ev.target.result);
+      let raw = [];
+      if (json.tracks && Array.isArray(json.tracks)) raw = json.tracks;
+      else if (Array.isArray(json)) raw = json.filter(x => x.master_metadata_track_name);
+      else throw new Error('Format non reconnu. Utilise YourLibrary.json');
+      if (!raw.length) throw new Error('Aucun track trouvé');
+
+      const seen = new Set();
+      S.sp.importedTracks = raw.map(t => {
+        if (t.track && t.artist) return { id: t.uri?.split(':').pop()||'', title:t.track||'', artist:t.artist||'', album:t.album||'', genre:'', tags:[], duration:0, description:'', label:'', source:'spotify' };
+        return { id: t.spotify_track_uri?.split(':').pop()||'', title:t.master_metadata_track_name||'', artist:t.master_metadata_album_artist_name||'', album:t.master_metadata_album_album_name||'', genre:'', tags:[], duration:Math.round((t.ms_played||0)/1000), description:'', label:'', source:'spotify' };
+      }).filter(t => { if(!t.id) return true; if(seen.has(t.id)) return false; seen.add(t.id); return true; });
+
+      const count = S.sp.importedTracks.length;
+      S.sp.connected = true;
+      document.getElementById('sp-name').textContent  = file.name;
+      document.getElementById('sp-count').textContent = `${count.toLocaleString('fr')} tracks`;
+      document.getElementById('sp-connected').classList.add('show');
+      document.getElementById('sp-form').classList.remove('open');
+      document.getElementById('sp-card').classList.add('connected');
+      setStatus('sp', 'ok', '✓ Importé');
+      setMsg('sp', `✓ ${count.toLocaleString('fr')} tracks`, 'var(--green)');
+      updateRun();
+    } catch(err) {
+      setStatus('sp', 'error', '✕ Erreur');
+      setMsg('sp', '✕ ' + err.message, 'var(--red)');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ─── Disconnect ───────────────────────────────────────────────────────────────
+function disconnectService(svc) {
+  S[svc].connected = false;
+  if (svc === 'lfm') {
+    S.lfm.tracks = []; S.lfm.username = null;
+    localStorage.removeItem('lfm_user'); localStorage.removeItem('lfm_src');
+    document.getElementById('lfm-avatar').style.display = 'none';
+    document.getElementById('lfm-avatar-ph').style.display = 'flex';
+    document.getElementById('lfm-connected').classList.remove('show');
+    document.getElementById('lfm-form').classList.add('open');
+  } else if (svc === 'sc') {
+    S.sc.token = null; S.sc.userId = null;
+    document.getElementById('sc-connected').classList.remove('show');
+    document.getElementById('sc-form').classList.remove('open');
+  } else if (svc === 'sp') {
+    S.sp.importedTracks = [];
+    document.getElementById('sp-connected').classList.remove('show');
+    document.getElementById('sp-form').classList.remove('open');
+  }
+  document.getElementById(`${svc}-card`).classList.remove('connected');
+  setStatus(svc, '', 'Non connecté');
+  updateRun();
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function setStatus(svc, cls, txt) {
+  const el = document.getElementById(`${svc}-status`);
+  el.className = 'card-status' + (cls ? ' ' + cls : '');
+  el.textContent = txt;
+}
+function setMsg(svc, txt, color) {
+  const el = document.getElementById(`${svc}-msg`);
+  el.style.color = color; el.textContent = txt;
+}
+function updateRun() {
+  const ok = S.lfm.connected || S.sc.connected || S.sp.connected;
+  document.getElementById('run-btn').disabled = !ok;
+  document.getElementById('run-info').textContent = ok
+    ? 'Prêt — cliquez pour lancer'
+    : 'Connecte au moins un service';
+}
+function setProgress(pct, txt) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-text').textContent = txt;
+}
+function addLog(txt, type = '') {
+  const el = document.createElement('div');
+  el.className = 'log-line' + (type ? ' ' + type : '');
+  el.textContent = txt;
+  const log = document.getElementById('progress-log');
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ─── Classification ───────────────────────────────────────────────────────────
 const SETS_CAT = { name:'SETS', label:'Sets / Mixes', emoji:'🎚️', color:'#888888' };
 const ALL_CATS  = [...GENRE_CATEGORIES, SETS_CAT];
 
-window.runClassification = async function() {
+async function runClassification() {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('results-wrap').classList.remove('show');
-  const pw = document.getElementById('progress-wrap');
-  pw.classList.add('show');
+  document.getElementById('progress-wrap').classList.add('show');
   document.getElementById('progress-log').innerHTML = '';
   document.getElementById('run-btn').disabled = true;
   setProgress(0, 'Récupération des tracks...');
 
-  const allTracks = [];
+  const all = [];
 
   try {
-    // ── Last.fm ──
-    if (state.lfm.connected) {
-      addLog('Last.fm — récupération des tracks...', 'info');
-      const lfmTracks = await fetchLFMTracks();
-      lfmTracks.forEach(t => allTracks.push({ raw: t, source: 'lastfm', prenormalized: true }));
-      addLog(`Last.fm — ${lfmTracks.length} tracks récupérés`, 'ok');
-      setProgress(25, 'Last.fm ✓');
+    if (S.lfm.connected) {
+      addLog('Last.fm — récupération...', 'info');
+      const t = await fetchLFMTracks();
+      t.forEach(x => all.push({ raw: x, prenormalized: true }));
+      addLog(`Last.fm — ${t.length} tracks ✓`, 'ok');
+      setProgress(30, 'Last.fm ✓');
     }
 
-    // ── SoundCloud likes ──
-    if (state.sc.connected) {
-      addLog('SoundCloud — récupération des likes...', 'info');
-      const scTracks = await fetchSCLikes();
-      scTracks.forEach(t => allTracks.push({ raw: t, source: 'soundcloud' }));
-      addLog(`SoundCloud — ${scTracks.length} tracks récupérés`, 'ok');
-      setProgress(33, 'SoundCloud ✓');
+    if (S.sc.connected) {
+      addLog('SoundCloud — récupération...', 'info');
+      const t = await fetchSCLikes();
+      t.forEach(x => all.push({ raw: x, source: 'soundcloud' }));
+      addLog(`SoundCloud — ${t.length} tracks ✓`, 'ok');
+      setProgress(60, 'SoundCloud ✓');
     }
 
-    // ── Spotify likes (import JSON) ──
-    if (state.sp.connected && state.sp.importedTracks?.length) {
-      addLog('Spotify — chargement des tracks importés...', 'info');
-      // Les tracks sont déjà normalisés par importSpotifyJSON
-      state.sp.importedTracks.forEach(t => allTracks.push({ raw: t, source: 'spotify', prenormalized: true }));
-      addLog(`Spotify — ${state.sp.importedTracks.length} tracks chargés`, 'ok');
-      setProgress(66, 'Spotify ✓');
+    if (S.sp.connected) {
+      addLog('Spotify — chargement...', 'info');
+      S.sp.importedTracks.forEach(x => all.push({ raw: x, prenormalized: true }));
+      addLog(`Spotify — ${S.sp.importedTracks.length} tracks ✓`, 'ok');
+      setProgress(80, 'Spotify ✓');
     }
 
-    // ── Deezer likes ──
-    if (state.dz.connected) {
-      addLog('Deezer — récupération des likes...', 'info');
-      const dzTracks = await fetchDeezerLikes();
-      dzTracks.forEach(t => allTracks.push({ raw: t, source: 'deezer' }));
-      addLog(`Deezer — ${dzTracks.length} tracks récupérés`, 'ok');
-      setProgress(90, 'Deezer ✓');
-    }
+    if (!all.length) throw new Error('Aucun track récupéré');
 
-    addLog(`Classification de ${allTracks.length} tracks...`, 'info');
-    setProgress(95, 'Classification...');
+    addLog(`Classification de ${all.length} tracks...`, 'info');
+    setProgress(90, 'Classification...');
 
-    // Classifier
     const buckets = {};
     ALL_CATS.forEach(c => buckets[c.name] = []);
 
-    for (const { raw, source, prenormalized } of allTracks) {
+    for (const { raw, source, prenormalized } of all) {
       const track = prenormalized ? raw : normalizeTrack(raw, source);
       if (isSet(track)) {
         buckets['SETS'].push(track);
@@ -1135,185 +730,104 @@ window.runClassification = async function() {
     }
 
     setProgress(100, 'Terminé ✓');
-    addLog(`Classification terminée. ${allTracks.length} tracks répartis.`, 'ok');
-    state.results = buckets;
+    addLog(`${all.length} tracks classifiés en ${Object.values(buckets).filter(b=>b.length).length} catégories.`, 'ok');
+    S.results = buckets;
+    setTimeout(() => showResults(buckets, all.length), 600);
 
-    setTimeout(() => showResults(buckets, allTracks.length), 600);
   } catch(e) {
-    addLog(`Erreur : ${e.message}`, 'error');
+    addLog('Erreur : ' + e.message, 'error');
   } finally {
     document.getElementById('run-btn').disabled = false;
   }
-};
-
-// ─── Fetchers ─────────────────────────────────────────────────────────────────
-async function fetchSCLikes() {
-  const tracks = [];
-  const PROXY_BASE = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
-  let url = `https://api-v2.soundcloud.com/users/${state.sc.userId}/likes/tracks?limit=200`;
-  while (url) {
-    const data = await scFetch(url, state.sc.token);
-    tracks.push(...(data.collection || []));
-    url = data.next_href || null;
-    addLog(`SC — ${tracks.length} tracks...`);
-    await new Promise(r => setTimeout(r, 200)); // rate limit
-  }
-  return tracks;
 }
 
-async function fetchSpotifyLikes() {
-  // Mode import JSON — retourne les tracks déjà parsés
-  return state.sp.importedTracks || [];
-}
-
-async function fetchDeezerLikes() {
-  const tracks = [];
-  let idx = 0;
-  const limit = 50;
-  while (true) {
-    const res = await fetch(`https://api.deezer.com/user/me/tracks?access_token=${state.dz.token}&limit=${limit}&index=${idx}`);
-    const data = await res.json();
-    if (!data.data?.length) break;
-    tracks.push(...data.data);
-    idx += data.data.length;
-    addLog(`Deezer — ${tracks.length} tracks...`);
-    if (!data.next) break;
-    await new Promise(r => setTimeout(r, 200));
-  }
-  return tracks;
-}
-
-// ─── RESULTS DISPLAY ──────────────────────────────────────────────────────────
+// ─── Results display ──────────────────────────────────────────────────────────
 function showResults(buckets, total) {
   document.getElementById('progress-wrap').classList.remove('show');
   document.getElementById('results-wrap').classList.add('show');
   document.getElementById('results-meta').textContent =
-    `${total.toLocaleString()} tracks analysés · ${Object.values(buckets).filter(b=>b.length>0).length} catégories`;
+    `${total.toLocaleString('fr')} tracks · ${Object.values(buckets).filter(b=>b.length).length} catégories`;
 
   const grid = document.getElementById('cats-grid');
   grid.innerHTML = '';
 
   const sorted = ALL_CATS
-    .filter(c => buckets[c.name]?.length > 0)
-    .sort((a, b) => (buckets[b.name]?.length||0) - (buckets[a.name]?.length||0));
+    .filter(c => buckets[c.name]?.length)
+    .sort((a,b) => (buckets[b.name]?.length||0) - (buckets[a.name]?.length||0));
 
-  const maxCount = Math.max(...sorted.map(c => buckets[c.name]?.length||0));
+  const max = Math.max(...sorted.map(c => buckets[c.name]?.length||0));
 
   sorted.forEach(cat => {
     const count = buckets[cat.name]?.length || 0;
-    const pct   = Math.round((count / maxCount) * 100);
+    const pct   = Math.round((count/max)*100);
+    const srcs  = [...new Set((buckets[cat.name]||[]).map(t=>t.source))].join(', ');
     const card  = document.createElement('div');
     card.className = 'cat-card';
-    card.style.setProperty('--cat-color', cat.color || '#ff4400');
+    card.style.setProperty('--cc', cat.color || '#ff4400');
     card.innerHTML = `
       <div class="cat-card-top">
-        <span class="cat-emoji">${cat.emoji || '🎵'}</span>
-        <span class="cat-count">${count.toLocaleString()}</span>
+        <span class="cat-emoji">${cat.emoji||'🎵'}</span>
+        <span class="cat-count">${count.toLocaleString('fr')}</span>
       </div>
       <div class="cat-name">${cat.label}</div>
-      <div class="cat-service">${[...new Set((buckets[cat.name]||[]).map(t=>t.source))].join(', ')}</div>
-      <a href="#" class="cat-playlist-btn" data-cat="${cat.name}">Créer playlist →</a>
-      <div class="cat-bar" style="width:0"></div>
+      <div class="cat-src">${srcs}</div>
+      <div class="cat-bar"></div>
     `;
     grid.appendChild(card);
-    requestAnimationFrame(() => {
-      card.querySelector('.cat-bar').style.width = pct + '%';
-    });
-
-    card.querySelector('.cat-playlist-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-      createPlaylist(cat.name, e.currentTarget);
-    });
+    requestAnimationFrame(() => card.querySelector('.cat-bar').style.width = pct+'%');
   });
 }
 
-// ─── CREATE PLAYLIST ──────────────────────────────────────────────────────────
-async function createPlaylist(catName, btn) {
-  const cat    = ALL_CATS.find(c => c.name === catName);
-  const tracks = state.results[catName] || [];
-  if (!tracks.length) return;
-
-  btn.textContent = '⟳ Création...';
-  btn.classList.remove('created');
-
-  try {
-    const scTracks = tracks.filter(t => t.source === 'soundcloud');
-    const spTracks = tracks.filter(t => t.source === 'spotify');
-    const dzTracks = tracks.filter(t => t.source === 'deezer');
-    const playlistName = `SoundHub — ${cat.label}`;
-
-    if (scTracks.length && state.sc.connected) {
-      // SC: POST /playlists avec tracks = [111, 222, ...]
-      const CHUNK = 500;
-      for (let i = 0; i < scTracks.length; i += CHUNK) {
-        const chunk   = scTracks.slice(i, i + CHUNK);
-        const suffix  = scTracks.length > CHUNK ? ` (${Math.floor(i/CHUNK)+1})` : '';
-        await fetch('https://api-v2.soundcloud.com/playlists', {
-          method: 'POST',
-          headers: { 'Authorization': `OAuth ${state.sc.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playlist: {
-            title: playlistName + suffix,
-            sharing: 'private',
-            tracks: chunk.map(t => t.id),
-          }})
-        });
-      }
-    }
-
-    if (spTracks.length && state.sp.connected) {
-      // Spotify : créer playlist puis ajouter tracks par batch de 100
-      const pl = await (await fetch(`https://api.spotify.com/v1/users/${state.sp.userId}/playlists`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${state.sp.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: playlistName, public: false })
-      })).json();
-      const uris = spTracks.map(t => `spotify:track:${t.id}`);
-      for (let i = 0; i < uris.length; i += 100) {
-        await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/tracks`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${state.sp.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uris: uris.slice(i, i+100) })
-        });
-      }
-    }
-
-    // Deezer : nécessite un backend pour créer des playlists (CORS)
-    if (dzTracks.length && state.dz.connected) {
-      addLog(`Deezer — création de playlists via le backend requis (CORS). À implémenter.`, 'error');
-    }
-
-    btn.textContent = '✓ Créée';
-    btn.classList.add('created');
-  } catch(e) {
-    btn.textContent = '✕ Erreur';
-    addLog(`Erreur playlist ${catName}: ${e.message}`, 'error');
-  }
+// ─── Export ───────────────────────────────────────────────────────────────────
+function exportJSON() {
+  if (!S.results) return;
+  const blob = new Blob([JSON.stringify(S.results, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'soundhub-results.json';
+  a.click();
 }
 
-window.createAllPlaylists = function() {
-  if (!state.results) return;
-  document.querySelectorAll('.cat-playlist-btn:not(.created)').forEach(btn => {
-    btn.click();
+// ─── Init & event wiring ──────────────────────────────────────────────────────
+
+// LFM — restaurer depuis localStorage
+const savedUser = localStorage.getItem('lfm_user');
+if (savedUser) {
+  document.getElementById('lfm-input').value = savedUser;
+  const savedSrc = localStorage.getItem('lfm_src') || 'loved';
+  const radio = document.querySelector(`input[name="lfm-src"][value="${savedSrc}"]`);
+  if (radio) radio.checked = true;
+}
+
+// Boutons
+document.getElementById('lfm-btn').addEventListener('click', connectLFM);
+document.getElementById('lfm-input').addEventListener('keydown', e => { if(e.key==='Enter') connectLFM(); });
+document.getElementById('lfm-disc').addEventListener('click', e => { e.stopPropagation(); disconnectService('lfm'); });
+
+document.getElementById('sc-btn').addEventListener('click', connectSC);
+document.getElementById('sc-disc').addEventListener('click', e => { e.stopPropagation(); disconnectService('sc'); });
+
+document.getElementById('sp-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('sp-file').click(); });
+document.getElementById('sp-file').addEventListener('change', importSpotifyFile);
+document.getElementById('sp-disc').addEventListener('click', e => { e.stopPropagation(); disconnectService('sp'); });
+
+document.getElementById('run-btn').addEventListener('click', runClassification);
+document.getElementById('export-btn').addEventListener('click', exportJSON);
+
+// Toggle cartes secondaires (SC / SP)
+['sc','sp'].forEach(svc => {
+  document.getElementById(`${svc}-card`).addEventListener('click', () => {
+    if (S[svc].connected) return;
+    document.getElementById(`${svc}-form`).classList.toggle('open');
   });
-};
-
-window.exportJSON = function() {
-  if (!state.results) return;
-  const blob = new Blob([JSON.stringify(state.results, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'soundhub-results.json'; a.click();
-};
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-handleCallbackParams();
-
-// Brancher les cartes après que tout le DOM est prêt
-['sc','sp'].forEach(service => {
-  const card = document.getElementById(`${service}-card`);
-  if (card) card.addEventListener('click', () => toggleManual(service));
 });
-const lfmCard = document.getElementById('lfm-card');
-if (lfmCard) lfmCard.addEventListener('click', () => toggleManualLFM());
+
+// LFM card — toggle form si non connecté
+document.getElementById('lfm-card').addEventListener('click', () => {
+  if (S.lfm.connected) return;
+  document.getElementById('lfm-form').classList.toggle('open');
+});
+
 </script>
 </body>
 </html>
