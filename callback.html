@@ -130,7 +130,7 @@
 <body>
 
 <div class="card">
-  <a href="app.html" class="logo">SOUND<span>HUB</span></a>
+  <a href="./app.html" class="logo">SOUND<span>HUB</span></a>
 
   <!-- STATE: Loading -->
   <div class="state active" id="state-loading">
@@ -154,7 +154,7 @@
     <div class="error-icon">✕</div>
     <div class="error-title">Erreur</div>
     <div class="error-msg" id="error-msg">Une erreur est survenue.</div>
-    <a href="app.html" class="retry-btn">← Retour à l'app</a>
+    <a href="./app.html" class="retry-btn">← Retour à l'app</a>
   </div>
 </div>
 
@@ -184,7 +184,7 @@ function setSuccess(detail) {
   document.getElementById('success-detail').textContent = detail || 'Redirection automatique...';
   showState('success');
   // Redirect après 2.5s (durée de la barre de progression)
-  setTimeout(() => { window.location.href = 'app.html'; }, 2600);
+  setTimeout(() => { window.location.href = './app.html'; }, 2600);
 }
 
 // ─── CONFIG (doit correspondre à app.html) ────────────────────────────────────
@@ -193,14 +193,14 @@ function setSuccess(detail) {
 const CONFIG = {
   soundcloud: {
     client_id:    sessionStorage.getItem('sh_sc_client_id')    || 'YOUR_SC_CLIENT_ID',
-    redirect_uri: 'https://s0undhub.netlify.app/callback',
+    redirect_uri: 'https://cclementbrr.github.io/SoundHub/callback.html',
   },
   spotify: {
     client_id:    sessionStorage.getItem('sh_sp_client_id')    || 'YOUR_SPOTIFY_CLIENT_ID',
-    redirect_uri: 'https://s0undhub.netlify.app/callback',
+    redirect_uri: 'https://cclementbrr.github.io/SoundHub/callback.html',
   },
   deezer: {
-    redirect_uri: 'https://s0undhub.netlify.app/callback',
+    redirect_uri: 'https://cclementbrr.github.io/SoundHub/callback.html',
   },
 };
 

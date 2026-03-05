@@ -272,8 +272,8 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo">SOUND<span>HUB</span></a>
-  <a href="index.html" class="nav-back">← Accueil</a>
+  <a href="./index.html" class="logo">SOUND<span>HUB</span></a>
+  <a href="./index.html" class="nav-back">← Accueil</a>
 </nav>
 
 <div class="app-layout">
@@ -445,17 +445,17 @@ import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet } from './soundh
 const CONFIG = {
   soundcloud: {
     client_id:     'YOUR_SC_CLIENT_ID',   // À obtenir via chatbot Otto sur help.soundcloud.com
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
+    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
     // En attendant l'approbation SoundCloud, on utilise le token manuel
   },
   spotify: {
     client_id:     'b2cf3a851fa247f0b13f2c8f7f3eaa34',  // Sur developer.spotify.com (gratuit, immédiat)
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
+    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
     scopes:        'user-read-private user-read-email user-library-read playlist-modify-private playlist-modify-public',
   },
   deezer: {
     app_id:        'YOUR_DEEZER_APP_ID',       // Sur developers.deezer.com (gratuit, immédiat)
-    redirect_uri:  'https://s0undhub.netlify.app/callback',
+    redirect_uri:  'https://cclementbrr.github.io/SoundHub/callback.html',
     perms:         'basic_access,manage_library,manage_playlist,offline_access',
   },
 };
