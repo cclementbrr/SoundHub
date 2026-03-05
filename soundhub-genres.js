@@ -424,7 +424,7 @@ export const GENRE_CATEGORIES = [
     color: "#ff00aa",
     priority: 50,
     keywords: [
-      "edm","big room","festival trap","future house","complextro",
+      "edm","big room","festival trap","future rave","complextro",
       "dutch house","electro house","progressive electro",
       "hands up edm","melbourne bounce","tropical house",
       "moombahton","moombahcore","electro pop edm",
@@ -454,27 +454,74 @@ export const GENRE_CATEGORIES = [
     labels: ["def jam","interscope","roc-a-fella","bad boy records","death row","rawkus","duck down"],
   },
   {
-    name: "RAP_NEWGEN",
-    label: "Trap / Drill / Cloud Rap / Hyperpop",
+    // TRAP : priority 88 > RAP_CLASSIC (68) > EDM (50)
+    // "trap" EDM (festival trap) est dans EDM_MAINSTAGE → ce tag seul ne suffit pas ici
+    // Pour override EDM : besoin d'au moins un strongKeyword spécifiquement rap
+    name: "TRAP",
+    label: "Trap / Drill / Cloud Rap / Phonk",
     emoji: "🌩️",
     color: "#ffcc00",
-    priority: 82,
-    // strongKeywords : matchent +5 comme un genre field — signal très spécifique à ce genre
+    priority: 88,
     strongKeywords: [
-      "cloud rap","cloudrap","trap","trap music","drill","uk drill",
-      "brooklyn drill","chicago drill","french drill","mumble rap",
-      "hyperpop","digicore","emo rap","phonk","dark phonk","memphis rap",
-      "afrotrap","afro trap","drain","surf gang","plugg",
+      "trap","trap music","cloud rap","cloudrap",
+      "drill","uk drill","brooklyn drill","chicago drill","french drill","afrotrap","afro trap",
+      "phonk","dark phonk","memphis rap","memphis phonk",
+      "mumble rap","plugg","pluggnb",
     ],
     keywords: [
       "trap","trap music","cloud rap","cloudrap","mumble rap",
       "drill","uk drill","brooklyn drill","chicago drill","french drill",
       "jersey club","jerk","crunk","snap music",
-      "hyperpop","digicore","emo rap","sad rap","melodic rap",
       "afrotrap","afro trap","ghetto music trap",
-      "lofi rap","phonk","dark phonk","memphis rap",
+      "phonk","dark phonk","memphis rap","memphis phonk",
+      "plugg","pluggnb","rage","opium rap",
     ],
-    labels: ["slaughter gang","young money","quality control","1017 records"],
+    labels: ["slaughter gang","young money","quality control","1017 records","empire"],
+    // Pas de override si EDM_MAINSTAGE marque plus fort (festival trap context)
+    antiKeywords: ["edm","mainstage","festival trap"],
+  },
+  {
+    // UNDERGROUND_RAP : rap alternatif, expérimental, lo-fi, drain gang, plugg
+    name: "UNDERGROUND_RAP",
+    label: "Underground Rap / Lo-Fi Rap / Expérimental",
+    emoji: "🕳️",
+    color: "#886644",
+    priority: 75,
+    strongKeywords: [
+      "underground hip hop","underground rap","underground",
+      "drain","drain gang","surf gang","digicore","emo rap","sad rap",
+      "lo-fi rap","lofi rap","bedroom rap","indie rap",
+      "alternative hip hop","alternative rap","experimental hip hop",
+      "abstract hip hop","left field hip hop",
+    ],
+    keywords: [
+      "underground hip hop","underground rap","underground",
+      "drain","drain gang","surf gang",
+      "lo-fi rap","lofi rap","bedroom rap","indie rap",
+      "alternative hip hop","alternative rap","experimental hip hop",
+      "abstract hip hop","left field hip hop","digicore","emo rap","sad rap",
+      "noise rap","death rap","dark rap","horror rap",
+      "instrumental rap","jazzy rap","art rap",
+    ],
+    labels: ["rubber bandits","deathbomb arc","anticon","rhymesayers","mello music group"],
+  },
+  {
+    // RAP_NEWGEN : reste pour hyperpop, génération post-2018 inclassable
+    name: "RAP_NEWGEN",
+    label: "Rap Newgen / Hyperpop / Melodic Trap",
+    emoji: "⚡",
+    color: "#ff6666",
+    priority: 82,
+    strongKeywords: [
+      "hyperpop","digicore","melodic trap","melodic rap","sad trap",
+      "rage","plugg trap","opium","SoundCloud rap",
+    ],
+    keywords: [
+      "hyperpop","digicore","melodic trap","melodic rap",
+      "sad trap","emo trap","rage","plugg trap","opium",
+      "SoundCloud rap","new gen rap","gen z rap",
+    ],
+    labels: ["transgressive","columbia hyperpop"],
   },
 
   // ╔══════════════════════════════════════════════════════════════════╗

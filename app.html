@@ -343,7 +343,7 @@ import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet, ARTIST_GENRE_MA
 const S = {
   lfm: { on:false, user:null, src:'loved' },
   lfmSession: null,   // session key Last.fm pour track.love (obtenue via OAuth)
-  dz:  { on:false, userId:null },
+  dz:  { on:false, userId:null, accessToken:null, appId:null },
   sc:  { on:false, token:null, userId:null },
   sp:  { on:false, tracks:[] },
   results: null,
@@ -528,20 +528,15 @@ async function connectDZ() {
   if (!uid) { setMsg('dz','Entre ton ID Deezer','var(--red)'); return; }
   setSt('dz','spin','⟳ Vérification...');
   try {
-    // Deezer public API — profil public uniquement
     const usr = await dzFetch(`https://api.deezer.com/user/${uid}`);
     if (!usr.id) throw new Error('Profil introuvable ou privé');
-
-    // Count favoris — endpoint public
     let count = 0;
     try {
-      const favR = await fetch(`https://api.deezer.com/user/${uid}/tracks?limit=1`);
-      const favD = await favR.json();
-      count = favD.total || favD.data?.length || 0;
+      const favD = await dzFetch(`https://api.deezer.com/user/${uid}/tracks?limit=1`);
+      count = favD.total || 0;
       if (favD.error?.code === 300) throw new Error('Profil privé — active "Rendre mes données publiques" dans les paramètres Deezer');
-    } catch(favErr) { if (favErr.message.includes('rivé')) throw favErr; }
-
-    S.dz = {on:true, userId:uid};
+    } catch(e2) { if (e2.message.includes('rivé')) throw e2; }
+    S.dz = { on:true, userId:String(uid), accessToken:null };
     if (usr.picture_medium) { $('dz-avt').src=usr.picture_medium; $('dz-avt').style.display='block'; $('dz-avt-ph').style.display='none'; }
     $('dz-name').textContent = usr.name||uid;
     $('dz-sub').textContent  = `${count.toLocaleString('fr')} favoris`;
@@ -549,20 +544,21 @@ async function connectDZ() {
     $('dz-form').classList.remove('open');
     $('dz-card').classList.add('on');
     setSt('dz','ok','✓ Connecté'); setMsg('dz',''); updateRun();
+    localStorage.setItem('dz_user_id', uid);
   } catch(e) { setSt('dz','err','✕ Erreur'); setMsg('dz','✕ '+e.message,'var(--red)'); }
 }
 
-// Fetch Deezer avec fallback CORS proxy si nécessaire
+// Fetch Deezer avec fallback CORS proxy
 async function dzFetch(url) {
   try {
     const r = await fetch(url);
-    if (!r.ok && r.status!==0) throw new Error(`HTTP ${r.status}`);
+    if (!r.ok && r.status !== 0) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
-    if (d.error?.code === 300) throw new Error('Profil privé — rends ton profil public dans les paramètres Deezer');
+    if (d.error?.code === 300) throw new Error('Profil privé');
+    if (d.error) throw new Error(d.error.message||'Erreur Deezer');
     return d;
   } catch(e) {
     if (e.message.includes('rivé')) throw e;
-    // Fallback CORS proxy (corsproxy.io est gratuit et public)
     const proxied = 'https://corsproxy.io/?' + encodeURIComponent(url);
     const r2 = await fetch(proxied);
     const d2 = await r2.json();
@@ -573,7 +569,7 @@ async function dzFetch(url) {
 
 async function fetchDZ() {
   const tracks=[];
-  let url=`https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100&index=0`;
+  let url=`https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100`;
   while (url) {
     const d = await dzFetch(url);
     if (!d.data?.length) break;
@@ -662,6 +658,7 @@ function importSP(e) {
 function disconn(svc) {
   S[svc].on = false;
   if (svc==='lfm') { S.lfm.user=null; localStorage.removeItem('lfm_user'); localStorage.removeItem('lfm_src'); $('lfm-avt').style.display='none'; $('lfm-avt-ph').style.display='flex'; $('lfm-form').classList.add('open'); }
+  if (svc==='dz')  { S.dz.accessToken=null; localStorage.removeItem('dz_token'); $('dz-avt').style.display='none'; $('dz-avt-ph').style.display='flex'; }
   if (svc==='sp')  S.sp.tracks=[];
   $(`${svc}-conn`).classList.remove('show');
   $(`${svc}-card`).classList.remove('on');
@@ -981,8 +978,18 @@ function lfmSign(params) {
 
 async function lfmPost(params) {
   const sig = lfmSign(params);
-  const body = new URLSearchParams({...params, api_sig:sig, format:'json'});
-  const r = await fetch(LFM, {method:'POST', body});
+  const allParams = {...params, api_sig:sig, format:'json'};
+  // NE PAS utiliser URLSearchParams : encode les crochets [] en %5B%5D
+  // Last.fm calcule sa vérif de signature sur les noms bruts → mismatch
+  // On encode uniquement les VALEURS, pas les noms de clés
+  const body = Object.entries(allParams)
+    .map(([k, v]) => k + '=' + encodeURIComponent(String(v)))
+    .join('&');
+  const r = await fetch(LFM, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body,
+  });
   return r.json();
 }
 
@@ -1111,63 +1118,71 @@ async function exportToLFMLoved(catName) {
   }
   btn.disabled=false;
 }
-// ── Deezer Export ─────────────────────────────────────────────────────────────
-// Deezer n'a pas d'API d'écriture publique sans OAuth token complet.
-// On propose deux options :
-//   1. Ouvrir les 5 premiers tracks dans Deezer pour vérification rapide
-//   2. Exporter un CSV importable via Soundiiz/TuneMyMusic
+// ── Deezer Export — via API publique search + Soundiiz deeplink ──────────────
+// Sans OAuth Deezer (apps fermées), on ne peut pas créer de playlist directement.
+// Flow : recherche les tracks → génère un CSV → ouvre Soundiiz avec instructions
 async function exportToDeezer(catName) {
   const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
   if (!tracks.length) return;
   const btn = $('m-dz-export');
-  btn.disabled=true;
+  btn.disabled = true;
 
-  // Chercher les tracks sur Deezer via l'API publique search
-  btn.textContent='🔍 Recherche sur Deezer...';
-  let found=0, notFound=[];
-  const deezerIds = [];
+  // Étape 1 : rechercher les Deezer IDs via API publique
+  btn.textContent = '🔍 0/' + tracks.length + '...';
+  const found = [], notFound = [];
 
   for (let i=0; i<tracks.length; i++) {
     const t = tracks[i];
-    const q = encodeURIComponent(`${t.artist} ${t.title}`);
     try {
-      const d = await dzFetch(`https://api.deezer.com/search?q=${q}&limit=1`);
-      if (d.data?.[0]?.id) {
-        deezerIds.push(d.data[0].id);
-        found++;
-      } else {
-        notFound.push(`${t.artist} — ${t.title}`);
+      const q = encodeURIComponent(`artist:"${t.artist}" track:"${t.title}"`);
+      let d = await dzFetch(`https://api.deezer.com/search?q=${q}&limit=1`);
+      if (!d.data?.length) {
+        const q2 = encodeURIComponent(t.artist + ' ' + t.title);
+        d = await dzFetch(`https://api.deezer.com/search?q=${q2}&limit=1`);
       }
-    } catch { notFound.push(`${t.artist} — ${t.title}`); }
-    btn.textContent=`🔍 ${i+1}/${tracks.length}...`;
-    await delay(100);
+      if (d.data?.[0]) found.push(d.data[0]);
+      else notFound.push(t);
+    } catch { notFound.push(t); }
+    btn.textContent = `🔍 ${i+1}/${tracks.length}...`;
+    await delay(80);
   }
 
-  // Générer un CSV pour import via Soundiiz / TuneMyMusic
+  // Étape 2 : générer CSV (format Soundiiz)
+  const playlistName = S.labels[catName] || catName;
   const csvRows = ['Artist,Title,Album'].concat(
-    tracks.map(t => {
-      const a = (t.artist||'').replace(/"/g,'""');
-      const ti = (t.title||'').replace(/"/g,'""');
-      const al = (t.album||'').replace(/"/g,'""');
+    found.map(tr => {
+      const a  = (tr.artist?.name||'').replace(/"/g,'""');
+      const ti = (tr.title_short||tr.title||'').replace(/"/g,'""');
+      const al = (tr.album?.title||'').replace(/"/g,'""');
       return `"${a}","${ti}","${al}"`;
     })
   );
   const csv = csvRows.join('\n');
   dl(csv, 'text/csv', `soundhub-${catName.toLowerCase()}.csv`);
 
-  if (notFound.length===0) {
-    btn.textContent=`✓ ${found} trouvés — CSV téléchargé`;
-    btn.style.borderColor='var(--green)';btn.style.color='var(--green)';
+  // Étape 3 : ouvrir Soundiiz avec instructions
+  const sub = $('m-sub');
+  const soundiizUrl = 'https://soundiiz.com/tool/csv-to-deezer';
+  const info = document.createElement('div');
+  info.style.cssText = 'font-family:Space Mono;font-size:9px;color:var(--grey2);margin-top:8px;line-height:1.8;padding:8px;border:1px solid var(--border);border-radius:4px;';
+  info.innerHTML = `<span style="color:var(--dz)">🎶 ${found.length} tracks trouvés</span>${notFound.length ? ` · <span style="color:var(--accent2)">${notFound.length} non trouvés</span>` : ''}<br>
+    CSV téléchargé · <a href="${soundiizUrl}" target="_blank" style="color:var(--dz)">Importer sur Soundiiz →</a><br>
+    <span style="color:var(--grey)">Soundiiz → CSV → Deezer → colle le fichier → nom : "${playlistName}"</span>`;
+  $('overlay').querySelector('.modal-body')?.appendChild(info) || sub?.insertAdjacentElement('afterend', info);
+
+  if (notFound.length === 0) {
+    btn.textContent = `✓ ${found.length} tracks — CSV prêt`;
+    btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
   } else {
-    btn.textContent=`✓ ${found}/${tracks.length} — CSV téléchargé`;
-    btn.style.borderColor='var(--accent2)';btn.style.color='var(--accent2)';
+    btn.textContent = `✓ ${found.length}/${tracks.length} — CSV prêt`;
+    btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
     console.group('Tracks non trouvés sur Deezer:');
-    notFound.forEach(t=>console.warn(t));
+    notFound.forEach(t=>console.warn(`${t.artist} — ${t.title}`));
     console.groupEnd();
   }
-  btn.title = `Importe le CSV sur soundiiz.com ou tunemymusic.com pour créer la playlist Deezer`;
-  btn.disabled=false;
+  btn.disabled = false;
 }
+
 
 function exportPlaylistJSON(catName) {
   const payload={playlist:S.labels[catName]||catName, tracks:S.results[catName]||[]};
@@ -1224,6 +1239,10 @@ function dl(content, mime, filename) {
   const sess = localStorage.getItem('lfm_session');
   if (sess) S.lfmSession = sess;
 })();
+
+// Restore Deezer user ID
+const dzSavedUid = localStorage.getItem('dz_user_id');
+if (dzSavedUid && $('dz-inp')) $('dz-inp').value = dzSavedUid;
 
 // Restore LFM user
 const savedU=localStorage.getItem('lfm_user');
