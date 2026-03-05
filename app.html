@@ -184,12 +184,17 @@ textarea.f-input{resize:none}
         <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services.<br>
           <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">Créer un compte gratuit →</a>
         </div>
-        <div id="lfm-secret-wrap" style="display:none;flex-direction:column;gap:6px">
-          <div class="f-label">Shared Secret (pour export loved)</div>
-          <input class="f-input" id="lfm-secret-inp" type="password" placeholder="Shared secret Last.fm API" onclick="event.stopPropagation()">
-          <div style="font-family:'Space Mono';font-size:8px;color:var(--grey2);line-height:1.6">
-            <a href="https://www.last.fm/api/accounts" target="_blank" style="color:var(--lfm)" onclick="event.stopPropagation()">last.fm/api/accounts</a> → colonne Secret
+        <div id="lfm-secret-wrap" style="display:none;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--border)">
+          <div class="f-label" style="color:var(--accent2)">⚡ Pour exporter vers Last.fm Loved</div>
+          <div style="font-family:'Space Mono';font-size:8px;color:var(--grey2);line-height:1.8">
+            La clé de démo ne supporte pas l'export.<br>
+            Crée une app gratuite en 30s →
+            <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)" onclick="event.stopPropagation()">last.fm/api/account/create</a>
           </div>
+          <input class="f-input" id="lfm-apikey-inp" type="text" placeholder="Clé API (API key)" onclick="event.stopPropagation()">
+          <input class="f-input" id="lfm-secret-inp" type="password" placeholder="Shared secret" onclick="event.stopPropagation()">
+          <button class="f-btn" id="lfm-save-creds" style="--c:var(--accent2)">💾 Sauvegarder</button>
+          <div class="f-msg" id="lfm-creds-msg"></div>
         </div>
         <div>
           <div class="f-label">Pseudo Last.fm</div>
@@ -382,7 +387,7 @@ function log(txt, type='') {
 
 // ── Last.fm ───────────────────────────────────────────────────────────────────
 const LFM  = 'https://ws.audioscrobbler.com/2.0/';
-const LFMK = 'b25b959554ed76058ac220b7b2e0a026';
+const LFMK = 'b25b959554ed76058ac220b7b2e0a026'; // clé de démo — remplaçable via UI
 
 async function lfmGet(p) {
   const r = await fetch(LFM+'?'+new URLSearchParams({...p,api_key:LFMK,format:'json'}));
@@ -764,9 +769,12 @@ function openModal(catName) {
   // Export buttons
   const bar = $('m-exports');
   const lfmConnected = !!S.lfmSession;
+  const hasSecret    = !!getLFMSecret();
   const lfmBtnHtml = lfmConnected
     ? `<button class="btn" id="m-lfm-love" style="border-color:var(--lfm);color:var(--lfm)">🔴 Ajouter au Last.fm Loved</button>`
-    : `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Connecter Last.fm pour exporter</button>`;
+    : hasSecret
+      ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Autoriser l'export Last.fm</button>`
+      : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Export Loved (config requise)</button>`;
   bar.innerHTML = `
     <button class="btn" id="m-json">↓ JSON</button>
     <button class="btn" id="m-txt">↓ .txt</button>
@@ -859,17 +867,13 @@ function toggleHubShare(catName) {
 }
 
 // ── Last.fm Web Auth → session key → track.love ───────────────────────────────
-// Last.fm utilise un flow "web auth" : 
-//   1. On ouvre last.fm/api/auth/?api_key=KEY&cb=CALLBACK_URL
-//   2. L'user autorise → Last.fm redirige vers CALLBACK_URL?token=TOKEN
-//   3. On échange token → session key via auth.getSession (nécessite signature MD5)
-//   4. Avec la session key on peut appeler track.love (aussi signé MD5)
-//
-// La signature MD5 est possible en pur JS (pas besoin de backend).
-// ⚠️ LFM_SECRET doit correspondre à ton API key Last.fm
-// Trouve-le sur https://www.last.fm/api/accounts (colonne "Secret")
-// Si tu utilises la clé b25b959554ed76058ac220b7b2e0a026, son secret associé est nécessaire
-const LFM_SECRET = localStorage.getItem('lfm_secret') || '';
+// Flow : last.fm/api/auth/ → token → auth.getSession(signed) → session key → track.love(signed)
+// ⚠️ La clé de démo b25b959554... n'accepte PAS les appels signés (auth.getSession, track.love).
+//    Il faut une vraie API key perso : https://www.last.fm/api/account/create
+//    Durée : 30 secondes pour créer l'application.
+// On lit la clé API + secret depuis le localStorage (saisis via l'UI ci-dessous)
+function getLFMKey()    { return localStorage.getItem('lfm_api_key')    || 'b25b959554ed76058ac220b7b2e0a026'; }
+function getLFMSecret() { return localStorage.getItem('lfm_api_secret') || ''; }
 
 async function md5(str) {
   // MD5 en pur JS via SubtleCrypto n'est pas dispo (pas supporté).
@@ -919,7 +923,7 @@ function lfmSign(params) {
   // Signature = md5(sorted_params_string + secret)
   const sorted = Object.keys(params).filter(k=>k!=='format').sort()
     .map(k=>k+params[k]).join('');
-  return md5js(sorted + LFM_SECRET);
+  return md5js(sorted + getLFMSecret());
 }
 
 async function lfmPost(params) {
@@ -932,16 +936,25 @@ async function lfmPost(params) {
 // Démarre le flow Last.fm Web Auth
 // Last.fm redirigera vers cette page avec ?token=XXXX
 function startLFMAuth(catName) {
-  // Sauvegarder la catégorie en cours pour y revenir après auth
+  if (!getLFMSecret()) {
+    // Pas de secret → guider l'user vers la configuration
+    closeModal();
+    $('lfm-secret-wrap').style.display='flex';
+    $('lfm-form').classList.add('open');
+    $('lfm-card').scrollIntoView({behavior:'smooth', block:'center'});
+    const msg=$('lfm-creds-msg');
+    if(msg){msg.style.color='var(--accent2)';msg.textContent='⚡ Entre ta clé API + secret ci-dessus pour activer l'export';}
+    return;
+  }
   if (catName) sessionStorage.setItem('lfm_pending_cat', catName);
   const callbackUrl = window.location.href.split('?')[0];
-  const authUrl = `https://www.last.fm/api/auth/?api_key=${LFMK}&cb=${encodeURIComponent(callbackUrl)}`;
+  const authUrl = `https://www.last.fm/api/auth/?api_key=${getLFMKey()}&cb=${encodeURIComponent(callbackUrl)}`;
   window.location.href = authUrl;
 }
 
 async function getLFMSession(token, catName) {
   try {
-    const d = await lfmPost({method:'auth.getSession', api_key:LFMK, token});
+    const d = await lfmPost({method:'auth.getSession', api_key:getLFMKey(), token});
     if (d.error) throw new Error(d.message);
     S.lfmSession = d.session.key;
     localStorage.setItem('lfm_session', d.session.key);
@@ -963,7 +976,7 @@ async function exportToLFMLoved(catName) {
     if (!t.artist||!t.title) continue;
     try {
       const d = await lfmPost({
-        method:'track.love', api_key:LFMK,
+        method:'track.love', api_key:getLFMKey(),
         sk:S.lfmSession, artist:t.artist, track:t.title
       });
       if (d.error) fail++; else ok++;
@@ -1022,19 +1035,29 @@ if (savedU) {
 }
 
 // Events
-// Show/hide secret input based on session state
+// Init champs clé API Last.fm
 (function(){
-  const wrap = $('lfm-secret-wrap');
-  const inp  = $('lfm-secret-inp');
-  if (wrap && inp) {
-    // Show if no session yet
-    if (!S.lfmSession) wrap.style.display='flex';
-    inp.value = localStorage.getItem('lfm_secret')||'';
-    inp.addEventListener('input', ()=>{
-      const v = inp.value.trim();
-      if (v) localStorage.setItem('lfm_secret', v);
-    });
-  }
+  const wrap    = $('lfm-secret-wrap');
+  const keyInp  = $('lfm-apikey-inp');
+  const secInp  = $('lfm-secret-inp');
+  const saveBtn = $('lfm-save-creds');
+  const msg     = $('lfm-creds-msg');
+  if (!wrap) return;
+  // Afficher si pas de session
+  if (!S.lfmSession) wrap.style.display='flex';
+  // Pré-remplir si déjà sauvegardé
+  if (keyInp) keyInp.value = localStorage.getItem('lfm_api_key')||'';
+  if (secInp) secInp.value = localStorage.getItem('lfm_api_secret')||'';
+  // Sauvegarder
+  if (saveBtn) saveBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    const k = keyInp?.value.trim()||'';
+    const s = secInp?.value.trim()||'';
+    if (!k||!s) { if(msg){msg.style.color='var(--red)';msg.textContent='Entre clé + secret';} return; }
+    localStorage.setItem('lfm_api_key', k);
+    localStorage.setItem('lfm_api_secret', s);
+    if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connecter Last.fm pour exporter"';}
+  });
 })();
 $('lfm-btn').onclick=connectLFM;
 $('lfm-inp').addEventListener('keydown',e=>{if(e.key==='Enter')connectLFM();});

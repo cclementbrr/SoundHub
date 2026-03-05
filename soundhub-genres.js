@@ -310,20 +310,31 @@ export const GENRE_CATEGORIES = [
     labels: ["ninja tune","mo wax","warp","echospace","leng records","apollo records"],
   },
   {
-    name: "EXPERIMENTAL_ELECTRONIC",
-    label: "Électronique Expérimentale / IDM / Glitch",
+    // IDM = "Intelligent Dance Music" — attrape tous les artistes avec un mix de tags
+    // électroniques non-catégorisables : idm, electronica, experimental, glitch, ambient techno...
+    // Priorité 96 > TECHNO (90) — dès que idm/electronica présent, IDM gagne sur techno générique
+    name: "IDM",
+    label: "IDM / Electronica / Expérimental",
     emoji: "🔬",
-    color: "#555577",
-    priority: 78,
-    keywords: [
-      "idm","intelligent dance music","glitch","microsound","electronica","braindance","drill n bass",
-      "acousmatic","musique concrete","musique concrète","electroacoustic",
-      "noise music","black midi","deconstructed club","avant garde electronic",
-      "experimental electronic","post digital","abstract electronic",
-      "generative","algorithmic","sound art","electro acoustic",
-      "witch house","witchhouse","hypnagogic","lowercase","onkyo",
+    color: "#7755cc",
+    priority: 96,
+    // strongKeywords : +5 chacun — un seul suffit pour indiquer IDM fort
+    strongKeywords: [
+      "idm","intelligent dance music","electronica","braindance",
+      "glitch","microsound","drill n bass","clicks and cuts",
+      "experimental electronic","abstract electronic","post digital",
     ],
-    labels: ["warp","raster noton","mego","editions mego","12k","sub rosa","erstwhile"],
+    keywords: [
+      "idm","intelligent dance music","electronica","braindance",
+      "glitch","microsound","drill n bass",
+      "acousmatic","musique concrete","musique concrète","electroacoustic",
+      "noise music","deconstructed club","avant garde electronic",
+      "experimental electronic","post digital","abstract electronic",
+      "generative","algorithmic","sound art",
+      "witch house","hypnagogic","lowercase","onkyo",
+      "ambient techno","industrial","electronic",
+    ],
+    labels: ["warp","raster noton","mego","editions mego","12k","sub rosa","erstwhile","artificial intelligence"],
   },
   {
     name: "EDM_MAINSTAGE",
@@ -993,9 +1004,17 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
   // "Contradire" = le genre principal des tags réels est totalement différent de la base artiste.
   // Heuristique simple : si tags réels ont ≥2 mots-clés rap/hip-hop ET base dit electronic → ignorer base.
   const realGenreStr = tagNorms.join(' ');
+  // Cas 1 : tags réels = rap/trap, base artiste = electronic → skip base (Crudo Means Raw)
   const isReallyRap  = /\b(rap|hip.?hop|trap|drill|cloud rap)\b/.test(realGenreStr) && tagNorms.length >= 2;
   const baseIsElec   = knownTags.some(t => /\b(edm|house|techno|electronic)\b/.test(t));
-  const skipBase     = isReallyRap && baseIsElec && tagNorms.length >= 3;
+  const skipBaseRap  = isReallyRap && baseIsElec && tagNorms.length >= 3;
+  // Cas 2 : tags réels = purement électroniques, base artiste = rap → skip base (Toobris taggué techno)
+  const isReallyElec = tagNorms.length >= 1 && tagNorms.every(t =>
+    /\b(techno|electronic|idm|house|ambient|trance|drum|bass|dnb|electro|synth|rave|acid|industrial|garage|jungle|glitch|electronica|experimental)\b/.test(t)
+  );
+  const baseIsRap    = knownTags.some(t => /\b(rap|hip.?hop|trap|drill)\b/.test(t));
+  const skipBaseElec = isReallyElec && baseIsRap && tagNorms.length >= 1;
+  const skipBase     = skipBaseRap || skipBaseElec;
   const mergedTags   = skipBase ? tagNorms : [...new Set([...tagNorms, ...knownTags])];
   const allEnrichedTags = mergedTags;
   const hasStrongTags = allEnrichedTags.length >= 3;
