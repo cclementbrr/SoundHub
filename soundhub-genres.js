@@ -777,6 +777,142 @@ export const GENRE_CATEGORIES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// BASE ARTISTES → GENRE (fallback quand l'API ne donne rien)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Format : "artiste normalisé (lowercase)" → [tags genre]
+export const ARTIST_GENRE_MAP = {
+  // ── RAP / HIP-HOP ──
+  "lil wayne": ["rap","hip hop","hip-hop"],
+  "lil' wayne": ["rap","hip hop","hip-hop"],
+  "jay z": ["rap","hip hop"],
+  "jay-z": ["rap","hip hop"],
+  "kanye west": ["rap","hip hop","trap"],
+  "drake": ["rap","hip hop","rnb"],
+  "kendrick lamar": ["rap","hip hop","conscious rap"],
+  "travis scott": ["trap","rap","hip hop"],
+  "21 savage": ["trap","rap"],
+  "young thug": ["trap","rap"],
+  "future": ["trap","rap","mumble rap"],
+  "post malone": ["rap","hip hop","pop"],
+  "j cole": ["rap","hip hop","conscious rap"],
+  "big sean": ["rap","hip hop"],
+  "wiz khalifa": ["rap","hip hop"],
+  "asap rocky": ["trap","rap","hip hop"],
+  "chance the rapper": ["rap","hip hop","conscious rap"],
+  "eminem": ["rap","hip hop","boom bap"],
+  "snoop dogg": ["rap","hip hop","west coast hip hop"],
+  "nas": ["rap","hip hop","boom bap"],
+  "wu-tang clan": ["rap","hip hop","east coast hip hop"],
+  "method man": ["rap","hip hop"],
+  "biggie": ["rap","hip hop","east coast hip hop"],
+  "notorious b.i.g": ["rap","hip hop","east coast hip hop"],
+  "2pac": ["rap","hip hop","west coast hip hop"],
+  "nicki minaj": ["rap","hip hop","pop rap"],
+  "cardi b": ["rap","hip hop","trap"],
+  "migos": ["trap","rap"],
+  "quavo": ["trap","rap"],
+  "offset": ["trap","rap"],
+  "lil uzi vert": ["trap","rap","emo rap"],
+  "juice wrld": ["emo rap","trap","melodic rap"],
+  "xxxtentacion": ["emo rap","trap","rap"],
+  "lil peep": ["emo rap","cloud rap"],
+  "bladee": ["cloud rap","digicore","drain"],
+  "ecco2k": ["cloud rap","digicore","experimental"],
+  "yeule": ["dream pop","shoegaze","experimental"],
+  "yeat": ["trap","rap"],
+  "playboi carti": ["trap","rap"],
+  "jeune morty": ["rap","rap francais","trap"],
+  "nej": ["rap francais","rap"],
+  "ninho": ["rap francais","trap"],
+  "booba": ["rap francais","rap"],
+  "rohff": ["rap francais","rap"],
+  "lacrim": ["rap francais","rap"],
+  "nekfeu": ["rap francais","rap","conscious rap"],
+  "kaaris": ["rap francais","trap"],
+  "scarlxrd": ["trap metal","rap","metal"],
+  "doja cat": ["pop","rap","rnb"],
+  "toobris": ["rap","hip hop","rap francais"],
+  // ── EDM / ÉLECTRONIQUE POP ──
+  "david guetta": ["edm","electro house","big room"],
+  "calvin harris": ["edm","electro house","dance pop"],
+  "avicii": ["edm","progressive house","trance"],
+  "tiesto": ["trance","edm","big room"],
+  "martin garrix": ["edm","big room","future house"],
+  "skrillex": ["dubstep","edm","future bass"],
+  "diplo": ["edm","trap","future bass"],
+  "marshmello": ["edm","future bass","big room"],
+  "the chainsmokers": ["edm","electropop","dance pop"],
+  "deadmau5": ["progressive house","techno","electro house"],
+  "daft punk": ["french touch","electro","house"],
+  "justice": ["french touch","electro","ed banger"],
+  "gesaffelstein": ["techno","electro","dark electro"],
+  "kavinsky": ["french touch","synthwave","electro"],
+  "modjo": ["french touch","filter house"],
+  "cassius": ["french touch","house","electro"],
+  "bob sinclar": ["french touch","house","electro"],
+  "tchami": ["future house","deep house","french house"],
+  "disclosure": ["uk garage","deep house","house"],
+  "flume": ["future bass","electronic","indie dance"],
+  "zedd": ["edm","electro house","complextro"],
+  "kygo": ["tropical house","edm","chillout"],
+  "odesza": ["edm","indie dance","electronica"],
+  "rufus du sol": ["indie dance","deep house","melodic techno"],
+  // ── HOUSE / TECHNO UNDERGROUND ──
+  "interplanetary criminal": ["uk garage","bassline","house"],
+  "crudo means raw": ["house","jackin house","deep house"],
+  "pauly": ["house","deep house"],
+  "bicep": ["house","techno","uk rave"],
+  "adam beyer": ["techno","drumcode"],
+  "charlotte de witte": ["techno","dark techno"],
+  "amelie lens": ["techno","hard techno"],
+  "solomun": ["melodic house","deep house","indie dance"],
+  "tale of us": ["melodic techno","dark house","afterlife"],
+  "fisher": ["tech house","jackin house"],
+  "chris lake": ["tech house","deep house"],
+  "black coffee": ["afro house","deep house","organic house"],
+  "peggy gou": ["house","techno","uk garage"],
+  "honey dijon": ["house","techno","disco"],
+  "dj koze": ["house","indie dance","organic house"],
+  "bicep": ["house","techno","rave"],
+  "techno animal": ["techno","industrial","experimental electronic"],
+  "gabber subculture": ["hardcore","gabber","rave"],
+  "surgeon": ["techno","industrial techno","birmingham techno"],
+  // ── R&B / SOUL ──
+  "the weeknd": ["rnb","pop","dark rnb"],
+  "frank ocean": ["rnb","alternative r&b","indie r&b"],
+  "beyonce": ["rnb","pop","soul"],
+  "sza": ["rnb","alternative r&b","neo soul"],
+  "h.e.r": ["rnb","soul","neo soul"],
+  "miguel": ["rnb","soul","neo soul"],
+  "daniel caesar": ["rnb","neo soul","soul"],
+  "biga ranx": ["reggae","dub","roots reggae"],
+  // ── ROCK / METAL / PUNK ──
+  "nirvana": ["grunge","alternative rock","rock"],
+  "radiohead": ["alternative rock","art rock","experimental rock"],
+  "arctic monkeys": ["indie rock","alternative rock","rock"],
+  "the strokes": ["indie rock","garage rock revival","alternative rock"],
+  "metallica": ["heavy metal","thrash metal","metal"],
+  "black sabbath": ["heavy metal","doom metal","metal"],
+  "tool": ["progressive metal","metal","alternative metal"],
+  "nine inch nails": ["industrial rock","alternative metal","noise rock"],
+  "white stripes": ["blues rock","garage rock","alternative rock"],
+  "jack white": ["blues rock","garage rock"],
+  // ── POP ──
+  "taylor swift": ["pop","country pop","indie pop"],
+  "rihanna": ["pop","rnb","dance pop"],
+  "ariana grande": ["pop","rnb","dance pop"],
+  "billie eilish": ["indie pop","pop","dark pop"],
+  "olivia rodrigo": ["pop","pop rock","indie pop"],
+  "harry styles": ["pop","indie pop","rock"],
+  "dua lipa": ["pop","dance pop","disco pop"],
+  "sia": ["pop","dance pop","electropop"],
+  "flo rida": ["pop rap","electro pop","crunk"],
+  "akon": ["rnb","pop","afropop"],
+  "ne-yo": ["rnb","pop","dance pop"],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MOTEUR DE CLASSIFICATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -820,6 +956,15 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
   const labelNorm  = normalize(track.label || "");
   const context    = `${titleNorm} ${artistNorm} ${descNorm} ${labelNorm}`;
 
+  // Enrichissement par base artiste — injecte les genres connus comme pseudo-tags
+  const artistKey    = artistNorm.trim();
+  const firstArtist  = artistKey.split(/[,\s&]/)[0].trim();
+  const knownTags    = [
+    ...(ARTIST_GENRE_MAP[artistKey]      || []),
+    ...(ARTIST_GENRE_MAP[firstArtist]    || []),
+  ].map(normalize);
+  const allEnrichedTags = [...new Set([...tagNorms, ...knownTags])];
+
   let bestCat    = "NON_CLASSES";
   let bestScore  = 0;
   let bestPrio   = -1;
@@ -832,13 +977,13 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
 
     for (const kw of (cat.keywords || [])) {
       const pat = kwRegex(normalize(kw));
-      if (pat.test(genreNorm))               { score += 5; matches.push(`genre:${kw}`); }
-      if (tagNorms.some(t => pat.test(t)))    { score += 3; matches.push(`tag:${kw}`); }
-      if (pat.test(context))                  { score += 2; matches.push(`ctx:${kw}`); }
+      if (pat.test(genreNorm))                        { score += 5; matches.push(`genre:${kw}`); }
+      if (allEnrichedTags.some(t => pat.test(t)))     { score += 3; matches.push(`tag:${kw}`); }
+      if (pat.test(context))                          { score += 2; matches.push(`ctx:${kw}`); }
     }
     for (const lbl of (cat.labels || [])) {
       const pat = kwRegex(normalize(lbl));
-      if (pat.test(genreNorm) || tagNorms.some(t => pat.test(t)) || pat.test(labelNorm)) {
+      if (pat.test(genreNorm) || allEnrichedTags.some(t => pat.test(t)) || pat.test(labelNorm)) {
         score += 4; matches.push(`label:${lbl}`);
       }
     }
