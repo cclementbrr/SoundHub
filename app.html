@@ -525,19 +525,21 @@ async function enrichAll(tracks, onProg) {
 // Deezer API publique — pas de CORS sur les endpoints publics GET
 async function connectDZ() {
   const uid = $('dz-inp').value.trim();
-  if (!uid||isNaN(uid)) { setMsg('dz','Entre ton ID numérique Deezer','var(--red)'); return; }
+  if (!uid) { setMsg('dz','Entre ton ID Deezer','var(--red)'); return; }
   setSt('dz','spin','⟳ Vérification...');
   try {
     // Deezer public API — profil public uniquement
-    const r = await fetch(`https://api.deezer.com/user/${uid}`);
-    if (!r.ok) throw new Error('Profil introuvable ou privé');
-    const usr = await r.json();
-    if (usr.error) throw new Error(usr.error.message||'Profil privé ou inexistant');
+    const usr = await dzFetch(`https://api.deezer.com/user/${uid}`);
+    if (!usr.id) throw new Error('Profil introuvable ou privé');
 
-    // Count favoris
-    const favR = await fetch(`https://api.deezer.com/user/${uid}/tracks?limit=1`);
-    const favD = await favR.json();
-    const count = favD.total || 0;
+    // Count favoris — endpoint public
+    let count = 0;
+    try {
+      const favR = await fetch(`https://api.deezer.com/user/${uid}/tracks?limit=1`);
+      const favD = await favR.json();
+      count = favD.total || favD.data?.length || 0;
+      if (favD.error?.code === 300) throw new Error('Profil privé — active "Rendre mes données publiques" dans les paramètres Deezer');
+    } catch(favErr) { if (favErr.message.includes('rivé')) throw favErr; }
 
     S.dz = {on:true, userId:uid};
     if (usr.picture_medium) { $('dz-avt').src=usr.picture_medium; $('dz-avt').style.display='block'; $('dz-avt-ph').style.display='none'; }
@@ -550,20 +552,38 @@ async function connectDZ() {
   } catch(e) { setSt('dz','err','✕ Erreur'); setMsg('dz','✕ '+e.message,'var(--red)'); }
 }
 
-async function fetchDZ() {
-  const tracks=[]; let idx=0;
-  while (true) {
-    const r = await fetch(`https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100&index=${idx}`);
+// Fetch Deezer avec fallback CORS proxy si nécessaire
+async function dzFetch(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok && r.status!==0) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
+    if (d.error?.code === 300) throw new Error('Profil privé — rends ton profil public dans les paramètres Deezer');
+    return d;
+  } catch(e) {
+    if (e.message.includes('rivé')) throw e;
+    // Fallback CORS proxy (corsproxy.io est gratuit et public)
+    const proxied = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    const r2 = await fetch(proxied);
+    const d2 = await r2.json();
+    if (d2.error) throw new Error(d2.error.message||'Erreur Deezer via proxy');
+    return d2;
+  }
+}
+
+async function fetchDZ() {
+  const tracks=[];
+  let url=`https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100&index=0`;
+  while (url) {
+    const d = await dzFetch(url);
     if (!d.data?.length) break;
     tracks.push(...d.data);
-    idx += d.data.length;
     log(`Deezer — ${tracks.length} tracks...`);
-    if (!d.next) break;
-    await delay(200);
+    url = d.next || null;
+    if (url) await delay(150);
   }
   return tracks.map(t=>({
-    id: String(t.id||''), title: t.title||'',
+    id: String(t.id||''), title: t.title_short||t.title||'',
     artist: t.artist?.name||'', album: t.album?.title||'',
     genre: '', tags: [], duration: t.duration||0,
     description:'', label:'', source:'deezer',
@@ -718,6 +738,9 @@ async function run() {
     S.results = buckets;
     S.labels  = {};
     ALL_CATS.forEach(c=>{ S.labels[c.name]=c.label; });
+    // Persister pour survivre au redirect OAuth Last.fm
+    try { sessionStorage.setItem('sh_results', JSON.stringify(buckets)); } catch{}
+    try { sessionStorage.setItem('sh_labels',  JSON.stringify(S.labels)); } catch{}
     setTimeout(()=>showResults(buckets,all.length),600);
   } catch(e) {
     log('Erreur : '+e.message,'err');
@@ -759,7 +782,9 @@ function renderGrid(buckets) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function openModal(catName) {
+  if (!S.results) return; // résultats pas encore chargés
   const cat    = ALL_CATS.find(c=>c.name===catName);
+  if (!cat) return;
   const tracks = S.results[catName]||[];
   S.openCat = catName;
   $('m-emo').textContent  = cat.emoji||'🎵';
@@ -771,10 +796,11 @@ function openModal(catName) {
   const lfmConnected = !!S.lfmSession;
   const hasSecret    = !!getLFMSecret();
   const lfmBtnHtml = lfmConnected
-    ? `<button class="btn" id="m-lfm-love" style="border-color:var(--lfm);color:var(--lfm)">🔴 Ajouter au Last.fm Loved</button>`
+    ? `<button class="btn" id="m-lfm-scrobble" style="border-color:var(--lfm);color:var(--lfm)" title="Scrobble = ajouter à ton historique Last.fm">🔴 Scrobbler sur Last.fm</button>
+       <button class="btn" id="m-lfm-love" style="border-color:var(--lfm);color:var(--lfm);opacity:.7" title="Ajouter aux Loved tracks">♥ Loved</button>`
     : hasSecret
-      ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Autoriser l'export Last.fm</button>`
-      : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Export Loved (config requise)</button>`;
+      ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Autoriser export Last.fm</button>`
+      : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Last.fm (config requise)</button>`;
   bar.innerHTML = `
     <button class="btn" id="m-json">↓ JSON</button>
     <button class="btn" id="m-txt">↓ .txt</button>
@@ -787,7 +813,8 @@ function openModal(catName) {
   $('m-txt').onclick  = ()=>exportTXT(catName);
   $('m-hub-wrap').onclick = ()=>toggleHubShare(catName);
   if (lfmConnected) {
-    $('m-lfm-love').onclick = ()=>exportToLFMLoved(catName);
+    $('m-lfm-scrobble').onclick = ()=>exportToLFMScrobble(catName);
+    $('m-lfm-love').onclick     = ()=>exportToLFMLoved(catName);
   } else {
     $('m-lfm-auth').onclick = ()=>startLFMAuth(catName);
   }
@@ -955,36 +982,107 @@ function startLFMAuth(catName) {
 async function getLFMSession(token, catName) {
   try {
     const d = await lfmPost({method:'auth.getSession', api_key:getLFMKey(), token});
-    if (d.error) throw new Error(d.message);
+    if (d.error) throw new Error(d.message||'Erreur auth Last.fm');
     S.lfmSession = d.session.key;
     localStorage.setItem('lfm_session', d.session.key);
-    // Réouvrir la modale pour afficher le bouton love
-    if (catName) openModal(catName);
+    // Réouvrir la modale seulement si les résultats sont disponibles
+    if (catName && S.results && S.results[catName]) {
+      openModal(catName);
+    } else if (S.results) {
+      // résultats dispo mais catégorie inconnue — rien à faire
+    }
   } catch(e) {
     alert('Erreur auth Last.fm : '+e.message);
   }
 }
 
+async function exportToLFMScrobble(catName) {
+  const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
+  if (!tracks.length||!S.lfmSession) return;
+  const btn = $('m-lfm-scrobble');
+  btn.disabled = true;
+  btn.textContent = '⟳ Préparation...';
+
+  // Scrobble en batches de 50 (limite API Last.fm)
+  // Timestamps rétroactifs : maintenant - (N-i)*35s (comme si on venait d'écouter)
+  const now = Math.floor(Date.now()/1000);
+  let done=0, fails=[];
+
+  for (let i=0; i<tracks.length; i+=50) {
+    const batch = tracks.slice(i, i+50);
+    const params = { method:'track.scrobble', api_key:getLFMKey(), sk:S.lfmSession };
+    batch.forEach((t,j)=>{
+      const idx = i+j;
+      params[`artist[${j}]`]    = t.artist;
+      params[`track[${j}]`]     = t.title;
+      params[`timestamp[${j}]`] = now - (tracks.length - idx) * 35;
+      if (t.album) params[`album[${j}]`] = t.album;
+    });
+
+    try {
+      const d = await lfmPost(params);
+      if (d.error) {
+        fails.push(...batch.map(t=>`${t.artist} — ${t.title} (err ${d.error}: ${d.message})`));
+      } else {
+        const ignored = d.scrobbles?.['@attr']?.ignored||0;
+        done += batch.length - ignored;
+        if (ignored>0) fails.push(`${ignored} ignorés (tracks non reconnues)`);
+      }
+    } catch(e) {
+      fails.push(`Batch ${i}-${i+batch.length}: ${e.message}`);
+    }
+    btn.textContent = `⟳ ${done}/${tracks.length}...`;
+    if (i+50 < tracks.length) await delay(300);
+  }
+
+  if (fails.length===0) {
+    btn.textContent = `✓ ${done} scrobblés`;
+    btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
+  } else {
+    btn.textContent = `⚠ ${done}/${tracks.length} — voir console`;
+    btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
+    console.group('❌ Scrobble errors:');
+    fails.forEach(f=>console.warn(f));
+    console.groupEnd();
+  }
+  btn.disabled=false;
+}
+
 async function exportToLFMLoved(catName) {
-  const tracks = S.results[catName]||[];
+  const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
   if (!tracks.length||!S.lfmSession) return;
   const btn = $('m-lfm-love');
-  btn.textContent='⟳ Envoi en cours...'; btn.disabled=true;
+  btn.disabled=true;
+  btn.textContent='⟳ 0/'+tracks.length+' lovés...';
 
-  let ok=0, fail=0;
-  for (const t of tracks) {
-    if (!t.artist||!t.title) continue;
-    try {
-      const d = await lfmPost({
-        method:'track.love', api_key:getLFMKey(),
-        sk:S.lfmSession, artist:t.artist, track:t.title
-      });
-      if (d.error) fail++; else ok++;
-    } catch { fail++; }
-    await delay(300); // rate limit Last.fm
-    btn.textContent=`⟳ ${ok}/${tracks.length}...`;
+  let done=0, fails=[];
+  for (let i=0; i<tracks.length; i+=5) {
+    const batch = tracks.slice(i, i+5);
+    const results = await Promise.allSettled(batch.map(t =>
+      lfmPost({method:'track.love', api_key:getLFMKey(), sk:S.lfmSession, artist:t.artist, track:t.title})
+    ));
+    for (let j=0; j<results.length; j++) {
+      const r = results[j];
+      if (r.status==='rejected'||(r.value?.error)) {
+        fails.push(`${batch[j].artist} — ${batch[j].title} (${r.value?.message||r.reason||'?'})`);
+      } else { done++; }
+    }
+    btn.textContent=`⟳ ${done}/${tracks.length} lovés...`;
+    if (i+5 < tracks.length) await delay(250);
   }
-  btn.textContent=`✓ ${ok} lovés${fail?` (${fail} erreurs)`:''}`;
+
+  if (fails.length===0) {
+    btn.textContent=`♥ ${done} lovés`;
+    btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
+    const sub=$('m-sub');
+    if(sub&&S.lfm.user) sub.innerHTML+=` · <a href="https://www.last.fm/user/${S.lfm.user}/loved" target="_blank" style="color:var(--lfm);font-family:Space Mono;font-size:9px">Voir Loved →</a>`;
+  } else {
+    btn.textContent=`⚠ ${done}/${tracks.length} — ${fails.length} erreurs`;
+    btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
+    console.group('❌ Love errors:');
+    fails.forEach(f=>console.warn(f));
+    console.groupEnd();
+  }
   btn.disabled=false;
 }
 function exportPlaylistJSON(catName) {
@@ -1012,13 +1110,31 @@ function dl(content, mime, filename) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 // Handle Last.fm OAuth callback — ?token=XXXX in URL after redirect
 (function handleLFMCallback(){
+  // Restaurer les résultats depuis sessionStorage (survivent au redirect OAuth)
+  try {
+    const saved = sessionStorage.getItem('sh_results');
+    const savedLabels = sessionStorage.getItem('sh_labels');
+    if (saved) {
+      S.results = JSON.parse(saved);
+      if (savedLabels) S.labels = JSON.parse(savedLabels);
+    }
+  } catch{}
+
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
   if (token) {
     window.history.replaceState({}, '', window.location.pathname);
     const pendingCat = sessionStorage.getItem('lfm_pending_cat')||null;
     sessionStorage.removeItem('lfm_pending_cat');
-    getLFMSession(token, pendingCat);
+    // Réafficher les résultats + ouvrir modale APRÈS que le DOM soit prêt
+    setTimeout(async () => {
+      if (S.results) {
+        const total = Object.values(S.results).reduce((s,a)=>s+a.length,0);
+        showResults(S.results, total);
+        await new Promise(r => setTimeout(r, 400)); // laisser le DOM se rendre
+      }
+      await getLFMSession(token, pendingCat);
+    }, 100);
   }
   // Restore existing session key
   const sess = localStorage.getItem('lfm_session');
