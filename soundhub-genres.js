@@ -37,12 +37,20 @@ export const GENRE_CATEGORIES = [
       "soulful garage",
       "vocal garage",
       "uk funky",
+      "hard house",
+      "uk hard house",
+      "hardhouse",
+      "nrg house",
+      "hard nrg",
+      "nu energy",
     ],
     keywords: [
       "uk garage","ukg","speed garage","2 step","2step","two step",
       "uk funky","funky house","4x4","bassline","bassline house",
       "grime","sublow","soulful garage","vocal garage","garage house",
       "uk urban","niche","urban house","garage uk","sub low",
+      "hard house","uk hard house","hardhouse","nrg house","hard nrg",
+      "bouncy techno","donk house","nu energy",
     ],
     labels: ["locked on","defected","garage nation","pay as u go","so solid crew","big apple records"],
   },
@@ -157,25 +165,6 @@ export const GENRE_CATEGORIES = [
     labels: ["black butter","kalawa jazmee","platoon africa","ubuntu music"],
   },
 
-  {
-    name: "HARD_HOUSE",
-    label: "Hard House / UK Hard House / Bouncy Techno",
-    emoji: "🏠",
-    color: "#ff4488",
-    priority: 98,  // > UKG (97) > HARD_TECHNO (95) > TECHNO (90) > HOUSE (72)
-    strongKeywords: [
-      'hard house','uk hard house','hardhouse','bouncy techno',
-      'hard trance house','nu energy','nrg house','hard nrg',
-      'hard funky','donk house','bouncy house',
-    ],
-    keywords: [
-      'hard house','uk hard house','hardhouse','bouncy techno',
-      'hard trance house','nu energy','nrg house','hard nrg',
-      'hard funky','donk house','bouncy house',
-      'scouse hard house','happy hard house','hard bass house',
-    ],
-    labels: ["evolution records","hard2beat","nukleuz","positiva hard","big love"],
-  },
 
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  ÉLECTRONIQUE — TECHNO                                         ║

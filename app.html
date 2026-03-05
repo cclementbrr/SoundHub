@@ -801,10 +801,16 @@ function openModal(catName) {
     : hasSecret
       ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Autoriser export Last.fm</button>`
       : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Last.fm (config requise)</button>`;
+  const dzConnected = !!S.dz?.on;
+  const dzBtnHtml = dzConnected
+    ? `<button class="btn" id="m-dz-export" style="border-color:var(--dz);color:var(--dz)">🎶 Exporter sur Deezer</button>`
+    : '';
+
   bar.innerHTML = `
     <button class="btn" id="m-json">↓ JSON</button>
     <button class="btn" id="m-txt">↓ .txt</button>
     ${lfmBtnHtml}
+    ${dzBtnHtml}
     <label class="btn" style="display:flex;align-items:center;gap:8px;cursor:pointer" id="m-hub-wrap">
       <span id="m-hub-dot" style="width:8px;height:8px;border-radius:50%;background:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};transition:background .2s;flex-shrink:0"></span>
       Partager sur le Hub
@@ -817,6 +823,9 @@ function openModal(catName) {
     $('m-lfm-love').onclick     = ()=>exportToLFMLoved(catName);
   } else {
     $('m-lfm-auth').onclick = ()=>startLFMAuth(catName);
+  }
+  if (dzConnected) {
+    $('m-dz-export').onclick = ()=>exportToDeezer(catName);
   }
 
   // Catégories disponibles pour le déplacement (celles qui ont des tracks)
@@ -946,11 +955,28 @@ function md5js(str) {
   return [a,b,c,d].map(n=>('0000000'+(n>>>0).toString(16)).slice(-8).match(/.{2}/g).reverse().join('')).join('');
 }
 
+function toUTF8(str) {
+  // Encode la string en UTF-8 bytes (nécessaire pour que md5js signe correctement les accents)
+  const bytes = [];
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c < 128) bytes.push(c);
+    else if (c < 2048) bytes.push(0xC0|(c>>6), 0x80|(c&63));
+    else if (c < 65536) bytes.push(0xE0|(c>>12), 0x80|((c>>6)&63), 0x80|(c&63));
+    else bytes.push(0xF0|(c>>18),0x80|((c>>12)&63),0x80|((c>>6)&63),0x80|(c&63));
+  }
+  return String.fromCharCode(...bytes);
+}
+
 function lfmSign(params) {
-  // Signature = md5(sorted_params_string + secret)
-  const sorted = Object.keys(params).filter(k=>k!=='format').sort()
-    .map(k=>k+params[k]).join('');
-  return md5js(sorted + getLFMSecret());
+  // Last.fm signature : md5(sorted_params_utf8 + secret_utf8)
+  // Le tri exclut "format" et "api_sig"
+  const sorted = Object.keys(params)
+    .filter(k => k !== 'format' && k !== 'api_sig')
+    .sort()
+    .map(k => k + params[k])
+    .join('');
+  return md5js(toUTF8(sorted + getLFMSecret()));
 }
 
 async function lfmPost(params) {
@@ -1085,6 +1111,64 @@ async function exportToLFMLoved(catName) {
   }
   btn.disabled=false;
 }
+// ── Deezer Export ─────────────────────────────────────────────────────────────
+// Deezer n'a pas d'API d'écriture publique sans OAuth token complet.
+// On propose deux options :
+//   1. Ouvrir les 5 premiers tracks dans Deezer pour vérification rapide
+//   2. Exporter un CSV importable via Soundiiz/TuneMyMusic
+async function exportToDeezer(catName) {
+  const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
+  if (!tracks.length) return;
+  const btn = $('m-dz-export');
+  btn.disabled=true;
+
+  // Chercher les tracks sur Deezer via l'API publique search
+  btn.textContent='🔍 Recherche sur Deezer...';
+  let found=0, notFound=[];
+  const deezerIds = [];
+
+  for (let i=0; i<tracks.length; i++) {
+    const t = tracks[i];
+    const q = encodeURIComponent(`${t.artist} ${t.title}`);
+    try {
+      const d = await dzFetch(`https://api.deezer.com/search?q=${q}&limit=1`);
+      if (d.data?.[0]?.id) {
+        deezerIds.push(d.data[0].id);
+        found++;
+      } else {
+        notFound.push(`${t.artist} — ${t.title}`);
+      }
+    } catch { notFound.push(`${t.artist} — ${t.title}`); }
+    btn.textContent=`🔍 ${i+1}/${tracks.length}...`;
+    await delay(100);
+  }
+
+  // Générer un CSV pour import via Soundiiz / TuneMyMusic
+  const csvRows = ['Artist,Title,Album'].concat(
+    tracks.map(t => {
+      const a = (t.artist||'').replace(/"/g,'""');
+      const ti = (t.title||'').replace(/"/g,'""');
+      const al = (t.album||'').replace(/"/g,'""');
+      return `"${a}","${ti}","${al}"`;
+    })
+  );
+  const csv = csvRows.join('\n');
+  dl(csv, 'text/csv', `soundhub-${catName.toLowerCase()}.csv`);
+
+  if (notFound.length===0) {
+    btn.textContent=`✓ ${found} trouvés — CSV téléchargé`;
+    btn.style.borderColor='var(--green)';btn.style.color='var(--green)';
+  } else {
+    btn.textContent=`✓ ${found}/${tracks.length} — CSV téléchargé`;
+    btn.style.borderColor='var(--accent2)';btn.style.color='var(--accent2)';
+    console.group('Tracks non trouvés sur Deezer:');
+    notFound.forEach(t=>console.warn(t));
+    console.groupEnd();
+  }
+  btn.title = `Importe le CSV sur soundiiz.com ou tunemymusic.com pour créer la playlist Deezer`;
+  btn.disabled=false;
+}
+
 function exportPlaylistJSON(catName) {
   const payload={playlist:S.labels[catName]||catName, tracks:S.results[catName]||[]};
   dl(JSON.stringify(payload,null,2),'application/json',`soundhub-${catName.toLowerCase()}.json`);
