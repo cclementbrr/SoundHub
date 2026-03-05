@@ -943,7 +943,7 @@ function startLFMAuth(catName) {
     $('lfm-form').classList.add('open');
     $('lfm-card').scrollIntoView({behavior:'smooth', block:'center'});
     const msg=$('lfm-creds-msg');
-    if(msg){msg.style.color='var(--accent2)';msg.textContent='⚡ Entre ta clé API + secret ci-dessus pour activer l'export';}
+    if(msg){msg.style.color='var(--accent2)';msg.textContent="⚡ Entre ta clé API + secret ci-dessus pour activer l'export";}
     return;
   }
   if (catName) sessionStorage.setItem('lfm_pending_cat', catName);
