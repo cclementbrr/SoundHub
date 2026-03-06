@@ -1,26 +1,38 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SoundHub — Le Hub</title>
+<title>SoundHub — Hub</title>
 <!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+// ── Language toggle ──────────────────────────────────────────────────────────
+(function(){
+  const btn = document.getElementById('lang-toggle');
+  const stored = localStorage.getItem('sh_lang') || 'en';
+  if (btn) btn.textContent = stored === 'en' ? '🇫🇷 FR' : '🇬🇧 EN';
+  if (btn) btn.onclick = () => {
+    const next = (localStorage.getItem('sh_lang') || 'en') === 'en' ? 'fr' : 'en';
+    localStorage.setItem('sh_lang', next);
+    location.reload();
+  };
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:  #1b1b1b;
-    --dark:   #242424;
-    --card:   #2a2a2a;
-    --border: #3a3a3a;
+    --black:  #080808;
+    --dark:   #111111;
+    --card:   #161616;
+    --border: #222222;
     --border2:#333333;
-    --accent: #ff9000;
+    --accent: #ff4400;
     --accent2:#ff6600;
     --white:  #f0f0f0;
     --grey:   #666666;
-    --grey2:  #444444;
+    --grey2:  #333333;
     --green:  #00e676;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -388,13 +400,14 @@
 
 <!-- NAV -->
 <nav>
-  <a href="index.html" class="logo">SOUND<span style="background:var(--accent);color:#000;padding:1px 8px;border-radius:4px">HUB</span></a>
+  <a href="index.html" class="logo">SOUND<span>HUB</span></a>
   <div class="nav-links">
-    <a href="index.html">Accueil</a>
+    <a href="index.html">Home</a>
     <a href="app.html">App</a>
     <a href="hub.html" class="active">Hub</a>
     <a href="app.html" class="nav-cta">Créer mes playlists →</a>
   </div>
+  <button id="lang-toggle" style="background:transparent;border:1px solid var(--border);color:var(--grey);font-family:'Space Mono';font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;transition:all .2s">🇬🇧 EN</button>
 </nav>
 
 <!-- HERO -->
@@ -432,9 +445,8 @@
 <div class="share-banner">
   <div class="share-banner-text">
     <strong>Tu viens de classifier tes likes ?</strong><br>
-    Partage tes playlists publiques ici — sans créer de compte, sans données personnelles. Juste ton lien + un genre.
-  </div>
-  <button class="share-btn" onclick="openModal()">+ Partager une playlist</button>
+    Share your public playlists here — no account needed, no personal data. Just music.</div>
+  <button class="share-btn" onclick="openModal()">+ Share a playlist</button>
 </div>
 
 <!-- FILTERS -->
@@ -442,7 +454,7 @@
   <div class="filters-top">
     <span class="filter-label">Genre :</span>
     <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
-      <button class="filter-expand-btn" id="expandBtn" onclick="toggleFilters()">Voir tous ▾</button>
+      <button class="filter-expand-btn" id="expandBtn" onclick="toggleFilters()">See all ▾</button>
       <div class="search-wrap">
         <span class="search-icon">⌕</span>
         <input type="text" class="search-input" id="searchInput" placeholder="Chercher...">
@@ -456,9 +468,9 @@
 
 <!-- SORT -->
 <div class="sort-row">
-  <span class="sort-lbl">Trier par :</span>
-  <button class="sort-btn active" data-sort="recent" onclick="setSort(this)">Récent</button>
-  <button class="sort-btn" data-sort="trending" onclick="setSort(this)">🔥 Tendance</button>
+  <span class="sort-lbl">Sort by:</span>
+  <button class="sort-btn active" data-sort="recent" onclick="setSort(this)">Recent</button>
+  <button class="sort-btn" data-sort="trending" onclick="setSort(this)">🔥 Trending</button>
   <button class="sort-btn" data-sort="likes" onclick="setSort(this)">Likes</button>
   <button class="sort-btn" data-sort="tracks" onclick="setSort(this)">Tracks</button>
   <button class="sort-btn" data-sort="alpha" onclick="setSort(this)">A–Z</button>
@@ -468,11 +480,11 @@
 <!-- FEATURED SECTIONS (front page) -->
 <div id="featuredSections" style="max-width:1400px;margin:0 auto;padding:0 40px 8px">
   <div id="featured-recent" style="margin-bottom:32px">
-    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">// Récemment ajoutées</div>
+    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">// Recently added</div>
     <div class="cards-row" id="feat-recent-row"></div>
   </div>
   <div id="featured-trending">
-    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">🔥 Tendance</div>
+    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">🔥 Trending</div>
     <div class="cards-row" id="feat-trending-row"></div>
   </div>
   <hr style="border:none;border-top:1px solid var(--border);margin:24px 0 8px">
@@ -493,7 +505,7 @@
     </div>
 
     <div class="sidebar-block">
-      <div class="sb-title">// Activité récente</div>
+      <div class="sb-title">// Recent activity</div>
       <div id="recentActivity"></div>
     </div>
 
@@ -509,36 +521,36 @@
 <div class="modal-overlay" id="shareModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Partager une playlist</div>
+      <div class="modal-title">Share a playlist</div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
       <div>
-        <label class="modal-label">Lien de ta playlist (public)</label>
-        <input class="modal-input" id="m-url" type="url" placeholder="https://soundcloud.com/user/sets/ma-playlist">
+        <label class="modal-label">Playlist link (public)</label>
+        <input class="modal-input" id="m-url" type="url" placeholder="https://soundcloud.com/user/sets/my-playlist">
       </div>
       <div>
-        <label class="modal-label">Nom de la playlist</label>
-        <input class="modal-input" id="m-name" type="text" placeholder="Ex: Techno Mental 2025">
+        <label class="modal-label">Playlist name</label>
+        <input class="modal-input" id="m-name" type="text" placeholder="e.g. Mental Techno 2025">
       </div>
       <div>
-        <label class="modal-label">Genre principal</label>
+        <label class="modal-label">Main genre</label>
         <select class="modal-select" id="m-genre"></select>
       </div>
       <div>
-        <label class="modal-label">Tags (séparés par des virgules)</label>
+        <label class="modal-label">Tags (comma-separated)</label>
         <input class="modal-input" id="m-tags" type="text" placeholder="#hardtechno, #schranz, #rave">
       </div>
       <div>
-        <label class="modal-label">Ton pseudo (optionnel)</label>
-        <input class="modal-input" id="m-author" type="text" placeholder="Ex: dj_acid_teuf" maxlength="40">
+        <label class="modal-label">Your username (optional)</label>
+        <input class="modal-input" id="m-author" type="text" placeholder="e.g. dj_acid_teuf" maxlength="40">
       </div>
       <div>
-        <label class="modal-label">Nombre de tracks</label>
-        <input class="modal-input" id="m-tracks" type="number" min="0" placeholder="Ex: 42" style="width:120px">
+        <label class="modal-label">Number of tracks</label>
+        <input class="modal-input" id="m-tracks" type="number" min="0" placeholder="e.g. 42" style="width:120px">
       </div>
       <div>
-        <label class="modal-label">Plateforme source</label>
+        <label class="modal-label">Source platform</label>
         <select class="modal-select" id="m-service">
           <option value="soundcloud">SoundCloud</option>
           <option value="spotify">Spotify</option>
@@ -552,12 +564,12 @@
         </select>
       </div>
       <p class="privacy-note">
-        🔒 Aucune donnée personnelle n'est collectée. Seuls le lien public, le genre et les tags sont stockés. Tu peux demander la suppression à tout moment.
+        🔒 No personal data collected. Only the public link, genre and tags are stored. You can request deletion at any time.
       </p>
     </div>
     <div class="modal-footer">
-      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
-      <button class="modal-submit" onclick="submitPlaylist()">Partager →</button>
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-submit" onclick="submitPlaylist()">Share →</button>
     </div>
   </div>
 </div>
@@ -674,7 +686,7 @@ async function loadStats() {
   const { data } = await db.from('playlists').select('genre, track_count');
   if (!data) return;
   document.getElementById('stat-playlists').textContent = data.length;
-  document.getElementById('stat-tracks').textContent    = data.reduce((a,b)=>a+(b.track_count||0),0).toLocaleString('fr');
+  document.getElementById('stat-tracks').textContent    = data.reduce((a,b)=>a+(b.track_count||0),0).toLocaleString('en');
   document.getElementById('stat-genres').textContent    = new Set(data.map(d=>d.genre)).size;
 }
 
@@ -704,14 +716,14 @@ window.toggleFilters = function() {
   const row = document.getElementById('filtersRow');
   const btn = document.getElementById('expandBtn');
   const expanded = row.classList.toggle('expanded');
-  btn.textContent = expanded ? 'Réduire ▴' : 'Voir tous ▾';
+  btn.textContent = expanded ? 'Collapse ▴' : 'See all ▾';
 };
 
 async function init() {
   buildFilters();
   buildGenreSelect();
   document.getElementById('playlistsArea').innerHTML =
-    '<div style="padding:60px;text-align:center;font-family:Space Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--grey)">CHARGEMENT...</div>';
+    '<div style="padding:60px;text-align:center;font-family:Space Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--grey)">LOADING...</div>';
 
   const [playlists] = await Promise.all([loadPlaylists(), loadStats(), loadMyLikes()]);
   state.playlists = playlists;
@@ -747,7 +759,7 @@ function buildFilters() {
       chip.classList.add("active");
       // Auto-collapse after selection
       document.getElementById("filtersRow").classList.remove("expanded");
-      document.getElementById("expandBtn").textContent = "Voir tous ▾";
+      document.getElementById("expandBtn").textContent = "See all ▾";
       render();
     };
     row.appendChild(chip);
@@ -785,11 +797,11 @@ function getFiltered() {
   switch (state.sort) {
     case "recent":   list.sort((a,b) => b.ts - a.ts); break;
     case "trending": {
-      // Score tendance : likes récents (priorité 15-20 jours) qui fade vers le nouveau
+      // Score tendance : likes récents (priorité 15-20 days) qui fade vers le nouveau
       const now = Date.now();
       const DAY = 86400000;
       list.sort((a,b) => {
-        const ageA = (now - (a.ts||0)) / DAY; // âge en jours
+        const ageA = (now - (a.ts||0)) / DAY; // âge en days
         const ageB = (now - (b.ts||0)) / DAY;
         // Boost max entre J0 et J15, fade linéaire de J15 à J30, zéro après J30
         const freshA = ageA < 15 ? 1 : ageA < 30 ? (30-ageA)/15 : 0;
@@ -812,12 +824,12 @@ function renderFeatured() {
   if (!state.playlists.length) return;
   const now = Date.now(), DAY = 86400000;
 
-  // Récentes : 6 dernières
+  // Recentes : 6 dernières
   const recent = [...state.playlists].sort((a,b)=>b.ts-a.ts).slice(0,6);
   const rRow = document.getElementById("feat-recent-row");
   if (rRow) { rRow.innerHTML=''; recent.forEach((p,i)=>rRow.appendChild(buildCard(p,i))); }
 
-  // Tendance : score avec fraîcheur 30j
+  // Trending : score avec fraîcheur 30j
   const trending = [...state.playlists].sort((a,b)=>{
     const ageA=(now-(a.ts||0))/DAY, ageB=(now-(b.ts||0))/DAY;
     const fA=ageA<15?1:ageA<30?(30-ageA)/15:0, fB=ageB<15?1:ageB<30?(30-ageB)/15:0;
@@ -835,7 +847,7 @@ function render() {
   area.innerHTML = "";
 
   if (!filtered.length) {
-    area.innerHTML = `<div class="empty-genre">Aucune playlist dans ce genre pour l'instant.<br>Sois le premier à partager !</div>`;
+    area.innerHTML = `<div class="empty-genre">No playlists in this genre yet.<br>Sois le premier à partager !</div>`;
     return;
   }
 
@@ -897,7 +909,7 @@ function buildCard(p, i) {
     </div>
     <div class="pl-tags">${p.tags.map(t => `<span class="pl-tag">${t}</span>`).join("")}</div>
     <div class="pl-card-footer">
-      <a href="${p.url}" target="_blank" class="pl-open-btn">Écouter ↗</a>
+      <a href="${p.url}" target="_blank" class="pl-open-btn">Listen ↗</a>
       <div class="pl-likes">
         <button class="${liked ? "liked" : ""}" data-id="${p.id}" onclick="toggleLike(event,${p.id})">
           ${liked ? "♥" : "♡"}
@@ -1013,13 +1025,13 @@ window.submitPlaylist = async function() {
   const author  = document.getElementById("m-author")?.value.trim() || "Anonyme";
 
   if (!url || !name || !genre) { alert("Lien, nom et genre sont obligatoires."); return; }
-  if (!url.startsWith('http')) { alert("L'URL doit commencer par http(s)://"); return; }
+  if (!url.startsWith('http')) { alert("URL must start with http(s)://"); return; }
 
   const tags = tagsRaw.split(",").map(t => t.trim()).filter(Boolean)
     .map(t => t.startsWith("#") ? t : "#"+t);
 
   const submitBtn = document.querySelector('.modal-submit');
-  submitBtn.textContent = 'Envoi...'; submitBtn.disabled = true;
+  submitBtn.textContent = 'Sending…'; submitBtn.disabled = true;
 
   const fp = await getFingerprint();
   const { data, error } = await db.from('playlists').insert({
@@ -1030,15 +1042,15 @@ window.submitPlaylist = async function() {
     fingerprint: fp,
   }).select().single();
 
-  submitBtn.textContent = 'Partager →'; submitBtn.disabled = false;
+  submitBtn.textContent = 'Share →'; submitBtn.disabled = false;
 
-  if (error) { alert('Erreur : ' + error.message); return; }
+  if (error) { alert('Error: ' + error.message); return; }
 
   closeModal();
   // Message de confirmation
   const conf = document.createElement('div');
   conf.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--white);font-family:Space Mono;font-size:11px;padding:12px 24px;border-radius:6px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5)';
-  conf.textContent = '✓ Playlist partagée sur le Hub !';
+  conf.textContent = '✓ Playlist shared on Hub!';
   document.body.appendChild(conf);
   setTimeout(()=>conf.remove(), 3500);
   // Réinitialiser les champs
@@ -1061,13 +1073,16 @@ window.submitPlaylist = async function() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function timeAgo(ts) {
+  if (!ts) return "—";
   const diff = Date.now() - ts;
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return "À l'instant";
-  if (h < 24) return `${h}h`;
+  const m = Math.floor(diff / 60000);
+  if (m < 2)  return "just now";
+  if (m < 60) return `${m}min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
-  if (d < 7) return `${d}j`;
-  return `${Math.floor(d/7)}sem`;
+  if (d < 30) return `${d}d ago`;
+  return `${Math.floor(d/30)}mo ago`;
 }
 
 // close modal on overlay click

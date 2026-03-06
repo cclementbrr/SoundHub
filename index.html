@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SoundHub — Trie tes likes, découvre ta musique</title>
+<title>SoundHub — Sort your likes, discover your music</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:   #1b1b1b;
-    --dark:    #242424;
-    --card:    #2a2a2a;
-    --border:  #3a3a3a;
-    --accent:  #ff9000;
+    --black:   #080808;
+    --dark:    #111111;
+    --card:    #161616;
+    --border:  #222222;
+    --accent:  #ff4400;
     --accent2: #ff6600;
     --white:   #f0f0f0;
     --grey:    #888888;
@@ -503,34 +503,34 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#" class="logo">SOUND<span style="background:var(--accent);color:#000;padding:1px 8px;border-radius:4px">HUB</span></a>
+  <a href="#" class="logo">SOUND<span>HUB</span></a>
   <ul>
     <li><a href="#services">Services</a></li>
-    <li><a href="#how">Comment</a></li>
+    <li><a href="#how">How</a></li>
     <li><a href="#genres">Genres</a></li>
     <li><a href="hub.html">Hub</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:12px">
-    <button id="lang-btn" onclick="toggleLang()" style="background:transparent;border:1px solid var(--border);color:var(--grey);font-family:'Space Mono';font-size:10px;padding:5px 10px;cursor:pointer;border-radius:3px;transition:all .2s" title="Switch language">🇫🇷 FR</button>
-    <a href="app.html" class="nav-cta" id="nav-cta-btn">Lancer →</a>
+    <button id="lang-btn" onclick="toggleLang()" style="background:transparent;border:1px solid var(--border);color:var(--grey);font-family:'Space Mono';font-size:10px;padding:5px 10px;cursor:pointer;border-radius:3px;transition:all .2s" title="Switch language">🇬🇧 EN</button>
+    <a href="app.html" class="nav-cta" id="nav-cta-btn">Launch →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <p class="hero-tag">// Classe tes likes. Partage tes sons.</p>
+  <p class="hero-tag">// Sort your likes. Share your sounds.</p>
   <h1>
-    TRIE<br>
-    <span class="accent">TES</span><br>
+    SORT<br>
+    <span class="accent">YOUR</span><br>
     <span class="outline">LIKES</span>
   </h1>
   <p class="hero-sub">
-    SoundHub analyse tes <strong>likes SoundCloud, Spotify, Deezer</strong> et les classe
-    automatiquement en playlists par genre — sans compte, sans données stockées.
+    SoundHub analyses your <strong>SoundCloud, Spotify, Deezer likes</strong> et les classe
+    automatiquement en playlists par genre — no account, no data stored.
   </p>
   <div class="hero-actions">
-    <a href="app.html" class="btn-primary">Commencer gratuitement</a>
-    <a href="#how" class="btn-ghost">Comment ça marche</a>
+    <a href="app.html" class="btn-primary">Start for free</a>
+    <a href="#how" class="btn-ghost">How ça marche</a>
   </div>
 
   <!-- Waveform décoratif -->
@@ -542,44 +542,44 @@
 <!-- SERVICES -->
 <section class="services" id="services">
   <div class="reveal">
-    <p class="section-label">// Compatibilité</p>
-    <h2 class="section-title">TES PLATEFORMES</h2>
+    <p class="section-label">// Compatibility</p>
+    <h2 class="section-title">YOUR PLATEFORMES</h2>
   </div>
   <div class="services-grid reveal">
     <div class="service-card" style="--service-color:#ff5500">
       <div class="service-icon">☁️</div>
       <div class="service-name">SoundCloud</div>
-      <div class="service-status status-ready">● Disponible</div>
+      <div class="service-status status-ready">● Available</div>
     </div>
     <div class="service-card" style="--service-color:#1db954">
       <div class="service-icon">💚</div>
       <div class="service-name">Spotify</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
     <div class="service-card" style="--service-color:#fa57c1">
       <div class="service-icon">🎵</div>
       <div class="service-name">Apple Music</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
     <div class="service-card" style="--service-color:#ef5466">
       <div class="service-icon">🎶</div>
       <div class="service-name">Deezer</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
     <div class="service-card" style="--service-color:#ff0000">
       <div class="service-icon">▶️</div>
       <div class="service-name">YouTube Music</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
     <div class="service-card" style="--service-color:#00bfff">
       <div class="service-icon">🔷</div>
       <div class="service-name">Tidal</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
     <div class="service-card" style="--service-color:#1a1aff">
       <div class="service-icon">🎼</div>
       <div class="service-name">Qobuz</div>
-      <div class="service-status status-soon">○ Bientôt</div>
+      <div class="service-status status-soon">○ Coming soon</div>
     </div>
   </div>
 </section>
@@ -588,12 +588,12 @@
 <section class="how" id="how">
   <div class="reveal">
     <p class="section-label">// Processus</p>
-    <h2 class="section-title">COMMENT ÇA MARCHE</h2>
+    <h2 class="section-title">HOW IT WORKS</h2>
   </div>
   <div class="steps-row">
     <div class="step-block reveal">
       <div class="step-num">01</div>
-      <div class="step-title">Connecte ton service</div>
+      <div class="step-title">Connect ton service</div>
       <p class="step-desc">SoundCloud via token OAuth. Spotify via OAuth officiel. Aucun mot de passe stocké.</p>
     </div>
     <div class="step-block reveal">
@@ -604,7 +604,7 @@
     <div class="step-block reveal">
       <div class="step-num">03</div>
       <div class="step-title">Tes playlists sont créées</div>
-      <p class="step-desc">Une playlist privée par genre, directement dans ton compte. Tu choisis les catégories.</p>
+      <p class="step-desc">One private playlist per genre, directly in your account. You choose what to keep.</p>
     </div>
     <div class="step-block reveal">
       <div class="step-num">04</div>
@@ -643,7 +643,7 @@
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">SOUND<span>HUB</span></div>
-  <div class="footer-copy">© 2025 — Zéro donnée stockée. Open source.</div>
+  <div class="footer-copy">© 2025 — Zéro donnée stored. Open source.</div>
   <div class="footer-links">
     <a href="app.html">App</a>
     <a href="hub.html">Hub</a>
@@ -746,13 +746,13 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 // ── Langue FR/EN ─────────────────────────────────────────────────────────────
 const LANG = {
   fr: {
-    tag: "// Classe tes likes. Partage tes sons.",
-    h1: "TRIE<br><span class=\"accent\">TES</span><br><span class=\"outline\">LIKES</span>",
-    sub: "SoundHub analyse tes <strong>likes SoundCloud, Spotify, Deezer</strong> et les classe automatiquement en playlists par genre — sans compte, sans données stockées.",
-    cta1: "Commencer gratuitement", cta2: "Comment ça marche",
-    nav_launch: "Lancer →", nav_flag: "🇫🇷 FR",
-    services_label: "// Compatibilité", services_title: "TES PLATEFORMES",
-    how_label: "// Mode d'emploi", how_title: "COMMENT ÇA MARCHE",
+    tag: "// Sort your likes. Share your sounds.",
+    h1: "SORT<br><span class=\"accent\">YOUR</span><br><span class=\"outline\">LIKES</span>",
+    sub: "SoundHub analyses your <strong>SoundCloud, Spotify, Deezer likes</strong> and automatically sorts them into genre playlists — no account, no data stored.",
+    cta1: "Start for free", cta2: "How ça marche",
+    nav_launch: "Launch →", nav_flag: "🇬🇧 EN",
+    services_label: "// Compatibility", services_title: "YOUR PLATEFORMES",
+    how_label: "// How to use", how_title: "HOW IT WORKS",
   },
   en: {
     tag: "// Sort your likes. Share your sounds.",
@@ -765,11 +765,11 @@ const LANG = {
   }
 };
 
-let currentLang = localStorage.getItem('sh_lang') || 'fr';
+let currentLang = localStorage.getItem('sh_lang') || 'en';
 applyLang(currentLang);
 
 function toggleLang() {
-  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  currentLang = currentLang === 'en' ? 'fr' : 'en';
   localStorage.setItem('sh_lang', currentLang);
   applyLang(currentLang);
 }
@@ -784,7 +784,7 @@ function applyLang(lang) {
   if(ctas[0]) ctas[0].textContent = L.cta1;
   if(ctas[1]) ctas[1].textContent = L.cta2;
   const lb = document.getElementById('lang-btn');
-  if(lb) lb.textContent = L.nav_flag;
+  if(lb) lb.textContent = lang === 'en' ? '🇫🇷 FR' : '🇬🇧 EN';
   const nc = document.getElementById('nav-cta-btn');
   if(nc) nc.textContent = L.nav_launch;
   document.documentElement.lang = lang;
