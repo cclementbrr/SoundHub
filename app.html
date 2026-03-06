@@ -229,6 +229,11 @@ textarea.f-input{resize:none}
         <button class="disc" id="dz-disc">✕</button>
       </div>
       <div class="svc-form" id="dz-form" onclick="event.stopPropagation()">
+        <div id="dz-ext-row" style="display:none;margin-bottom:10px">
+          <button class="f-btn" id="dz-ext-btn" style="width:100%;background:rgba(123,106,255,.12);border-color:rgba(123,106,255,.35);color:#c0b0ff">⚡ Connecter via l'extension</button>
+          <div style="font-size:9px;color:var(--grey2);text-align:center;margin-top:4px;opacity:.8">Cookie ARL récupéré automatiquement</div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+        </div>
         <div class="f-hint">Via l'API publique Deezer. Ton profil doit être public.</div>
         <div>
           <div class="f-label">ID utilisateur Deezer</div>
@@ -254,6 +259,11 @@ textarea.f-input{resize:none}
         <button class="disc" id="sc-disc">✕</button>
       </div>
       <div class="svc-form" id="sc-form" onclick="event.stopPropagation()">
+        <div id="sc-ext-row" style="display:none;margin-bottom:10px">
+          <button class="f-btn" id="sc-ext-btn" style="width:100%;background:rgba(123,106,255,.12);border-color:rgba(123,106,255,.35);color:#c0b0ff">⚡ Connecter via l'extension</button>
+          <div style="font-size:9px;color:var(--grey2);text-align:center;margin-top:4px;opacity:.8">Token & cookies récupérés automatiquement</div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+        </div>
 
         <!-- ÉTAPE 1 : bookmarklet -->
         <div style="background:rgba(255,69,0,.08);border:1px solid rgba(255,69,0,.25);border-radius:8px;padding:12px;margin-bottom:10px">
@@ -304,6 +314,11 @@ textarea.f-input{resize:none}
         <button class="disc" id="sp-disc">✕</button>
       </div>
       <div class="svc-form" id="sp-form" onclick="event.stopPropagation()">
+        <div id="sp-ext-row" style="display:none;margin-bottom:10px">
+          <button class="f-btn" id="sp-ext-btn" style="width:100%;background:rgba(123,106,255,.12);border-color:rgba(123,106,255,.35);color:#c0b0ff">⚡ Connecter via l'extension</button>
+          <div style="font-size:9px;color:var(--grey2);text-align:center;margin-top:4px;opacity:.8">Token Spotify récupéré automatiquement</div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+        </div>
         <div class="f-hint">Exportee <strong style="color:var(--white)">YourLibrary.json</strong> depuis <a href="https://www.spotify.com/account/privacy" target="_blank" style="color:var(--sp);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">spotify.com/account/privacy →</a></div>
         <button class="f-btn" id="sp-btn">📂 Importer JSON</button>
         <input type="file" id="sp-file" accept=".json" style="display:none">
@@ -1719,51 +1734,64 @@ $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal(
 
 
 
-// ── SoundHub Connect Extension ───────────────────────────────────────────────
-// Reçoit les credentials depuis l'extension Chrome
+// ── SoundHub Connect Extension ──────────────────────────────────────────────
+
+let _extAvailable = false;
+
+function _showExtButtons() {
+  ['sc','dz','sp'].forEach(p => {
+    const row = document.getElementById(`${p}-ext-row`);
+    if (row) row.style.display = 'block';
+  });
+}
 
 window.addEventListener('message', async function(ev) {
-  if (!ev.data || !ev.data.type) return;
+  if (!ev.data?.type) return;
 
   if (ev.data.type === 'soundhub_ext_present') {
-    // Afficher badge "extension active" pendant 3s
+    _extAvailable = true;
+    _showExtButtons();
     const badge = document.createElement('div');
-    badge.style.cssText = 'position:fixed;bottom:16px;right:16px;background:rgba(123,106,255,.15);border:1px solid rgba(123,106,255,.35);color:#b0a0ff;font-size:10px;padding:6px 14px;border-radius:20px;font-family:Space Mono,monospace;z-index:9999;pointer-events:none;';
+    badge.style.cssText = 'position:fixed;bottom:16px;right:16px;background:rgba(123,106,255,.15);border:1px solid rgba(123,106,255,.35);color:#b0a0ff;font-size:10px;padding:6px 14px;border-radius:20px;font-family:Space Mono,monospace;z-index:9999;pointer-events:none;transition:opacity .5s';
     badge.textContent = '⚡ Extension SoundHub active';
     document.body.appendChild(badge);
-    setTimeout(() => badge.remove(), 3000);
+    setTimeout(() => { badge.style.opacity='0'; setTimeout(()=>badge.remove(),500); }, 2500);
     return;
   }
 
-  const isInit  = ev.data.type === 'soundhub_ext_init';
-  const isCreds = ev.data.type === 'soundhub_ext_credentials';
-  if (!isInit && !isCreds) return;
-
-  if (isInit) {
+  if (ev.data.type === 'soundhub_ext_init') {
+    _extAvailable = true; _showExtButtons();
     const d = ev.data.data || {};
     if (d.sc?.token && !S.sc?.on) await _extConnectSC(d.sc);
-    if (d.dz?.arl   && !S.dz?.on) _extConnectDZ(d.dz);
-    if (d.sp?.token && !S.sp?.on) _extConnectSP(d.sp);
+    if (d.dz?.arl   && !S.dz?.on) await _extConnectDZ(d.dz);
+    if (d.sp?.token && !S.sp?.on) await _extConnectSP(d.sp);
+    return;
   }
 
-  if (isCreds) {
+  if (ev.data.type === 'soundhub_ext_credentials') {
     const { platform, data } = ev.data;
-    if (platform === 'sc' && data?.token) await _extConnectSC(data);
-    if (platform === 'dz' && data?.arl)   _extConnectDZ(data);
-    if (platform === 'sp' && data?.token) _extConnectSP(data);
+    if (platform === 'sc') await _extConnectSC(data);
+    if (platform === 'dz') await _extConnectDZ(data);
+    if (platform === 'sp') await _extConnectSP(data);
+    return;
+  }
+
+  // Demande depuis les boutons "Connecter via extension" des forms
+  if (ev.data.type === 'soundhub_ext_request') {
+    // Le content script forward la demande au background
   }
 });
 
 async function _extConnectSC(d) {
-  const tok = (d.token||'').replace(/^OAuth\s+/i,'');
+  const tok = (d?.token||'').replace(/^OAuth\s+/i,'');
   if (!tok) return;
+  setSt('sc','spin','⟳ Connexion...');
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
-    if (!me?.id) throw new Error('pas de me.id');
+    if (!me?.id) throw new Error('Token SC invalide');
     S.sc = { on:true, token:tok, userId:String(me.id), cookies: d.cookies||'' };
     if (me.avatar_url && $('sc-avt')) {
-      $('sc-avt').src = me.avatar_url;
-      $('sc-avt').style.display = 'block';
+      $('sc-avt').src = me.avatar_url; $('sc-avt').style.display = 'block';
       if($('sc-avt-ph')) $('sc-avt-ph').style.display = 'none';
     }
     $('sc-name').textContent = me.username;
@@ -1771,32 +1799,50 @@ async function _extConnectSC(d) {
     $('sc-conn').classList.add('show');
     $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
-    setSt('sc','ok','✓ Connecté via extension');
-    setMsg('sc','');
-    updateRun();
-  } catch(e) { console.warn('[SH ext] SC connect failed:', e); }
+    setSt('sc','ok', d.cookies ? '✓ Connecté · export playlist actif' : '✓ Connecté via extension');
+    setMsg('sc',''); updateRun();
+  } catch(e) {
+    setSt('sc','err','✕ Échec'); setMsg('sc','✕ ' + e.message, 'var(--red)');
+  }
 }
 
-function _extConnectDZ(d) {
+async function _extConnectDZ(d) {
   if (!d?.arl) return;
   S.dz = { on:true, arl: d.arl };
   if($('dz-name')) $('dz-name').textContent = 'Connecté';
   if($('dz-conn')) $('dz-conn').classList.add('show');
   if($('dz-form')) $('dz-form').classList.remove('open');
   if($('dz-card')) $('dz-card').classList.add('on');
-  setSt('dz','ok','✓ Connecté via extension');
-  updateRun();
+  setSt('dz','ok','✓ Connecté via extension'); updateRun();
 }
 
-function _extConnectSP(d) {
-  if (!d?.token) return;
-  S.sp = { on:true, token: d.token };
+async function _extConnectSP(d) {
+  if (!d?.token && !d?.sp_dc) return;
+  S.sp = { on:true, token: d.token||'', sp_dc: d.sp_dc||'' };
   if($('sp-name')) $('sp-name').textContent = 'Connecté';
   if($('sp-conn')) $('sp-conn').classList.add('show');
   if($('sp-form')) $('sp-form').classList.remove('open');
   if($('sp-card')) $('sp-card').classList.add('on');
-  setSt('sp','ok','✓ Connecté via extension');
-  updateRun();
+  setSt('sp','ok','✓ Connecté via extension'); updateRun();
 }
 
+// Boutons "Connecter via extension" dans les forms
+function _wireExtButtons() {
+  ['sc','dz','sp'].forEach(p => {
+    const btn = document.getElementById(`${p}-ext-btn`);
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.disabled = true; btn.textContent = '⟳ Récupération...';
+      // Le content script écoute ce message et demande au background
+      window.postMessage({ type:'soundhub_ext_request', platform: p }, '*');
+      setTimeout(() => { btn.disabled=false; btn.textContent="⚡ Connecter via l'extension"; }, 6000);
+    });
+  });
+}
+_wireExtButtons();
 
+init();
+</script>
+</body>
+</html>
