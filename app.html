@@ -246,6 +246,11 @@ textarea.f-input{resize:none}
     <!-- Plateformes connectées (apparaissent après connexion) -->
     <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
 
+    <!-- Bouton test local (bypass extension) -->
+    <button id="btn-test-inject" style="display:none;width:100%;padding:6px;background:none;border:1px dashed #333;border-radius:6px;color:#555;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer;margin-bottom:6px">
+      🧪 Test : simuler injection SC+DZ
+    </button>
+
     <!-- Bouton 1 clic centré -->
     <!-- Debug log -->
     <div id="debug-log" style="font-family:'Space Mono',monospace;padding:6px 8px;margin-bottom:8px;background:rgba(0,0,0,.3);border:1px solid #222;border-radius:6px;min-height:24px;max-height:90px;overflow:hidden"></div>
@@ -3293,29 +3298,47 @@ function _setConnectStatus(msg, color) {
 document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
-  btn.textContent = '⟳ Recherche...';
+  btn.textContent = '⟳ Connexion...';
   _setConnectStatus('', '');
+  dbg('→ Bouton cliqué', '#fa0');
 
-  if (!_extAvailable) {
-    btn.disabled = false;
-    btn.textContent = '⚡ Connexion en 1 clic';
-    _setConnectStatus('Extension non détectée — ouvre le popup extension et clique "Injecter"', 'var(--red)');
-    return;
-  }
-
+  // Étape 1 : essayer via postMessage (si content script actif)
   window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
   window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
 
-  await new Promise(r => setTimeout(r, 5000));
-  btn.disabled = false;
-  btn.textContent = '⚡ Connexion en 1 clic';
+  // Étape 2 : attendre 1.5s que les credentials arrivent
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Étape 3 : vérifier si connecté
   const connected = ['sc','dz'].filter(p => S[p]?.on);
   if (connected.length) {
+    btn.disabled = false;
+    btn.textContent = '⚡ Connexion en 1 clic';
     _setConnectStatus('✓ ' + connected.map(p => ({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + ') + ' connectés', 'var(--green)');
-  } else {
-    _setConnectStatus('Aucune session — ouvre SC et Deezer dans des onglets', 'var(--red)');
+    dbg('✓ Connecté via content script', '#4f4');
+    return;
   }
+
+  // Étape 4 : content script inactif — demander d'utiliser le popup extension
+  btn.disabled = false;
+  btn.textContent = '⚡ Connexion en 1 clic';
+  _setConnectStatus('Clique sur l'icône extension → Récupérer → sélectionne cet onglet → Injecter', 'var(--grey)');
+  dbg('⚠ Content script inactif — utilise le popup extension', '#fa0');
 });
+
+// Bouton test : simuler une injection directe (debug)
+document.getElementById('btn-test-inject')?.addEventListener('click', async () => {
+  dbg('→ Test injection simulée', '#fa0');
+  await _extConnectSC({ token: 'TEST_TOKEN_FAKE', cookies: '' });
+  _extConnectDZ({ arl: 'TEST_ARL_FAKE' });
+  dbg('✓ Test OK — pipeline fonctionne', '#4f4');
+});
+
+// Afficher le bouton test si on est en dev (localhost ou file://)
+if (window.location.hostname === 'localhost' || window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1') {
+  const testBtn = document.getElementById('btn-test-inject');
+  if (testBtn) testBtn.style.display = 'block';
+}
 
 // Listener messages depuis content-soundhub.js
 window.addEventListener('message', async function(ev) {
@@ -3363,12 +3386,13 @@ window.addEventListener('message', async function(ev) {
 
 async function _extConnectSC(d) {
   const tok = (d?.token||'').replace(/^OAuth\s+/i,'');
-  if (!tok) { console.warn('[SC] token vide'); return; }
-  // Stocker directement sans valider via proxy (le token vient de l'extension = fiable)
+  if (!tok) { console.warn('[SC] token vide'); dbg('SC: token vide!', '#f66'); return; }
+  dbg('SC: connexion avec token ' + tok.slice(0,10) + '...', '#6af');
   S.sc = { on:true, token:tok, userId:'', cookies:d.cookies||'' };
   setSt('sc', 'ok', '✓ SoundCloud');
   renderConnectedPlats();
   updateContinueBtn();
+  dbg('SC: ✓ connecté, pills mises à jour', '#4f4');
   // Tenter de récupérer le userId en arrière-plan (non bloquant)
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
@@ -3377,11 +3401,13 @@ async function _extConnectSC(d) {
 }
 
 function _extConnectDZ(d) {
-  if (!d?.arl) return;
+  if (!d?.arl) { dbg('DZ: ARL vide!', '#f66'); return; }
+  dbg('DZ: connexion avec ARL ' + d.arl.slice(0,10) + '...', '#6af');
   S.dz = { on:true, arl:d.arl };
   setSt('dz', 'ok', '✓');
   renderConnectedPlats();
   updateContinueBtn();
+  dbg('DZ: ✓ connecté', '#4f4');
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
