@@ -233,7 +233,7 @@ textarea.f-input{resize:none}
   <div id="step-1" class="step active">
 
     <!-- Debug panel (temporaire) -->
-    <div id="debug-panel" style="font-size:8px;font-family:Space Mono,monospace;color:#666;background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:8px;margin-bottom:8px;max-height:80px;overflow-y:auto;display:none">
+    <div id="debug-panel" style="font-size:8px;font-family:Space Mono,monospace;color:#888;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:6px;padding:8px;margin-bottom:8px;max-height:100px;overflow-y:auto;display:block">
       <div style="color:#444;margin-bottom:4px">Console liaison extension :</div>
       <div id="debug-log"></div>
     </div>
@@ -1837,6 +1837,7 @@ document.getElementById('btn-connect-all')?.addEventListener('click', async () =
 // Listener messages depuis content-soundhub.js
 window.addEventListener('message', async function(ev) {
   if (!ev.data?.type) return;
+  console.log('[SoundHub page] message reçu:', ev.data.type, ev.data);
   dbg('msg: ' + ev.data.type, '#666');
 
   if (ev.data.type === 'soundhub_ext_present') {
@@ -1879,15 +1880,17 @@ window.addEventListener('message', async function(ev) {
 
 async function _extConnectSC(d) {
   const tok = (d?.token||'').replace(/^OAuth\s+/i,'');
-  if (!tok) return;
+  if (!tok) { console.warn('[SC] token vide'); return; }
+  // Stocker directement sans valider via proxy (le token vient de l'extension = fiable)
+  S.sc = { on:true, token:tok, userId:'', cookies:d.cookies||'' };
+  setSt('sc', 'ok', '✓ SoundCloud');
+  renderConnectedPlats();
+  updateContinueBtn();
+  // Tenter de récupérer le userId en arrière-plan (non bloquant)
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
-    if (!me?.id) throw new Error('Token invalide');
-    S.sc = { on:true, token:tok, userId:String(me.id), cookies:d.cookies||'' };
-    setSt('sc', 'ok', d.cookies ? '✓ + playlists' : '✓');
-    renderConnectedPlats();
-    updateContinueBtn();
-  } catch(e) { console.warn('[SC]', e.message); }
+    if (me?.id) { S.sc.userId = String(me.id); renderConnectedPlats(); }
+  } catch(e) { console.warn('[SC] userId fetch failed (non critique):', e.message); }
 }
 
 function _extConnectDZ(d) {
