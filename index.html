@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:   #080808;
-    --dark:    #111111;
-    --card:    #181818;
-    --border:  #2a2a2a;
-    --accent:  #ff4400;
-    --accent2: #ff8800;
+    --black:   #1b1b1b;
+    --dark:    #242424;
+    --card:    #2a2a2a;
+    --border:  #3a3a3a;
+    --accent:  #ff9000;
+    --accent2: #ff6600;
     --white:   #f0f0f0;
     --grey:    #888888;
     --green:   #00ff88;
@@ -503,14 +503,17 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#" class="logo">SOUND<span>HUB</span></a>
+  <a href="#" class="logo">SOUND<span style="background:var(--accent);color:#000;padding:1px 8px;border-radius:4px">HUB</span></a>
   <ul>
     <li><a href="#services">Services</a></li>
     <li><a href="#how">Comment</a></li>
     <li><a href="#genres">Genres</a></li>
-    <li><a href="/SoundHub/hub.html">Hub</a></li>
+    <li><a href="hub.html">Hub</a></li>
   </ul>
-  <a href="/SoundHub/app.html" class="nav-cta">Lancer →</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="lang-btn" onclick="toggleLang()" style="background:transparent;border:1px solid var(--border);color:var(--grey);font-family:'Space Mono';font-size:10px;padding:5px 10px;cursor:pointer;border-radius:3px;transition:all .2s" title="Switch language">🇫🇷 FR</button>
+    <a href="app.html" class="nav-cta" id="nav-cta-btn">Lancer →</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -526,7 +529,7 @@
     automatiquement en playlists par genre — sans compte, sans données stockées.
   </p>
   <div class="hero-actions">
-    <a href="/SoundHub/app.html" class="btn-primary">Commencer gratuitement</a>
+    <a href="app.html" class="btn-primary">Commencer gratuitement</a>
     <a href="#how" class="btn-ghost">Comment ça marche</a>
   </div>
 
@@ -633,7 +636,7 @@
   </div>
   <div class="hub-grid reveal" id="hubPreview"></div>
   <div style="text-align:center;margin-top:40px" class="reveal">
-    <a href="/SoundHub/hub.html" class="btn-primary">Explorer le Hub →</a>
+    <a href="hub.html" class="btn-primary">Explorer le Hub →</a>
   </div>
 </section>
 
@@ -642,8 +645,8 @@
   <div class="footer-logo">SOUND<span>HUB</span></div>
   <div class="footer-copy">© 2025 — Zéro donnée stockée. Open source.</div>
   <div class="footer-links">
-    <a href="/SoundHub/app.html">App</a>
-    <a href="/SoundHub/hub.html">Hub</a>
+    <a href="app.html">App</a>
+    <a href="hub.html">Hub</a>
     <a href="#">GitHub</a>
   </div>
 </footer>
@@ -737,6 +740,55 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+<script>
+// ── Langue FR/EN ─────────────────────────────────────────────────────────────
+const LANG = {
+  fr: {
+    tag: "// Classe tes likes. Partage tes sons.",
+    h1: "TRIE<br><span class=\"accent\">TES</span><br><span class=\"outline\">LIKES</span>",
+    sub: "SoundHub analyse tes <strong>likes SoundCloud, Spotify, Deezer</strong> et les classe automatiquement en playlists par genre — sans compte, sans données stockées.",
+    cta1: "Commencer gratuitement", cta2: "Comment ça marche",
+    nav_launch: "Lancer →", nav_flag: "🇫🇷 FR",
+    services_label: "// Compatibilité", services_title: "TES PLATEFORMES",
+    how_label: "// Mode d'emploi", how_title: "COMMENT ÇA MARCHE",
+  },
+  en: {
+    tag: "// Sort your likes. Share your sounds.",
+    h1: "SORT<br><span class=\"accent\">YOUR</span><br><span class=\"outline\">LIKES</span>",
+    sub: "SoundHub analyses your <strong>SoundCloud, Spotify, Deezer likes</strong> and automatically sorts them into genre playlists — no account, no data stored.",
+    cta1: "Start for free", cta2: "How it works",
+    nav_launch: "Launch →", nav_flag: "🇬🇧 EN",
+    services_label: "// Compatibility", services_title: "YOUR PLATFORMS",
+    how_label: "// How to use", how_title: "HOW IT WORKS",
+  }
+};
+
+let currentLang = localStorage.getItem('sh_lang') || 'fr';
+applyLang(currentLang);
+
+function toggleLang() {
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  localStorage.setItem('sh_lang', currentLang);
+  applyLang(currentLang);
+}
+
+function applyLang(lang) {
+  const L = LANG[lang];
+  const set = (sel, val, prop='innerHTML') => { const el = document.querySelector(sel); if(el) el[prop]=val; };
+  set('.hero-tag', L.tag);
+  set('.hero h1', L.h1);
+  set('.hero-sub', L.sub);
+  const ctas = document.querySelectorAll('.hero-actions a');
+  if(ctas[0]) ctas[0].textContent = L.cta1;
+  if(ctas[1]) ctas[1].textContent = L.cta2;
+  const lb = document.getElementById('lang-btn');
+  if(lb) lb.textContent = L.nav_flag;
+  const nc = document.getElementById('nav-cta-btn');
+  if(nc) nc.textContent = L.nav_launch;
+  document.documentElement.lang = lang;
+}
 </script>
 </body>
 </html>

@@ -11,13 +11,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:  #080808;
-    --dark:   #111111;
-    --card:   #161616;
-    --border: #222222;
+    --black:  #1b1b1b;
+    --dark:   #242424;
+    --card:   #2a2a2a;
+    --border: #3a3a3a;
     --border2:#333333;
-    --accent: #ff4400;
-    --accent2:#ff8800;
+    --accent: #ff9000;
+    --accent2:#ff6600;
     --white:  #f0f0f0;
     --grey:   #666666;
     --grey2:  #444444;
@@ -388,12 +388,12 @@
 
 <!-- NAV -->
 <nav>
-  <a href="/SoundHub/index.html" class="logo">SOUND<span>HUB</span></a>
+  <a href="index.html" class="logo">SOUND<span style="background:var(--accent);color:#000;padding:1px 8px;border-radius:4px">HUB</span></a>
   <div class="nav-links">
-    <a href="/SoundHub/index.html">Accueil</a>
-    <a href="/SoundHub/app.html">App</a>
-    <a href="/SoundHub/hub.html" class="active">Hub</a>
-    <a href="/SoundHub/app.html" class="nav-cta">Créer mes playlists →</a>
+    <a href="index.html">Accueil</a>
+    <a href="app.html">App</a>
+    <a href="hub.html" class="active">Hub</a>
+    <a href="app.html" class="nav-cta">Créer mes playlists →</a>
   </div>
 </nav>
 
@@ -458,10 +458,24 @@
 <div class="sort-row">
   <span class="sort-lbl">Trier par :</span>
   <button class="sort-btn active" data-sort="recent" onclick="setSort(this)">Récent</button>
+  <button class="sort-btn" data-sort="trending" onclick="setSort(this)">🔥 Tendance</button>
   <button class="sort-btn" data-sort="likes" onclick="setSort(this)">Likes</button>
   <button class="sort-btn" data-sort="tracks" onclick="setSort(this)">Tracks</button>
   <button class="sort-btn" data-sort="alpha" onclick="setSort(this)">A–Z</button>
   <span class="results-count" id="resultsCount">— playlists</span>
+</div>
+
+<!-- FEATURED SECTIONS (front page) -->
+<div id="featuredSections" style="max-width:1400px;margin:0 auto;padding:0 40px 8px">
+  <div id="featured-recent" style="margin-bottom:32px">
+    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">// Récemment ajoutées</div>
+    <div class="cards-row" id="feat-recent-row"></div>
+  </div>
+  <div id="featured-trending">
+    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">🔥 Tendance</div>
+    <div class="cards-row" id="feat-trending-row"></div>
+  </div>
+  <hr style="border:none;border-top:1px solid var(--border);margin:24px 0 8px">
 </div>
 
 <!-- BODY -->
@@ -520,11 +534,20 @@
         <input class="modal-input" id="m-author" type="text" placeholder="Ex: dj_acid_teuf" maxlength="40">
       </div>
       <div>
-        <label class="modal-label">Service</label>
+        <label class="modal-label">Nombre de tracks</label>
+        <input class="modal-input" id="m-tracks" type="number" min="0" placeholder="Ex: 42" style="width:120px">
+      </div>
+      <div>
+        <label class="modal-label">Plateforme source</label>
         <select class="modal-select" id="m-service">
           <option value="soundcloud">SoundCloud</option>
           <option value="spotify">Spotify</option>
           <option value="deezer">Deezer</option>
+          <option value="tidal">Tidal</option>
+          <option value="youtube_music">YouTube Music</option>
+          <option value="qobuz">Qobuz</option>
+          <option value="apple_music">Apple Music</option>
+          <option value="amazon_music">Amazon Music</option>
           <option value="other">Autre</option>
         </select>
       </div>
@@ -579,13 +602,24 @@ const GENRES = [
   { name:"LATIN_REGGAETON",        label:"Latin",         color:"#ff4400", emoji:"💃" },
   { name:"AFROBEATS",              label:"Afrobeats",     color:"#ff9900", emoji:"🌍" },
   { name:"WORLD_MUSIC",            label:"World",         color:"#558866", emoji:"🌏" },
+  { name:"DANCEHALL_BOUYON",        label:"Dancehall",     color:"#00dd88", emoji:"🌴" },
+  { name:"TRAP",                    label:"Trap",          color:"#ffcc00", emoji:"🌩️" },
+  { name:"UNDERGROUND_RAP",         label:"Underground",   color:"#886644", emoji:"🕳️" },
+  { name:"KPOP",                    label:"K-Pop",         color:"#ff69b4", emoji:"🎀" },
+  { name:"IDM",                     label:"IDM",           color:"#7755cc", emoji:"🔬" },
+  { name:"SETS",                    label:"Sets",          color:"#888888", emoji:"📻" },
 ];
 
 const SERVICE_ICONS = {
-  soundcloud: { icon:"☁️", color:"#ff5500" },
-  spotify:    { icon:"💚", color:"#1db954" },
-  deezer:     { icon:"🎶", color:"#ef5466" },
-  other:      { icon:"🎵", color:"#888888" },
+  soundcloud:    { icon:"☁️", color:"#ff5500" },
+  spotify:       { icon:"💚", color:"#1db954" },
+  deezer:        { icon:"🎶", color:"#ef5466" },
+  tidal:         { icon:"🌊", color:"#00ffff" },
+  youtube_music: { icon:"▶️", color:"#ff0000" },
+  qobuz:         { icon:"🎼", color:"#2b6fe6" },
+  apple_music:   { icon:"🍎", color:"#fc3c44" },
+  amazon_music:  { icon:"📦", color:"#00a8e1" },
+  other:         { icon:"🎵", color:"#888888" },
 };
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
@@ -683,7 +717,7 @@ async function init() {
   state.playlists = playlists;
   state.loading   = false;
 
-  buildTopGenres(); buildRecentActivity(); buildTagsCloud(); render();
+  buildTopGenres(); buildRecentActivity(); buildTagsCloud(); renderFeatured(); render();
   subscribeRealtime();
 
   let searchTimer = null;
@@ -691,7 +725,7 @@ async function init() {
     state.search = e.target.value.toLowerCase();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(async () => {
-      state.playlists = await loadPlaylists(); render();
+      state.playlists = await loadPlaylists(); renderFeatured(); render();
     }, 350);
   });
 }
@@ -749,7 +783,23 @@ function getFiltered() {
     p.author.toLowerCase().includes(state.search)
   );
   switch (state.sort) {
-    case "recent": list.sort((a,b) => b.ts - a.ts); break;
+    case "recent":   list.sort((a,b) => b.ts - a.ts); break;
+    case "trending": {
+      // Score tendance : likes récents (priorité 15-20 jours) qui fade vers le nouveau
+      const now = Date.now();
+      const DAY = 86400000;
+      list.sort((a,b) => {
+        const ageA = (now - (a.ts||0)) / DAY; // âge en jours
+        const ageB = (now - (b.ts||0)) / DAY;
+        // Boost max entre J0 et J15, fade linéaire de J15 à J30, zéro après J30
+        const freshA = ageA < 15 ? 1 : ageA < 30 ? (30-ageA)/15 : 0;
+        const freshB = ageB < 15 ? 1 : ageB < 30 ? (30-ageB)/15 : 0;
+        const scoreA = (a.likes||0) * (0.3 + 0.7 * freshA);
+        const scoreB = (b.likes||0) * (0.3 + 0.7 * freshB);
+        return scoreB - scoreA;
+      });
+      break;
+    }
     case "likes":  list.sort((a,b) => b.likes - a.likes); break;
     case "tracks": list.sort((a,b) => b.tracks - a.tracks); break;
     case "alpha":  list.sort((a,b) => a.name.localeCompare(b.name)); break;
@@ -758,6 +808,25 @@ function getFiltered() {
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
+function renderFeatured() {
+  if (!state.playlists.length) return;
+  const now = Date.now(), DAY = 86400000;
+
+  // Récentes : 6 dernières
+  const recent = [...state.playlists].sort((a,b)=>b.ts-a.ts).slice(0,6);
+  const rRow = document.getElementById("feat-recent-row");
+  if (rRow) { rRow.innerHTML=''; recent.forEach((p,i)=>rRow.appendChild(buildCard(p,i))); }
+
+  // Tendance : score avec fraîcheur 30j
+  const trending = [...state.playlists].sort((a,b)=>{
+    const ageA=(now-(a.ts||0))/DAY, ageB=(now-(b.ts||0))/DAY;
+    const fA=ageA<15?1:ageA<30?(30-ageA)/15:0, fB=ageB<15?1:ageB<30?(30-ageB)/15:0;
+    return ((b.likes||0)*(0.3+0.7*fB)) - ((a.likes||0)*(0.3+0.7*fA));
+  }).slice(0,6);
+  const tRow = document.getElementById("feat-trending-row");
+  if (tRow) { tRow.innerHTML=''; trending.forEach((p,i)=>tRow.appendChild(buildCard(p,i))); }
+}
+
 function render() {
   const filtered = getFiltered();
   document.getElementById("resultsCount").textContent = `${filtered.length} playlist${filtered.length > 1 ? "s" : ""}`;
@@ -956,7 +1025,7 @@ window.submitPlaylist = async function() {
   const { data, error } = await db.from('playlists').insert({
     name: name.slice(0,120), url, genre, service,
     tags: tags.slice(0,8),
-    track_count: 0,
+    track_count: parseInt(document.getElementById("m-tracks")?.value||"0")||0,
     author: author.slice(0,40),
     fingerprint: fp,
   }).select().single();
@@ -966,8 +1035,14 @@ window.submitPlaylist = async function() {
   if (error) { alert('Erreur : ' + error.message); return; }
 
   closeModal();
+  // Message de confirmation
+  const conf = document.createElement('div');
+  conf.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);color:var(--white);font-family:Space Mono;font-size:11px;padding:12px 24px;border-radius:6px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5)';
+  conf.textContent = '✓ Playlist partagée sur le Hub !';
+  document.body.appendChild(conf);
+  setTimeout(()=>conf.remove(), 3500);
   // Réinitialiser les champs
-  ['m-url','m-name','m-tags'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  ['m-url','m-name','m-tags','m-tracks'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
 
   // Afficher immédiatement (le realtime s'en chargera aussi)
   state.playlists.unshift({

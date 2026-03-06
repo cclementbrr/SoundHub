@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --black:#080808; --dark:#111111; --card:#161616;
-  --border:#252525; --border2:#333333;
-  --accent:#ff4400; --accent2:#ff8800;
+  --black:#1b1b1b; --dark:#242424; --card:#2a2a2a;
+  --border:#3a3a3a; --border2:#444444;
+  --accent:#ff9000; --accent2:#ff6600;
   --white:#f0f0f0; --grey:#666666; --grey2:#444444;
   --green:#00e676; --red:#ff3333;
   --lfm:#d51007; --sc:#ff5500; --sp:#1db954; --dz:#ef5466;
@@ -22,8 +22,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--black);color:var(--white)
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.35}
 
 nav{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--black);z-index:100}
-.logo{font-family:'Bebas Neue';font-size:24px;letter-spacing:3px;text-decoration:none;color:var(--white)}
-.logo span{color:var(--accent)}
+.logo{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;text-decoration:none;color:var(--white)}
+.logo span{background:var(--accent);color:#000;padding:1px 7px;border-radius:4px;font-size:24px}
 .nav-back{font-family:'Space Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--grey);text-decoration:none;transition:color .2s}
 .nav-back:hover{color:var(--white)}
 
@@ -144,7 +144,7 @@ textarea.f-input{resize:none}
 .move-wrap{position:relative;flex-shrink:0}
 .move-btn{font-family:'Space Mono';font-size:9px;background:transparent;border:1px solid var(--border2);color:var(--grey);cursor:pointer;padding:4px 8px;transition:all .2s;white-space:nowrap}
 .move-btn:hover{border-color:var(--accent);color:var(--accent)}
-.move-menu{display:none;position:absolute;right:0;top:calc(100%+4px);background:var(--dark);border:1px solid var(--border);z-index:300;min-width:230px;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.move-menu{display:none;position:fixed;background:var(--dark);border:1px solid var(--border);z-index:9999;min-width:230px;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.8)}
 .move-menu.open{display:block}
 .move-opt{padding:9px 14px;font-family:'Space Mono';font-size:9px;letter-spacing:1px;color:var(--grey);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
 .move-opt:hover{background:rgba(255,255,255,.06);color:var(--white)}
@@ -314,8 +314,26 @@ textarea.f-input{resize:none}
         <div class="res-acts">
           <button class="btn" id="btn-export-all">↓ Export JSON global</button>
           <button class="btn" id="btn-rerun">↺ Reclassifier</button>
+          <button class="btn" id="btn-merge-mode" style="border-color:var(--accent2);color:var(--accent2)">⊕ Merge / Supprimer</button>
         </div>
       </div>
+    </div>
+    <!-- Info banner -->
+    <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;padding:10px 16px;margin-bottom:16px;line-height:1.8">
+      ⚠ L'algorithme peut faire des erreurs — cliquer sur une playlist pour <strong style="color:var(--white)">déplacer des morceaux</strong>, <strong style="color:var(--white)">renommer</strong> ou <strong style="color:var(--white)">exporter</strong>.
+      Utilise <strong style="color:var(--accent2)">⊕ Merge</strong> pour fusionner ou supprimer des playlists.
+    </div>
+    <!-- Barre de recherche -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <input id="res-search" type="text" placeholder="🔍 Rechercher un morceau, artiste, album..." style="flex:1;background:var(--dark2);border:1px solid var(--border);color:var(--white);font-family:'Space Mono';font-size:10px;padding:8px 12px;border-radius:4px;outline:none">
+      <div id="res-search-results" style="display:none;position:fixed;z-index:500;background:var(--dark);border:1px solid var(--border);border-radius:4px;max-height:300px;overflow-y:auto;min-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.8)"></div>
+    </div>
+    <!-- Merge mode bar -->
+    <div id="merge-bar" style="display:none;background:rgba(255,100,0,.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 16px;margin-bottom:12px;display:none;align-items:center;gap:12px">
+      <span style="font-family:'Space Mono';font-size:9px;color:var(--accent2)" id="merge-count">0 playlist(s) sélectionnée(s)</span>
+      <button class="btn" id="btn-do-merge" style="border-color:var(--green);color:var(--green)">⊕ Fusionner</button>
+      <button class="btn" id="btn-do-delete" style="border-color:var(--red);color:var(--red)">✕ Supprimer</button>
+      <button class="btn" id="btn-cancel-merge">Annuler</button>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -549,34 +567,57 @@ async function connectDZ() {
 }
 
 // Fetch Deezer avec fallback CORS proxy
+// Proxies CORS pour Deezer — on essaie en cascade
+const DZ_PROXIES = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
 async function dzFetch(url) {
+  // Essai direct d'abord (marche pour la 1ère page sur certains navigateurs)
   try {
-    const r = await fetch(url);
-    if (!r.ok && r.status !== 0) throw new Error(`HTTP ${r.status}`);
-    const d = await r.json();
-    if (d.error?.code === 300) throw new Error('Profil privé');
-    if (d.error) throw new Error(d.error.message||'Erreur Deezer');
-    return d;
-  } catch(e) {
-    if (e.message.includes('rivé')) throw e;
-    const proxied = 'https://corsproxy.io/?' + encodeURIComponent(url);
-    const r2 = await fetch(proxied);
-    const d2 = await r2.json();
-    if (d2.error) throw new Error(d2.error.message||'Erreur Deezer via proxy');
-    return d2;
+    const r = await fetch(url, {signal: AbortSignal.timeout(4000)});
+    if (r.ok) {
+      const d = await r.json();
+      if (d.error?.code === 300) throw new Error('Profil privé');
+      if (!d.error) return d;
+    }
+  } catch(e) { if (e.message.includes('rivé')) throw e; }
+
+  // Cascade de proxies
+  for (const makeProxy of DZ_PROXIES) {
+    try {
+      const proxyUrl = makeProxy(url);
+      const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(8000)});
+      if (!r.ok) continue;
+      const raw = await r.json();
+      // allorigins.win retourne {contents: "...json string..."}
+      const d = raw.contents ? JSON.parse(raw.contents) : raw;
+      if (d.error?.code === 300) throw new Error('Profil privé');
+      if (d.error) continue; // essayer le prochain proxy
+      return d;
+    } catch(e) {
+      if (e.message.includes('rivé')) throw e;
+      continue;
+    }
   }
+  throw new Error("Impossible de contacter l'API Deezer (CORS bloqué sur tous les proxies)");
 }
 
 async function fetchDZ() {
   const tracks=[];
-  let url=`https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100`;
-  while (url) {
+  let index = 0;
+  while (true) {
+    const url = `https://api.deezer.com/user/${S.dz.userId}/tracks?limit=100&index=${index}`;
     const d = await dzFetch(url);
     if (!d.data?.length) break;
     tracks.push(...d.data);
     log(`Deezer — ${tracks.length} tracks...`);
-    url = d.next || null;
-    if (url) await delay(150);
+    // Utiliser index manuel plutôt que d.next (URL directe = CORS bloqué)
+    if (!d.next || d.data.length < 100) break;
+    index += 100;
+    await delay(300);
   }
   return tracks.map(t=>({
     id: String(t.id||''), title: t.title_short||t.title||'',
@@ -771,7 +812,15 @@ function renderGrid(buckets) {
       <div class="cat-lbl">${esc(S.labels[cat.name]||cat.label)}</div>
       <div class="cat-src">${srcs}</div>
       <div class="cat-bar"></div>`;
-    card.addEventListener('click',()=>openModal(cat.name));
+    // En merge mode : toggle sélection au lieu d'ouvrir la modale
+    card.addEventListener('click',()=>{
+      if(mergeMode){
+        if(mergeSelected.has(cat.name)){mergeSelected.delete(cat.name);card.style.outline='';}
+        else{mergeSelected.add(cat.name);card.style.outline='2px solid var(--accent2)';}
+        $('merge-count').textContent=`${mergeSelected.size} playlist(s) sélectionnée(s)`;
+      } else { openModal(cat.name); }
+    });
+    if(mergeMode && mergeSelected.has(cat.name)) card.style.outline='2px solid var(--accent2)';
     grid.appendChild(card);
     requestAnimationFrame(()=>card.querySelector('.cat-bar').style.width=pct+'%');
   });
@@ -853,6 +902,9 @@ function openModal(catName) {
       mb.addEventListener('click',e=>{
         e.stopPropagation();
         document.querySelectorAll('.move-menu.open').forEach(m=>m!==mm&&m.classList.remove('open'));
+        const rect = mb.getBoundingClientRect();
+        mm.style.left = Math.min(rect.right - 230, window.innerWidth - 240) + 'px';
+        mm.style.top  = (rect.bottom + 6) + 'px';
         mm.classList.toggle('open');
       });
       mm.querySelectorAll('.move-opt').forEach(opt=>{
@@ -1295,6 +1347,75 @@ $('sp-disc').onclick=e=>{e.stopPropagation();disconn('sp');};
 $('run-btn').onclick=run;
 $('btn-export-all').onclick=exportAllJSON;
 $('btn-rerun').onclick=run;
+
+// ── Merge / Supprimer mode ────────────────────────────────────────────────────
+let mergeMode = false;
+const mergeSelected = new Set();
+
+$('btn-merge-mode').onclick = ()=>{
+  mergeMode = !mergeMode;
+  $('merge-bar').style.display = mergeMode ? 'flex' : 'none';
+  $('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Merge / Supprimer';
+  $('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
+  mergeSelected.clear(); renderGrid(S.results);
+};
+$('btn-cancel-merge').onclick = ()=>{
+  mergeMode=false; mergeSelected.clear();
+  $('merge-bar').style.display='none';
+  $('btn-merge-mode').textContent='⊕ Merge / Supprimer';
+  $('btn-merge-mode').style.borderColor='var(--accent2)';
+  renderGrid(S.results);
+};
+$('btn-do-merge').onclick = ()=>{
+  if (mergeSelected.size<2){alert('Sélectionne au moins 2 playlists');return;}
+  const cats=[...mergeSelected], dest=cats[0];
+  for(let i=1;i<cats.length;i++){S.results[dest].push(...(S.results[cats[i]]||[]));S.results[cats[i]]=[];}
+  const nom=prompt('Nom de la playlist fusionnée:',S.labels[dest]||dest);
+  if(nom) S.labels[dest]=nom;
+  mergeMode=false; mergeSelected.clear();
+  $('merge-bar').style.display='none';
+  $('btn-merge-mode').textContent='⊕ Merge / Supprimer';
+  $('btn-merge-mode').style.borderColor='var(--accent2)';
+  const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
+  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
+  renderGrid(S.results);
+};
+$('btn-do-delete').onclick = ()=>{
+  if(!mergeSelected.size)return;
+  if(!confirm(`Supprimer ${mergeSelected.size} playlist(s) ? Les morceaux seront perdus.`))return;
+  for(const cat of mergeSelected) S.results[cat]=[];
+  mergeMode=false; mergeSelected.clear();
+  $('merge-bar').style.display='none';
+  $('btn-merge-mode').textContent='⊕ Merge / Supprimer';
+  const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
+  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
+  renderGrid(S.results);
+};
+
+// ── Barre de recherche résultats ─────────────────────────────────────────────
+const resSearch=$('res-search'), rsr=$('res-search-results');
+if(resSearch){
+  resSearch.addEventListener('input',()=>{
+    const q=resSearch.value.trim().toLowerCase();
+    if(!q||!S.results){rsr.style.display='none';return;}
+    const found=[];
+    for(const [cat,tracks] of Object.entries(S.results)){
+      for(const t of tracks){
+        if((t.artist||'').toLowerCase().includes(q)||(t.title||'').toLowerCase().includes(q)||
+           (t.album||'').toLowerCase().includes(q)||(t.label||'').toLowerCase().includes(q))
+          found.push({t,cat});
+      }
+    }
+    if(!found.length){rsr.innerHTML='<div style="padding:12px;font-family:Space Mono;font-size:9px;color:var(--grey)">Aucun résultat</div>';}
+    else{rsr.innerHTML=found.slice(0,30).map(({t,cat})=>`<div style="padding:10px 14px;cursor:pointer;font-family:Space Mono;font-size:9px;border-bottom:1px solid var(--border)" onclick="openModal('${cat}')"><span style="color:var(--white)">${esc(t.artist)} — ${esc(t.title)}</span> <span style="color:var(--grey2);font-size:8px">→ ${esc(S.labels[cat]||cat)}</span></div>`).join('')+(found.length>30?`<div style="padding:8px 14px;font-family:Space Mono;font-size:8px;color:var(--grey)">+${found.length-30} autres</div>`:'');}
+    const rect=resSearch.getBoundingClientRect();
+    rsr.style.left=rect.left+'px'; rsr.style.top=(rect.bottom+4)+'px'; rsr.style.width=rect.width+'px';
+    rsr.style.display='block';
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#res-search')&&!e.target.closest('#res-search-results'))rsr.style.display='none';
+  });
+}
 
 // Toggle cartes secondaires
 ['dz','sc','sp'].forEach(svc=>{

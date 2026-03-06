@@ -438,7 +438,7 @@ export const GENRE_CATEGORIES = [
 
   {
     name: "RAP_CLASSIC",
-    label: "Hip-Hop / Boom Bap / Rap classique",
+    label: "OG Rap / Hip-Hop / Boom Bap",
     emoji: "🎤",
     color: "#ddaa00",
     priority: 68,
@@ -458,7 +458,7 @@ export const GENRE_CATEGORIES = [
     // "trap" EDM (festival trap) est dans EDM_MAINSTAGE → ce tag seul ne suffit pas ici
     // Pour override EDM : besoin d'au moins un strongKeyword spécifiquement rap
     name: "TRAP",
-    label: "Trap / Drill / Cloud Rap / Phonk",
+    label: "Trap / Drill / Cloud Rap",
     emoji: "🌩️",
     color: "#ffcc00",
     priority: 88,
@@ -508,7 +508,7 @@ export const GENRE_CATEGORIES = [
   {
     // RAP_NEWGEN : reste pour hyperpop, génération post-2018 inclassable
     name: "RAP_NEWGEN",
-    label: "Rap Newgen / Hyperpop / Melodic Trap",
+    label: "Newgen Rap / Hyperpop / Melodic Trap",
     emoji: "⚡",
     color: "#ff6666",
     priority: 82,
@@ -530,7 +530,7 @@ export const GENRE_CATEGORIES = [
 
   {
     name: "RNB_SOUL",
-    label: "R&B / Soul / New Jack Swing / Neo-Soul",
+    label: "R&B / Soul / Neo-Soul",
     emoji: "🎶",
     color: "#cc6699",
     priority: 62,
@@ -545,7 +545,7 @@ export const GENRE_CATEGORIES = [
   },
   {
     name: "FUNK_GROOVE",
-    label: "Funk / Groove / Deep Funk / Gospel",
+    label: "Funk / Groove / Gospel",
     emoji: "🕺",
     color: "#ff8800",
     priority: 60,
@@ -636,7 +636,7 @@ export const GENRE_CATEGORIES = [
   },
   {
     name: "ROCK_POST_PUNK",
-    label: "Post-Punk / New Wave / Cold Wave / Goth",
+    label: "Post-Punk / New Wave / Cold Wave",
     emoji: "🖤",
     color: "#554466",
     priority: 57,
@@ -753,28 +753,19 @@ export const GENRE_CATEGORIES = [
 
   {
     name: "REGGAE_DUB",
-    label: "Reggae / Dub / Dancehall / Ska",
+    label: "Reggae / Dub / Roots",
     emoji: "🌿",
     color: "#00aa44",
     priority: 64,
     strongKeywords: [
       "reggae",
-      "dancehall",
       "dub",
       "roots reggae",
-      "rocksteady",
-      "ska",
-      "lovers rock",
-      "bashment",
-      "ragga",
-      "riddim",
       "conscious reggae",
     ],
     keywords: [
-      "reggae","roots reggae","classic reggae","lovers rock",
-      "dub","dub reggae","dub poetry","digital dub",
-      "dancehall","digital dancehall","bashment","ragga",
-      "ska","rocksteady","mento","bouyon",
+      "reggae","roots reggae","classic reggae",
+      "dub","dub reggae","dub poetry","digital dub","digital dancehall","mento","bouyon",
       "soca","calypso","one drop","steppers",
       "nyahbinghi","conscious reggae","jamaican music","ragga jungle",
     ],
@@ -785,6 +776,25 @@ export const GENRE_CATEGORIES = [
   // ║  LATIN / REGGAETON                                             ║
   // ╚══════════════════════════════════════════════════════════════════╝
 
+  {
+    name: "DANCEHALL_BOUYON",
+    label: "Dancehall / Bouyon / Shatta / Zouk",
+    emoji: "🌴",
+    color: "#00dd88",
+    priority: 78,
+    strongKeywords: [
+      "dancehall","bouyon","shatta","zouk","soca","kompa","bélé",
+      "ragga","bashment","riddim dancehall","afrobeats dancehall",
+      "tropical dancehall","conscious dancehall","lover's rock",
+    ],
+    keywords: [
+      "dancehall","bouyon","shatta","zouk","soca","kompa",
+      "ragga","bashment","riddim","conscious dancehall",
+      "jamaican dancehall","trinidadian soca","caribbean music",
+      "tropical","antillais","gwoka","biguine","zouk love",
+    ],
+    labels: ["vp records","greensleeves","jet star","xterminator"],
+  },
   {
     name: "LATIN_REGGAETON",
     label: "Latin / Reggaeton / Tropical",
@@ -817,7 +827,7 @@ export const GENRE_CATEGORIES = [
 
   {
     name: "AFROBEATS",
-    label: "Afrobeats / Amapiano / Afropop",
+    label: "Afrobeats / Afropop / Afro House",
     emoji: "🌍",
     color: "#ff9900",
     priority: 65,
@@ -850,6 +860,27 @@ export const GENRE_CATEGORIES = [
       "baul","indipop","hindi pop","dangdut","pinoy pop","opm","morlam",
     ],
   },
+  {
+    name: "KPOP",
+    label: "K-Pop / K-Hip-Hop / K-R&B",
+    emoji: "🎀",
+    color: "#ff69b4",
+    priority: 85,
+    strongKeywords: [
+      "k-pop","kpop","korean pop","k pop",
+      "k-hip-hop","k-r&b","k-indie","k-rnb",
+      "idol","hallyu","kdrama ost","kpop girl group","kpop boy group",
+    ],
+    keywords: [
+      "k-pop","kpop","korean pop","k pop",
+      "k-hip-hop","k-r&b","k-indie","k-rnb","k-soul",
+      "idol","hallyu","korean","j-pop","j-rock","japanese pop",
+      "mandopop","c-pop","cantopop","asian pop",
+      "bts","blackpink","twice","exo","nct","aespa","stray kids",
+    ],
+    labels: ["sm entertainment","yg entertainment","jyp entertainment","hybe","starship"],
+  },
+
 
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  MOYEN-ORIENT / AFRIQUE DU NORD (MENA)                        ║
