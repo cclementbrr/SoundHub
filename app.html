@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -160,8 +160,7 @@ textarea.f-input{resize:none}
 
 <nav>
   <a href="./index.html" class="logo">SOUND<span>HUB</span></a>
-  <a href="./index.html" class="nav-back">← Home</a>
-  <button id="lang-toggle" style="background:transparent;border:1px solid var(--border);color:var(--grey);font-family:'Space Mono';font-size:9px;padding:4px 9px;cursor:pointer;letter-spacing:1px;transition:all .2s">🇬🇧 EN</button>
+  <a href="./index.html" class="nav-back">← Accueil</a>
 </nav>
 
 <div class="app-layout">
@@ -173,7 +172,7 @@ textarea.f-input{resize:none}
     <div class="svc" id="lfm-card" style="--c:var(--lfm)">
       <div class="svc-head">
         <span class="svc-icon">🎵</span>
-        <div><div class="svc-name">Last.fm</div><div class="svc-st" id="lfm-st">Not connected</div></div>
+        <div><div class="svc-name">Last.fm</div><div class="svc-st" id="lfm-st">Non connecté</div></div>
       </div>
       <div class="conn-row" id="lfm-conn">
         <img class="avt" id="lfm-avt" style="display:none" src="" alt="">
@@ -192,7 +191,7 @@ textarea.f-input{resize:none}
             Crée une app gratuite en 30s →
             <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)" onclick="event.stopPropagation()">last.fm/api/account/create</a>
           </div>
-          <input class="f-input" id="lfm-apikey-inp" type="text" placeholder="API Key (API key)" onclick="event.stopPropagation()">
+          <input class="f-input" id="lfm-apikey-inp" type="text" placeholder="Clé API (API key)" onclick="event.stopPropagation()">
           <input class="f-input" id="lfm-secret-inp" type="password" placeholder="Shared secret" onclick="event.stopPropagation()">
           <button class="f-btn" id="lfm-save-creds" style="--c:var(--accent2)">💾 Sauvegarder</button>
           <div class="f-msg" id="lfm-creds-msg"></div>
@@ -209,7 +208,7 @@ textarea.f-input{resize:none}
             <label class="radio-opt" onclick="event.stopPropagation()"><input type="radio" name="lfm-src" value="top"> Top</label>
           </div>
         </div>
-        <button class="f-btn" id="lfm-btn">🔴 Connect Last.fm</button>
+        <button class="f-btn" id="lfm-btn">🔴 Connecte Last.fm</button>
         <div class="f-msg" id="lfm-msg"></div>
       </div>
     </div>
@@ -220,7 +219,7 @@ textarea.f-input{resize:none}
     <div class="svc" id="dz-card" style="--c:var(--dz);margin-top:8px">
       <div class="svc-head">
         <span class="svc-icon">🎶</span>
-        <div><div class="svc-name">Deezer</div><div class="svc-st" id="dz-st">Not connected</div></div>
+        <div><div class="svc-name">Deezer</div><div class="svc-st" id="dz-st">Non connecté</div></div>
       </div>
       <div class="conn-row" id="dz-conn">
         <img class="avt" id="dz-avt" style="display:none" src="" alt="">
@@ -229,15 +228,15 @@ textarea.f-input{resize:none}
         <button class="disc" id="dz-disc">✕</button>
       </div>
       <div class="svc-form" id="dz-form" onclick="event.stopPropagation()">
-        <div class="f-hint">Public Deezer API. Your profile must be public.</div>
+        <div class="f-hint">Via l'API publique Deezer. Ton profil doit être public.</div>
         <div>
-          <div class="f-label">Deezer User ID</div>
+          <div class="f-label">ID utilisateur Deezer</div>
           <input class="f-input" id="dz-inp" type="text" placeholder="123456789" style="margin-top:6px" onclick="event.stopPropagation()">
           <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:5px;line-height:1.6">
-            Find your ID: deezer.com/profile → URL → /profile/<strong style="color:var(--white)">TONID</strong>
+            Trouve ton ID : deezer.com/profile → URL → /profile/<strong style="color:var(--white)">TONID</strong>
           </div>
         </div>
-        <button class="f-btn" id="dz-btn">🎶 Connect Deezer</button>
+        <button class="f-btn" id="dz-btn">🎶 Connecte Deezer</button>
         <div class="f-msg" id="dz-msg"></div>
       </div>
     </div>
@@ -246,7 +245,7 @@ textarea.f-input{resize:none}
     <div class="svc" id="sc-card" style="--c:var(--sc);margin-top:8px">
       <div class="svc-head">
         <span class="svc-icon">☁️</span>
-        <div><div class="svc-name">SoundCloud</div><div class="svc-st" id="sc-st">Not connected</div></div>
+        <div><div class="svc-name">SoundCloud</div><div class="svc-st" id="sc-st">Non connecté</div></div>
       </div>
       <div class="conn-row" id="sc-conn">
         <div class="avt-ph">☁️</div>
@@ -254,12 +253,18 @@ textarea.f-input{resize:none}
         <button class="disc" id="sc-disc">✕</button>
       </div>
       <div class="svc-form" id="sc-form" onclick="event.stopPropagation()">
-        <div class="f-hint">DevTools → Network → <code style="color:var(--accent)">Authorization: OAuth</code></div>
-        <div>
-          <div class="f-label">Token OAuth</div>
-          <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123..." style="margin-top:6px" onclick="event.stopPropagation()"></textarea>
+        <div class="f-hint" style="line-height:1.9">
+          <strong style="color:var(--white)">Comment récupérer ton token :</strong><br>
+          1. Va sur <a href="https://soundcloud.com" target="_blank" style="color:var(--sc)">soundcloud.com</a> et connecte-toi<br>
+          2. Ouvre les DevTools (<code style="color:var(--accent)">F12</code>) → onglet <code style="color:var(--accent)">Network</code><br>
+          3. Rafraîchis la page, filtre sur <code style="color:var(--accent)">api-v2</code><br>
+          4. Clique une requête → Headers → copie la valeur après <code style="color:var(--accent)">OAuth </code>
         </div>
-        <button class="f-btn" id="sc-btn">☁️ Connect SoundCloud</button>
+        <div>
+          <div class="f-label">Token OAuth (commence par 2-)</div>
+          <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123def456..." style="margin-top:6px" onclick="event.stopPropagation()"></textarea>
+        </div>
+        <button class="f-btn" id="sc-btn">☁️ Connecter SoundCloud</button>
         <div class="f-msg" id="sc-msg"></div>
       </div>
     </div>
@@ -268,7 +273,7 @@ textarea.f-input{resize:none}
     <div class="svc" id="sp-card" style="--c:var(--sp);margin-top:8px">
       <div class="svc-head">
         <span class="svc-icon">💚</span>
-        <div><div class="svc-name">Spotify</div><div class="svc-st" id="sp-st">Not connected</div></div>
+        <div><div class="svc-name">Spotify</div><div class="svc-st" id="sp-st">Non connecté</div></div>
       </div>
       <div class="conn-row" id="sp-conn">
         <div class="avt-ph">💚</div>
@@ -276,55 +281,24 @@ textarea.f-input{resize:none}
         <button class="disc" id="sp-disc">✕</button>
       </div>
       <div class="svc-form" id="sp-form" onclick="event.stopPropagation()">
-        <div class="f-hint">Exporte <strong style="color:var(--white)">YourLibrary.json</strong> depuis <a href="https://www.spotify.com/account/privacy" target="_blank" style="color:var(--sp);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">spotify.com/account/privacy →</a></div>
-        <button class="f-btn" id="sp-btn">📂 Import JSON</button>
+        <div class="f-hint">Exportee <strong style="color:var(--white)">YourLibrary.json</strong> depuis <a href="https://www.spotify.com/account/privacy" target="_blank" style="color:var(--sp);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">spotify.com/account/privacy →</a></div>
+        <button class="f-btn" id="sp-btn">📂 Importer JSON</button>
         <input type="file" id="sp-file" accept=".json" style="display:none">
         <div class="f-msg" id="sp-msg"></div>
       </div>
     </div>
   </div>
 
-  <!-- SOUNDIIZ -->
-  <div class="svc-card" id="sz-card">
-    <div class="svc-head">
-      <div class="svc-avt-wrap">
-        <div class="svc-avt-ph" id="sz-avt-ph" style="background:#2a2a2a;color:#888">🔄</div>
-        <img class="svc-avt" id="sz-avt" style="display:none" alt="">
-      </div>
-      <div>
-        <div class="svc-name">Soundiiz</div>
-        <div class="svc-st" id="sz-st">Not connected</div>
-      </div>
-      <button class="svc-disc" id="sz-disc">✕</button>
-    </div>
-    <div class="svc-conn" id="sz-conn">
-      <div class="svc-conn-name" id="sz-name">—</div>
-      <div class="svc-conn-sub" id="sz-sub">— syncs</div>
-    </div>
-    <div class="svc-form open" id="sz-form">
-      <div class="f-hint">Connect Soundiiz to export playlists to Deezer, Spotify & more via your existing syncs.</div>
-      <div>
-        <div class="f-label">Bearer Token</div>
-        <input class="f-input" id="sz-token-inp" type="text" placeholder="Bearer token from soundiiz.com" style="margin-top:6px">
-        <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin-top:5px;line-height:1.6">
-          Get it at <a href="https://soundiiz.com/settings/profile" target="_blank" style="color:var(--accent)">soundiiz.com/settings</a> → API
-        </div>
-      </div>
-      <button class="f-btn" id="sz-btn">🔄 Connect Soundiiz</button>
-      <div class="f-msg" id="sz-msg"></div>
-    </div>
-  </div>
-
   <div class="run-area">
-    <button class="run-btn" id="run-btn" disabled>ANALYSE</button>
-    <div class="run-info" id="run-info">Connecte au moins un service</div>
+    <button class="run-btn" id="run-btn" disabled>LANCER LA CLASSIFICATION</button>
+    <div class="run-info" id="run-info">Connectee au moins un service</div>
   </div>
 </aside>
 
 <main class="main">
   <div class="empty" id="empty">
     <div class="empty-ico">🎛️</div>
-    <div class="empty-ttl">Ready to analyse</div>
+    <div class="empty-ttl">Prêt à classifier</div>
     <div class="empty-sub">Entre ton pseudo Last.fm et lance l'analyse. Les genres sont détectés via les tags de l'artiste et une base de 100+ artistes.</div>
   </div>
 
@@ -341,19 +315,19 @@ textarea.f-input{resize:none}
   <div class="res-wrap" id="res-wrap">
     <div class="res-head">
       <div>
-        <div class="res-ttl">Results</div>
+        <div class="res-ttl">Résultats</div>
         <div class="res-meta" id="res-meta">—</div>
         <div class="res-acts">
-          <button class="btn" id="btn-export-all">↓ Export all JSON</button>
-          <button class="btn" id="btn-rerun">↺ Re-analyse</button>
-          <button class="btn" id="btn-merge-mode" style="border-color:var(--accent2);color:var(--accent2)">⊕ Merge / Delete</button>
+          <button class="btn" id="btn-export-all">↓ Exporte all JSON</button>
+          <button class="btn" id="btn-rerun">↺ Reclassifier</button>
+          <button class="btn" id="btn-merge-mode" style="border-color:var(--accent2);color:var(--accent2)">⊕ Fusionner / Supprimer</button>
         </div>
       </div>
     </div>
     <!-- Info banner -->
     <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:6px;padding:10px 16px;margin-bottom:16px;line-height:1.8">
       ⚠ The algorithm can make mistakes — click a playlist to <strong style="color:var(--white)">move tracks</strong>, <strong style="color:var(--white)">rename</strong> ou <strong style="color:var(--white)">export</strong>.
-      Use <strong style="color:var(--accent2)">⊕ Merge</strong> to merge or delete playlists.
+      Use <strong style="color:var(--accent2)">⊕ Fusionner</strong> to merge or delete playlists.
     </div>
     <!-- Barre de recherche -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
@@ -362,10 +336,10 @@ textarea.f-input{resize:none}
     </div>
     <!-- Merge mode bar -->
     <div id="merge-bar" style="display:none;background:rgba(255,100,0,.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 16px;margin-bottom:12px;display:none;align-items:center;gap:12px">
-      <span style="font-family:'Space Mono';font-size:9px;color:var(--accent2)" id="merge-count">0 playlist(s) selected</span>
-      <button class="btn" id="btn-do-merge" style="border-color:var(--green);color:var(--green)">⊕ Merge</button>
-      <button class="btn" id="btn-do-delete" style="border-color:var(--red);color:var(--red)">✕ Delete</button>
-      <button class="btn" id="btn-cancel-merge">Cancel</button>
+      <span style="font-family:'Space Mono';font-size:9px;color:var(--accent2)" id="merge-count">0 playlist(s) sélectionnée(s)</span>
+      <button class="btn" id="btn-do-merge" style="border-color:var(--green);color:var(--green)">⊕ Fusionner</button>
+      <button class="btn" id="btn-do-delete" style="border-color:var(--red);color:var(--red)">✕ Supprimer</button>
+      <button class="btn" id="btn-cancel-merge">Annuler</button>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -378,7 +352,7 @@ textarea.f-input{resize:none}
     <div class="modal-h">
       <span class="modal-emo" id="m-emo">🎵</span>
       <input class="modal-title-inp" id="m-title" type="text" value="">
-      <button class="modal-x" id="m-close">✕ Close</button>
+      <button class="modal-x" id="m-close">✕ Fermer</button>
     </div>
     <div class="modal-sub" id="m-sub"></div>
     <div class="export-bar" id="m-exports"></div>
@@ -399,7 +373,7 @@ const S = {
   results: null,
   labels: {},
   openCat: null,
-  sharedCats: new Set(),   // categories partagées sur le Hub
+  sharedCats: new Set(),   // catégories partagées sur le Hub
 };
 
 const SETS_CAT = { name:'SETS', label:'Sets / Mixes', emoji:'🎚️', color:'#888888' };
@@ -420,7 +394,7 @@ function setMsg(svc, txt, col='var(--grey2)') {
 function updateRun() {
   const ok = S.lfm.on || S.dz.on || S.sc.on || S.sp.on;
   $('run-btn').disabled = !ok;
-  $('run-info').textContent = ok ? 'Prêt — cliquez pour lancer' : 'Connecte au moins un service';
+  $('run-info').textContent = ok ? 'Prêt — cliquez pour lancer' : 'Connectee au moins un service';
 }
 function setProg(pct, txt, sub='') {
   $('prog-bar').style.width = pct+'%';
@@ -449,7 +423,7 @@ async function connectLFM() {
   const u = $('lfm-inp').value.trim();
   if (!u) { setMsg('lfm','Entre ton pseudo','var(--red)'); return; }
   const src = document.querySelector('input[name="lfm-src"]:checked')?.value||'loved';
-  setSt('lfm','spin','⟳ Checking...'); setMsg('lfm','⟳ En cours...','var(--grey)');
+  setSt('lfm','spin','⟳ Vérification...'); setMsg('lfm','⟳ En cours...','var(--grey)');
   try {
     const d = await lfmGet({method:'user.getinfo',user:u});
     if (d.error) throw new Error(d.message);
@@ -457,9 +431,9 @@ async function connectLFM() {
     let sub = '';
     if (src==='loved') {
       const c = await lfmGet({method:'user.getlovedtracks',user:u,limit:1});
-      sub = (parseInt(c.lovedtracks?.['@attr']?.total||0)).toLocaleString('en')+' loved tracks';
+      sub = (parseInt(c.lovedtracks?.['@attr']?.total||0)).toLocaleString('fr')+' loved tracks';
     } else if (src==='recent') {
-      sub = parseInt(usr.playcount||0).toLocaleString('en')+' scrobbles';
+      sub = parseInt(usr.playcount||0).toLocaleString('fr')+' scrobbles';
     } else sub = 'top tracks';
     S.lfm = {on:true,user:usr.name,src};
     localStorage.setItem('lfm_user',usr.name); localStorage.setItem('lfm_src',src);
@@ -469,8 +443,8 @@ async function connectLFM() {
     $('lfm-conn').classList.add('show');
     $('lfm-form').classList.remove('open');
     $('lfm-card').classList.add('on');
-    setSt('lfm','ok','✓ Connected'); setMsg('lfm',''); updateRun();
-  } catch(e) { setSt('lfm','err','✕ Error'); setMsg('lfm','✕ '+e.message,'var(--red)'); }
+    setSt('lfm','ok','✓ Connecteed'); setMsg('lfm',''); updateRun();
+  } catch(e) { setSt('lfm','err','✕ Erreur'); setMsg('lfm','✕ '+e.message,'var(--red)'); }
 }
 
 async function fetchLFM() {
@@ -573,77 +547,13 @@ async function enrichAll(tracks, onProg) {
 
 // ── Deezer ────────────────────────────────────────────────────────────────────
 // Deezer API publique — pas de CORS sur les endpoints publics GET
-
-// ── Soundiiz ─────────────────────────────────────────────────────────────────
-const SOUNDIIZ_TOKEN_KEY = 'sz_token';
-const SOUNDIIZ_API = 'https://api.soundiiz.com/v1';
-
-async function szFetch(endpoint, method='GET', body=null) {
-  const tok = S.sz.token || localStorage.getItem(SOUNDIIZ_TOKEN_KEY);
-  if (!tok) throw new Error('No Soundiiz token');
-  const opts = {
-    method,
-    headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(SOUNDIIZ_API + endpoint, opts);
-  if (!r.ok) throw new Error('Soundiiz HTTP ' + r.status);
-  return r.json();
-}
-
-async function connectSZ() {
-  const tok = $('sz-token-inp')?.value.trim();
-  if (!tok) { setMsg('sz','Enter your Soundiiz token','var(--red)'); return; }
-  setSt('sz','spin','⟳ Connecting...');
-  try {
-    // Temporarily set token to test
-    S.sz.token = tok;
-    const me = await szFetch('/me');
-    if (!me.data?.id) throw new Error('Invalid token');
-    // Load syncs
-    const syncsData = await szFetch('/me/syncs?limit=100');
-    S.sz = { on:true, token:tok, syncs: syncsData.data?.items||[], username: me.data.username };
-    localStorage.setItem(SOUNDIIZ_TOKEN_KEY, tok);
-    $('sz-name').textContent = me.data.username || 'Soundiiz';
-    $('sz-sub').textContent  = `${S.sz.syncs.length} sync${S.sz.syncs.length!==1?'s':''}`;
-    $('sz-conn').classList.add('show');
-    $('sz-form').classList.remove('open');
-    $('sz-card').classList.add('on');
-    setSt('sz','ok','✓ Connected'); setMsg('sz',''); updateRun();
-  } catch(e) {
-    S.sz.token = null;
-    setSt('sz','err','✕ Error'); setMsg('sz','✕ '+e.message,'var(--red)');
-  }
-}
-
-// Restore Soundiiz session
-(async function restoreSZ() {
-  const tok = localStorage.getItem(SOUNDIIZ_TOKEN_KEY);
-  const inp = $('sz-token-inp');
-  if (inp && tok) inp.value = tok;
-  if (!tok) return;
-  try {
-    S.sz.token = tok;
-    const me = await szFetch('/me');
-    if (!me.data?.id) throw new Error('expired');
-    const syncsData = await szFetch('/me/syncs?limit=100');
-    S.sz = { on:true, token:tok, syncs: syncsData.data?.items||[], username: me.data.username };
-    $('sz-name').textContent = me.data.username || 'Soundiiz';
-    $('sz-sub').textContent  = `${S.sz.syncs.length} sync${S.sz.syncs.length!==1?'s':''}`;
-    $('sz-conn').classList.add('show');
-    $('sz-form').classList.remove('open');
-    $('sz-card').classList.add('on');
-    setSt('sz','ok','✓ Connected'); updateRun();
-  } catch { S.sz.token=null; localStorage.removeItem(SOUNDIIZ_TOKEN_KEY); }
-})();
-
 async function connectDZ() {
   const uid = $('dz-inp').value.trim();
   if (!uid) { setMsg('dz','Enter your Deezer ID','var(--red)'); return; }
-  setSt('dz','spin','⟳ Checking...');
+  setSt('dz','spin','⟳ Vérification...');
   try {
     const usr = await dzFetch(`https://api.deezer.com/user/${uid}`);
-    if (!usr.id) throw new Error('Profile not found or private');
+    if (!usr.id) throw new Error('Profile non trouvés or private');
     let count = 0;
     try {
       const favD = await dzFetch(`https://api.deezer.com/user/${uid}/tracks?limit=1`);
@@ -653,54 +563,49 @@ async function connectDZ() {
     S.dz = { on:true, userId:String(uid), accessToken:null };
     if (usr.picture_medium) { $('dz-avt').src=usr.picture_medium; $('dz-avt').style.display='block'; $('dz-avt-ph').style.display='none'; }
     $('dz-name').textContent = usr.name||uid;
-    $('dz-sub').textContent  = `${count.toLocaleString('en')} favoris`;
+    $('dz-sub').textContent  = `${count.toLocaleString('fr')} favoris`;
     $('dz-conn').classList.add('show');
     $('dz-form').classList.remove('open');
     $('dz-card').classList.add('on');
-    setSt('dz','ok','✓ Connected'); setMsg('dz',''); updateRun();
+    setSt('dz','ok','✓ Connecteed'); setMsg('dz',''); updateRun();
     localStorage.setItem('dz_user_id', uid);
-  } catch(e) { setSt('dz','err','✕ Error'); setMsg('dz','✕ '+e.message,'var(--red)'); }
+  } catch(e) { setSt('dz','err','✕ Erreur'); setMsg('dz','✕ '+e.message,'var(--red)'); }
 }
 
 // Fetch Deezer avec fallback CORS proxy
-// Proxies CORS pour Deezer — on essaie en cascade
-const DZ_PROXIES = [
-  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-];
+// Proxy Deezer via notre Supabase Edge Function (fiable, pas de limite)
+const DZ_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/dz-proxy';
 
 async function dzFetch(url) {
-  // Essai direct d'abord (marche pour la 1ère page sur certains navigateurs)
+  // 1. Essai direct (marche parfois selon navigateur)
   try {
-    const r = await fetch(url, {signal: AbortSignal.timeout(4000)});
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (r.ok) {
       const d = await r.json();
-      if (d.error?.code === 300) throw new Error('Private profile');
+      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
       if (!d.error) return d;
     }
-  } catch(e) { if (e.message.includes('rivé')) throw e; }
-
-  // Cascade de proxies
-  for (const makeProxy of DZ_PROXIES) {
-    try {
-      const proxyUrl = makeProxy(url);
-      const r = await fetch(proxyUrl, {signal: AbortSignal.timeout(8000)});
-      if (!r.ok) continue;
-      const raw = await r.json();
-      // allorigins.win retourne {contents: "...json string..."}
-      const d = raw.contents ? JSON.parse(raw.contents) : raw;
-      if (d.error?.code === 300) throw new Error('Private profile');
-      if (d.error) continue; // essayer le prochain proxy
-      return d;
-    } catch(e) {
-      if (e.message.includes('rivé')) throw e;
-      continue;
-    }
+  } catch(e) {
+    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
   }
-  throw new Error("Impossible de contacter l'API Deezer (CORS bloqué sur tous les proxies)");
-}
 
+  // 2. Proxy Supabase
+  try {
+    const r = await fetch(DZ_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!r.ok) throw new Error('Proxy HTTP ' + r.status);
+    const d = await r.json();
+    if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
+    if (d.error) throw new Error(d.error.message || 'Erreur Deezer');
+    return d;
+  } catch(e) {
+    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
+    throw new Error("Erreur proxy Deezer — déploie la fonction dz-proxy sur Supabase");
+  }
+}
 async function fetchDZ() {
   const tracks=[];
   let index = 0;
@@ -732,21 +637,22 @@ async function scFetch(ep, tok) {
   return r.json();
 }
 async function connectSC() {
-  const tok = $('sc-tok').value.trim();
-  if (!tok) { setMsg('sc','Entre ton token OAuth','var(--red)'); return; }
-  setSt('sc','spin','⟳ Checking...');
+  const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
+  if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
+  if (!tok.startsWith('2-')) { setMsg('sc','Token invalide — doit commencer par "2-"','var(--orange)'); }
+  setSt('sc','spin','⟳ Vérification...');
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
     if (!me||me.error) throw new Error('Token invalide');
     const lk = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`,tok);
     S.sc = {on:true,token:tok,userId:me.id};
     $('sc-name').textContent = me.username;
-    $('sc-sub').textContent  = `${(lk.total_results||0).toLocaleString('en')} likes`;
+    $('sc-sub').textContent  = `${(lk.total_results||0).toLocaleString('fr')} likes`;
     $('sc-conn').classList.add('show');
     $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
-    setSt('sc','ok','✓ Connected'); setMsg('sc',''); updateRun();
-  } catch(e) { setSt('sc','err','✕ Error'); setMsg('sc','✕ '+e.message,'var(--red)'); }
+    setSt('sc','ok','✓ Connecteed'); setMsg('sc',''); updateRun();
+  } catch(e) { setSt('sc','err','✕ Erreur'); setMsg('sc','✕ '+e.message,'var(--red)'); }
 }
 async function fetchSC() {
   const tracks=[]; let url=`https://api-v2.soundcloud.com/users/${S.sc.userId}/likes/tracks?limit=200`;
@@ -772,7 +678,7 @@ function importSP(e) {
       if (j.tracks&&Array.isArray(j.tracks)) raw=j.tracks;
       else if (Array.isArray(j)) raw=j.filter(x=>x.master_metadata_track_name);
       else throw new Error('Format non reconnu (utilise YourLibrary.json)');
-      if (!raw.length) throw new Error('No tracks found');
+      if (!raw.length) throw new Error('Aucun track trouvé');
       const seen=new Set();
       S.sp.tracks = raw.map(t=>t.track
         ?{id:t.uri?.split(':').pop()||'',title:t.track||'',artist:t.artist||'',album:t.album||'',genre:'',tags:[],duration:0,description:'',label:'',source:'spotify'}
@@ -780,12 +686,12 @@ function importSP(e) {
       ).filter(t=>{if(!t.id)return true;if(seen.has(t.id))return false;seen.add(t.id);return true;});
       S.sp.on = true;
       $('sp-name').textContent = file.name;
-      $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('en')} tracks`;
+      $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
       $('sp-conn').classList.add('show');
       $('sp-form').classList.remove('open');
       $('sp-card').classList.add('on');
       setSt('sp','ok','✓ Importé'); setMsg('sp',''); updateRun();
-    } catch(err) { setSt('sp','err','✕ Error'); setMsg('sp','✕ '+err.message,'var(--red)'); }
+    } catch(err) { setSt('sp','err','✕ Erreur'); setMsg('sp','✕ '+err.message,'var(--red)'); }
     e.target.value='';
   };
   rd.readAsText(file);
@@ -799,7 +705,7 @@ function disconn(svc) {
   if (svc==='sp')  S.sp.tracks=[];
   $(`${svc}-conn`).classList.remove('show');
   $(`${svc}-card`).classList.remove('on');
-  setSt(svc,'','Not connected'); updateRun();
+  setSt(svc,'','Non connecté'); updateRun();
 }
 
 // ── Classification ────────────────────────────────────────────────────────────
@@ -811,7 +717,7 @@ async function run() {
   $('prog-wrap').classList.add('show');
   $('prog-log').innerHTML='';
   $('run-btn').disabled=true;
-  setProg(0,'Fetching tracks...');
+  setProg(0,'Récupération des tracks...');
 
   let all=[];
   try {
@@ -842,7 +748,7 @@ async function run() {
       log(`Spotify — ${S.sp.tracks.length} tracks ✓`,'ok');
       setProg(40,'Spotify ✓');
     }
-    if (!all.length) throw new Error('No tracks fetched');
+    if (!all.length) throw new Error('Aucun track récupéré');
 
     // Enrichissement
     log(`${all.length} tracks — enrichissement des tags (patient)...`,'info');
@@ -856,8 +762,8 @@ async function run() {
     setProg(88,'Tags ✓');
 
     // Classification
-    log(`Classifying ${all.length} tracks...`,'info');
-    setProg(90,'Classifying...');
+    log(`Classification de ${all.length} tracks...`,'info');
+    setProg(90,'Classification en cours...');
     const buckets={};
     ALL_CATS.forEach(c=>buckets[c.name]=[]);
     for (const t of all) {
@@ -868,7 +774,7 @@ async function run() {
     }
     setProg(100,'Terminé ✓');
     const cats = Object.values(buckets).filter(b=>b.length).length;
-    log(`${all.length} tracks → ${cats} categories ✓`,'ok');
+    log(`${all.length} tracks → ${cats} catégories ✓`,'ok');
     S.results = buckets;
     S.labels  = {};
     ALL_CATS.forEach(c=>{ S.labels[c.name]=c.label; });
@@ -877,7 +783,7 @@ async function run() {
     try { sessionStorage.setItem('sh_labels',  JSON.stringify(S.labels)); } catch{}
     setTimeout(()=>showResults(buckets,all.length),600);
   } catch(e) {
-    log('Error: '+e.message,'err');
+    log('Erreur : '+e.message,'err');
   } finally {
     $('run-btn').disabled=false;
   }
@@ -888,7 +794,7 @@ function showResults(buckets, total) {
   $('prog-wrap').classList.remove('show');
   $('res-wrap').classList.add('show');
   const cats = Object.values(buckets).filter(b=>b.length).length;
-  $('res-meta').textContent = `${total.toLocaleString('en')} tracks · ${cats} categories`;
+  $('res-meta').textContent = `${total.toLocaleString('fr')} tracks · ${cats} catégories`;
   renderGrid(buckets);
 }
 
@@ -904,7 +810,7 @@ function renderGrid(buckets) {
     card.className='cat-card';
     card.style.setProperty('--cc',cat.color||'#ff4400');
     card.innerHTML=`
-      <div class="cat-top"><span class="cat-emo">${cat.emoji||'🎵'}</span><span class="cat-n">${count.toLocaleString('en')}</span></div>
+      <div class="cat-top"><span class="cat-emo">${cat.emoji||'🎵'}</span><span class="cat-n">${count.toLocaleString('fr')}</span></div>
       <div class="cat-lbl">${esc(S.labels[cat.name]||cat.label)}</div>
       <div class="cat-src">${srcs}</div>
       <div class="cat-bar"></div>`;
@@ -913,7 +819,7 @@ function renderGrid(buckets) {
       if(mergeMode){
         if(mergeSelected.has(cat.name)){mergeSelected.delete(cat.name);card.style.outline='';}
         else{mergeSelected.add(cat.name);card.style.outline='2px solid var(--accent2)';}
-        $('merge-count').textContent=`${mergeSelected.size} playlist(s) selected`;
+        $('merge-count').textContent=`${mergeSelected.size} playlist(s) sélectionnée(s)`;
       } else { openModal(cat.name); }
     });
     if(mergeMode && mergeSelected.has(cat.name)) card.style.outline='2px solid var(--accent2)';
@@ -931,25 +837,21 @@ function openModal(catName) {
   S.openCat = catName;
   $('m-emo').textContent  = cat.emoji||'🎵';
   $('m-title').value      = S.labels[catName]||cat.label;
-  $('m-sub').textContent  = `${tracks.length.toLocaleString('en')} tracks · ${catName}`;
+  $('m-sub').textContent  = `${tracks.length.toLocaleString('fr')} tracks · ${catName}`;
 
-  // Export buttons
+  // Exporte buttons
   const bar = $('m-exports');
-  const lfmConnected = !!S.lfmSession;
+  const lfmConnecteed = !!S.lfmSession;
   const hasSecret    = !!getLFMSecret();
-  const lfmBtnHtml = lfmConnected
-    ? `<button class="btn" id="m-lfm-scrobble" style="border-color:var(--lfm);color:var(--lfm)" title="Scrobble = ajouter à ton historique Last.fm">🔴 Scrobble to Last.fm</button>
+  const lfmBtnHtml = lfmConnecteed
+    ? `<button class="btn" id="m-lfm-scrobble" style="border-color:var(--lfm);color:var(--lfm)" title="Scrobble = ajouter à ton historique Last.fm">🔴 Scrobbler sur Last.fm</button>
        <button class="btn" id="m-lfm-love" style="border-color:var(--lfm);color:var(--lfm);opacity:.7" title="Ajouter aux Loved tracks">♥ Loved</button>`
     : hasSecret
-      ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Authorise Last.fm export</button>`
-      : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Last.fm (setup required)</button>`;
-  const dzConnected = !!S.dz?.on;
-  const dzBtnHtml = dzConnected
-    ? `<button class="btn" id="m-dz-export" style="border-color:var(--dz);color:var(--dz)">🎶 Export to Deezer</button>`
-    : '';
-  const szConnected = !!(S.sz?.on && S.sz.syncs?.length > 0);
-  const szBtnHtml = szConnected
-    ? `<button class="btn" id="m-sz-export" style="border-color:#aaa;color:#ddd">🔄 Soundiiz</button>`
+      ? `<button class="btn" id="m-lfm-auth" style="border-color:var(--lfm);color:var(--lfm)">🔴 Autoriser export Last.fm</button>`
+      : `<button class="btn" id="m-lfm-auth" style="border-color:var(--grey2);color:var(--grey2)" title="Configure ta clé API dans la carte Last.fm">🔴 Last.fm (config requise)</button>`;
+  const dzConnecteed = !!S.dz?.on;
+  const dzBtnHtml = dzConnecteed
+    ? `<button class="btn" id="m-dz-export" style="border-color:var(--dz);color:var(--dz)">🎶 Exporte to Deezer</button>`
     : '';
 
   bar.innerHTML = `
@@ -957,25 +859,21 @@ function openModal(catName) {
     <button class="btn" id="m-txt">↓ .txt</button>
     ${lfmBtnHtml}
     ${dzBtnHtml}
-    ${szBtnHtml}
     <label class="btn" style="display:flex;align-items:center;gap:8px;cursor:pointer" id="m-hub-wrap">
       <span id="m-hub-dot" style="width:8px;height:8px;border-radius:50%;background:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};transition:background .2s;flex-shrink:0"></span>
-      Share on Hub
+      Partager sur le Hub
     </label>`;
   $('m-json').onclick = ()=>exportPlaylistJSON(catName);
   $('m-txt').onclick  = ()=>exportTXT(catName);
   $('m-hub-wrap').onclick = ()=>toggleHubShare(catName);
-  if (lfmConnected) {
+  if (lfmConnecteed) {
     $('m-lfm-scrobble').onclick = ()=>exportToLFMScrobble(catName);
     $('m-lfm-love').onclick     = ()=>exportToLFMLoved(catName);
   } else {
     $('m-lfm-auth').onclick = ()=>startLFMAuth(catName);
   }
-  if (dzConnected) {
+  if (dzConnecteed) {
     $('m-dz-export').onclick = ()=>exportToDeezer(catName);
-  }
-  if (szConnected) {
-    $('m-sz-export').onclick = ()=>showSoundiizPicker(catName);
   }
 
   // Catégories disponibles pour le déplacement (celles qui ont des tracks)
@@ -999,7 +897,7 @@ function openModal(catName) {
         </div>
         <span class="tr-src">${t.source}</span>
         <div class="move-wrap">
-          <button class="move-btn">Move ↓</button>
+          <button class="move-btn">Déplacer ↓</button>
           <div class="move-menu">${availableCats.map(c=>`<div class="move-opt" data-cat="${c.name}">${c.emoji||''} ${esc(S.labels[c.name]||c.label)} <span style="color:var(--grey2);margin-left:4px">${S.results[c.name]?.length||0}</span></div>`).join('')}</div>
         </div>`;
       const mb=row.querySelector('.move-btn'), mm=row.querySelector('.move-menu');
@@ -1030,7 +928,7 @@ function moveTrack(from,idx,to) {
   if (!S.results[to]) S.results[to]=[];
   S.results[to].push(t);
   const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
-  $('res-meta').textContent=`${total.toLocaleString('en')} tracks · ${Object.values(S.results).filter(b=>b.length).length} categories`;
+  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
   renderGrid(S.results);
   openModal(from); // refresh modal
 }
@@ -1171,7 +1069,7 @@ function startLFMAuth(catName) {
 async function getLFMSession(token, catName) {
   try {
     const d = await lfmPost({method:'auth.getSession', api_key:getLFMKey(), token});
-    if (d.error) throw new Error(d.message||'Last.fm auth error');
+    if (d.error) throw new Error(d.message||'Erreur auth Last.fm');
     S.lfmSession = d.session.key;
     localStorage.setItem('lfm_session', d.session.key);
     // Réouvrir la modale seulement si les résultats sont disponibles
@@ -1181,7 +1079,7 @@ async function getLFMSession(token, catName) {
       // résultats dispo mais catégorie inconnue — rien à faire
     }
   } catch(e) {
-    alert('Last.fm auth error: '+e.message);
+    alert('Erreur auth Last.fm: '+e.message);
   }
 }
 
@@ -1230,7 +1128,7 @@ async function exportToLFMScrobble(catName) {
   } else {
     btn.textContent = `⚠ ${done}/${tracks.length} — voir console`;
     btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
-    console.group('❌ Scrobble errors:');
+    console.group('❌ Scrobble erreurs:');
     fails.forEach(f=>console.warn(f));
     console.groupEnd();
   }
@@ -1266,96 +1164,19 @@ async function exportToLFMLoved(catName) {
     const sub=$('m-sub');
     if(sub&&S.lfm.user) sub.innerHTML+=` · <a href="https://www.last.fm/user/${S.lfm.user}/loved" target="_blank" style="color:var(--lfm);font-family:Space Mono;font-size:9px">Voir Loved →</a>`;
   } else {
-    btn.textContent=`⚠ ${done}/${tracks.length} — ${fails.length} errors`;
+    btn.textContent=`⚠ ${done}/${tracks.length} — ${fails.length} erreurs`;
     btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
-    console.group('❌ Love errors:');
+    console.group('❌ Love erreurs:');
     fails.forEach(f=>console.warn(f));
     console.groupEnd();
   }
   btn.disabled=false;
 }
 
-// ── Soundiiz : afficher le picker de syncs dans la modale ────────────────────
-function showSoundiizPicker(catName) {
-  const tracks = (S.results[catName]||[]);
-  if (!tracks.length || !S.sz?.on) return;
-  const btn = $('m-sz-export');
-  if (!btn) return;
 
-  // Build picker UI under the bar
-  let picker = $('sz-picker');
-  if (picker) { picker.remove(); return; } // toggle off
-
-  picker = document.createElement('div');
-  picker.id = 'sz-picker';
-  picker.style.cssText = 'margin-top:12px;border:1px solid var(--border);border-radius:4px;overflow:hidden;font-family:Space Mono;font-size:9px';
-
-  const header = document.createElement('div');
-  header.style.cssText = 'padding:8px 12px;background:rgba(255,255,255,.04);color:var(--grey);letter-spacing:1px;border-bottom:1px solid var(--border)';
-  header.textContent = 'SELECT A SYNC TO TRIGGER';
-  picker.appendChild(header);
-
-  const hint = document.createElement('div');
-  hint.style.cssText = 'padding:8px 12px;color:var(--grey2);font-size:8px;line-height:1.6;border-bottom:1px solid var(--border)';
-  hint.innerHTML = '⚠ This will trigger an existing Soundiiz sync. The sync must already be configured at <a href="https://soundiiz.com" target="_blank" style="color:var(--accent)">soundiiz.com</a>.';
-  picker.appendChild(hint);
-
-  S.sz.syncs.forEach(sync => {
-    const row = document.createElement('div');
-    row.style.cssText = 'padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--grey);transition:background .12s,color .12s;display:flex;align-items:center;justify-content:space-between;gap:8px';
-    row.onmouseover = () => { row.style.background='rgba(255,255,255,.05)'; row.style.color='var(--white)'; };
-    row.onmouseout  = () => { row.style.background=''; row.style.color='var(--grey)'; };
-
-    const svcIcons = { spotify:'💚', deezer:'🎶', itunes:'🍎', apple_music:'🍎', tidal:'🌊', youtube:'▶️', soundcloud:'☁️' };
-    const srcIcon = svcIcons[sync.source?.serviceName] || '📋';
-    const dstIcon = svcIcons[sync.destination?.serviceName] || '📋';
-
-    row.innerHTML = `
-      <span>${srcIcon} → ${dstIcon} <strong style="color:var(--white)">${esc(sync.title.replace(/\[.*?\]\s*/,''))}</strong></span>
-      <span style="color:var(--grey2);font-size:8px">${sync.source?.serviceName||''} → ${sync.destination?.serviceName||''}</span>
-    `;
-    row.onclick = async () => {
-      row.style.background = 'rgba(255,144,0,.1)';
-      row.innerHTML = `<span>⟳ Triggering sync…</span>`;
-      try {
-        const res = await szFetch('/me/syncs/' + sync.id + '/trigger', 'POST');
-        const status = res.data?.status || 'accepted';
-        row.style.background = 'rgba(0,200,100,.1)';
-        row.style.color = 'var(--green)';
-        row.innerHTML = `<span>✓ ${status === 'accepted' ? 'Sync triggered!' : status}</span><a href="${sync.destination?.url||'https://soundiiz.com'}" target="_blank" style="color:var(--accent);font-size:8px">View →</a>`;
-        btn.textContent = '✓ Synced';
-        btn.style.borderColor = 'var(--green)';
-        btn.style.color = 'var(--green)';
-      } catch(e) {
-        row.style.background = 'rgba(255,50,50,.1)';
-        row.style.color = 'var(--red)';
-        row.innerHTML = `<span>✕ ${e.message}</span>`;
-      }
-    };
-    picker.appendChild(row);
-  });
-
-  if (!S.sz.syncs.length) {
-    const empty = document.createElement('div');
-    empty.style.cssText = 'padding:12px;color:var(--grey)';
-    empty.textContent = 'No syncs found. Create one at soundiiz.com.';
-    picker.appendChild(empty);
-  }
-
-  // Add create sync link
-  const footer = document.createElement('div');
-  footer.style.cssText = 'padding:8px 12px;background:rgba(255,255,255,.02);border-top:1px solid var(--border)';
-  footer.innerHTML = '<a href="https://soundiiz.com" target="_blank" style="color:var(--grey2);font-size:8px">+ Create a new sync on soundiiz.com →</a>';
-  picker.appendChild(footer);
-
-  const modal = document.getElementById('modal');
-  modal.appendChild(picker);
-  btn.textContent = '🔄 Soundiiz ✓';
-}
-
-// ── Deezer Export — via API publique search + Soundiiz deeplink ──────────────
+// ── Deezer Export — recherche tracks + génère CSV ────────────────────────────
 // Sans OAuth Deezer (apps fermées), on ne peut pas créer de playlist directement.
-// Flow : recherche les tracks → génère un CSV → ouvre Soundiiz avec instructions
+// Flow : recherche les tracks sur Deezer → génère un CSV à importer
 async function exportToDeezer(catName) {
   const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
   if (!tracks.length) return;
@@ -1382,7 +1203,7 @@ async function exportToDeezer(catName) {
     await delay(80);
   }
 
-  // Étape 2 : générer CSV (format Soundiiz)
+  // Étape 2 : générer CSV
   const playlistName = S.labels[catName] || catName;
   const csvRows = ['Artist,Title,Album'].concat(
     found.map(tr => {
@@ -1395,23 +1216,21 @@ async function exportToDeezer(catName) {
   const csv = csvRows.join('\n');
   dl(csv, 'text/csv', `soundhub-${catName.toLowerCase()}.csv`);
 
-  // Étape 3 : ouvrir Soundiiz avec instructions
+  // Étape 3 : afficher instructions
   const sub = $('m-sub');
-  const soundiizUrl = 'https://soundiiz.com/tool/csv-to-deezer';
   const info = document.createElement('div');
   info.style.cssText = 'font-family:Space Mono;font-size:9px;color:var(--grey2);margin-top:8px;line-height:1.8;padding:8px;border:1px solid var(--border);border-radius:4px;';
-  info.innerHTML = `<span style="color:var(--dz)">🎶 ${found.length} tracks found</span>${notFound.length ? ` · <span style="color:var(--accent2)">${notFound.length} not found</span>` : ''}<br>
-    CSV downloaded · <a href="${soundiizUrl}" target="_blank" style="color:var(--dz)">Import via Soundiiz →</a><br>
-    <span style="color:var(--grey)">Soundiiz → CSV → Deezer → paste file → name: "${playlistName}"</span>`;
+  info.innerHTML = `<span style="color:var(--dz)">🎶 ${found.length} tracks trouvés</span>${notFound.length ? ` · <span style="color:var(--accent2)">${notFound.length} non trouvés</span>` : ''}<br>
+    <span style="color:var(--grey)">✓ CSV téléchargé — importe-le dans Deezer : Mes playlists → Importer → nom : "${playlistName}"</span>`;
   $('overlay').querySelector('.modal-body')?.appendChild(info) || sub?.insertAdjacentElement('afterend', info);
 
   if (notFound.length === 0) {
-    btn.textContent = `✓ ${found.length} tracks — CSV ready`;
+    btn.textContent = `✓ ${found.length} tracks — CSV prêt`;
     btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
   } else {
-    btn.textContent = `✓ ${found.length}/${tracks.length} — CSV ready`;
+    btn.textContent = `✓ ${found.length}/${tracks.length} — CSV prêt`;
     btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
-    console.group('Tracks not found sur Deezer:');
+    console.group('Tracks non trouvés sur Deezer:');
     notFound.forEach(t=>console.warn(`${t.artist} — ${t.title}`));
     console.groupEnd();
   }
@@ -1510,7 +1329,7 @@ if (savedU) {
     if (!k||!s) { if(msg){msg.style.color='var(--red)';msg.textContent='Entre clé + secret';} return; }
     localStorage.setItem('lfm_api_key', k);
     localStorage.setItem('lfm_api_secret', s);
-    if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connect Last.fm pour export"';}
+    if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connecte Last.fm pour export"';}
   });
 })();
 $('lfm-btn').onclick=connectLFM;
@@ -1528,14 +1347,6 @@ $('sp-file').addEventListener('change',importSP);
 $('sp-disc').onclick=e=>{e.stopPropagation();disconn('sp');};
 
 $('run-btn').onclick=run;
-$('sz-btn').onclick = e => { e.stopPropagation(); connectSZ(); };
-$('sz-disc').onclick = e => { e.stopPropagation(); S.sz={on:false,token:null,syncs:[],username:null}; localStorage.removeItem('sz_token'); $('sz-conn').classList.remove('show'); $('sz-form').classList.add('open'); $('sz-card').classList.remove('on'); setSt('sz','','Not connected'); updateRun(); };
-['sz'].forEach(svc=>{
-  $(`${svc}-card`).addEventListener('click',()=>{
-    $(`${svc}-form`).classList.toggle('open');
-  });
-  $(`${svc}-form`).addEventListener('click',e=>e.stopPropagation());
-});
 
 $('btn-export-all').onclick=exportAllJSON;
 $('btn-rerun').onclick=run;
@@ -1547,40 +1358,40 @@ const mergeSelected = new Set();
 $('btn-merge-mode').onclick = ()=>{
   mergeMode = !mergeMode;
   $('merge-bar').style.display = mergeMode ? 'flex' : 'none';
-  $('btn-merge-mode').textContent = mergeMode ? '✕ Quit merge' : '⊕ Merge / Delete';
+  $('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Fusionner / Supprimer';
   $('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
   mergeSelected.clear(); renderGrid(S.results);
 };
 $('btn-cancel-merge').onclick = ()=>{
   mergeMode=false; mergeSelected.clear();
   $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Merge / Delete';
+  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
   $('btn-merge-mode').style.borderColor='var(--accent2)';
   renderGrid(S.results);
 };
 $('btn-do-merge').onclick = ()=>{
-  if (mergeSelected.size<2){alert('Select at least 2 playlists');return;}
+  if (mergeSelected.size<2){alert('Sélectionne au moins 2 playlists');return;}
   const cats=[...mergeSelected], dest=cats[0];
   for(let i=1;i<cats.length;i++){S.results[dest].push(...(S.results[cats[i]]||[]));S.results[cats[i]]=[];}
-  const nom=prompt('Name for merged playlist:',S.labels[dest]||dest);
+  const nom=prompt('Nom de la playlist fusionnée :',S.labels[dest]||dest);
   if(nom) S.labels[dest]=nom;
   mergeMode=false; mergeSelected.clear();
   $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Merge / Delete';
+  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
   $('btn-merge-mode').style.borderColor='var(--accent2)';
   const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
-  $('res-meta').textContent=`${total.toLocaleString('en')} tracks · ${Object.values(S.results).filter(b=>b.length).length} categories`;
+  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
   renderGrid(S.results);
 };
 $('btn-do-delete').onclick = ()=>{
   if(!mergeSelected.size)return;
-  if(!confirm(`Delete ${mergeSelected.size} playlist(s)? Tracks will be lost.`))return;
+  if(!confirm(`Delete ${mergeSelected.size} playlist(s)? Les morceaux seront perdus.`))return;
   for(const cat of mergeSelected) S.results[cat]=[];
   mergeMode=false; mergeSelected.clear();
   $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Merge / Delete';
+  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
   const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
-  $('res-meta').textContent=`${total.toLocaleString('en')} tracks · ${Object.values(S.results).filter(b=>b.length).length} categories`;
+  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
   renderGrid(S.results);
 };
 
@@ -1627,17 +1438,6 @@ $('m-title').addEventListener('input',e=>{if(S.openCat)S.labels[S.openCat]=e.tar
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
 
 
-// ── Language toggle ──────────────────────────────────────────────────────────
-(function(){
-  const btn = document.getElementById('lang-toggle');
-  const stored = localStorage.getItem('sh_lang') || 'en';
-  if (btn) btn.textContent = stored === 'en' ? '🇫🇷 FR' : '🇬🇧 EN';
-  if (btn) btn.onclick = () => {
-    const next = (localStorage.getItem('sh_lang') || 'en') === 'en' ? 'fr' : 'en';
-    localStorage.setItem('sh_lang', next);
-    location.reload();
-  };
-})();
 </script>
 </body>
 </html>
