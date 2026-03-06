@@ -443,7 +443,7 @@ async function connectLFM() {
     $('lfm-conn').classList.add('show');
     $('lfm-form').classList.remove('open');
     $('lfm-card').classList.add('on');
-    setSt('lfm','ok','✓ Connecteed'); setMsg('lfm',''); updateRun();
+    setSt('lfm','ok','✓ Connecté'); setMsg('lfm',''); updateRun();
   } catch(e) { setSt('lfm','err','✕ Erreur'); setMsg('lfm','✕ '+e.message,'var(--red)'); }
 }
 
@@ -567,13 +567,30 @@ async function connectDZ() {
     $('dz-conn').classList.add('show');
     $('dz-form').classList.remove('open');
     $('dz-card').classList.add('on');
-    setSt('dz','ok','✓ Connecteed'); setMsg('dz',''); updateRun();
+    setSt('dz','ok','✓ Connecté'); setMsg('dz',''); updateRun();
     localStorage.setItem('dz_user_id', uid);
   } catch(e) { setSt('dz','err','✕ Erreur'); setMsg('dz','✕ '+e.message,'var(--red)'); }
 }
 
 // Fetch Deezer avec fallback CORS proxy
 // Proxy Deezer via notre Supabase Edge Function (fiable, pas de limite)
+const SC_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhia2tvY3dycmFra2d1cnRtenNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjA1NDcsImV4cCI6MjA4ODI5NjU0N30.a40F8lj1VhoQN5Gy-XOqOg9UnsFqbHxjDrP0378ywNs';
+const SUPA_HEADERS = {
+  'Content-Type':  'application/json',
+  'apikey':        SUPA_ANON,
+  'Authorization': 'Bearer ' + SUPA_ANON,
+};
+async function scFetch(ep, tok) {
+  const r = await fetch(SC_PROXY, {
+    method: 'POST',
+    headers: SUPA_HEADERS,
+    body: JSON.stringify({endpoint: ep, token: tok}),
+  });
+  if (!r.ok) throw new Error('Proxy SC ' + r.status);
+  return r.json();
+}
+
 const DZ_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/dz-proxy';
 
 async function dzFetch(url) {
@@ -593,7 +610,7 @@ async function dzFetch(url) {
   try {
     const r = await fetch(DZ_PROXY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: SUPA_HEADERS,
       body: JSON.stringify({ url }),
     });
     if (!r.ok) throw new Error('Proxy HTTP ' + r.status);
@@ -630,12 +647,6 @@ async function fetchDZ() {
 }
 
 // ── SoundCloud ────────────────────────────────────────────────────────────────
-const SC_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
-async function scFetch(ep, tok) {
-  const r = await fetch(SC_PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:ep,token:tok})});
-  if (!r.ok) throw new Error('Proxy SC '+r.status);
-  return r.json();
-}
 async function connectSC() {
   const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
   if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
@@ -651,7 +662,7 @@ async function connectSC() {
     $('sc-conn').classList.add('show');
     $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
-    setSt('sc','ok','✓ Connecteed'); setMsg('sc',''); updateRun();
+    setSt('sc','ok','✓ Connecté'); setMsg('sc',''); updateRun();
   } catch(e) { setSt('sc','err','✕ Erreur'); setMsg('sc','✕ '+e.message,'var(--red)'); }
 }
 async function fetchSC() {

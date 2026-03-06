@@ -879,10 +879,11 @@ function render() {
 }
 
 function buildCard(p, i) {
-  const genre = GENRES.find(g => g.name === p.genre) || { color:"#666", emoji:"🎵", label:p.genre };
+  const genre = GENRES.find(g => g.name === p.genre) || { color:"#666", emoji:"🎵", label: p.genre || "?" };
   const svc   = SERVICE_ICONS[p.service] || SERVICE_ICONS.other;
   const liked = state.likedIds.includes(p.id);
   const ago   = timeAgo(p.ts);
+  const tracks = p.tracks > 0 ? p.tracks : "—";
 
   const card = document.createElement("div");
   card.className = "pl-card";
@@ -893,27 +894,48 @@ function buildCard(p, i) {
   card.innerHTML = `
     <div class="pl-card-accent"></div>
     <div class="pl-card-top">
-      <div class="pl-service-icon">${svc.icon}</div>
-      <div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:36px;align-items:center">
+        <div class="pl-service-icon" title="${p.service||''}">${svc.icon}</div>
+        <div style="font-family:'Space Mono';font-size:7px;color:var(--s-color,var(--grey));letter-spacing:0.5px;text-align:center;text-transform:uppercase">${p.service||''}</div>
+      </div>
+      <div style="flex:1;min-width:0">
         <div class="pl-card-name">${p.name}</div>
-        <div class="pl-card-author">${p.author} · ${ago}</div>
+        <div class="pl-card-author">${p.author||'Anonyme'} · ${ago}</div>
       </div>
     </div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--c-color,var(--border));border-radius:3px;padding:3px 9px;margin-bottom:10px">
+      <span style="font-size:13px">${genre.emoji}</span>
+      <span style="font-family:'Space Mono';font-size:8px;color:var(--c-color,var(--white));letter-spacing:1px;text-transform:uppercase">${genre.label}</span>
+    </div>
     <div class="pl-card-stats">
-      <div class="pl-stat"><div class="pl-stat-num">${p.tracks}</div><div class="pl-stat-lbl">Tracks</div></div>
-      <div class="pl-stat"><div class="pl-stat-num">${p.likes}</div><div class="pl-stat-lbl">Likes</div></div>
+      <div class="pl-stat">
+        <div class="pl-stat-num">${tracks}</div>
+        <div class="pl-stat-lbl">Tracks</div>
+      </div>
+      <div class="pl-stat">
+        <div class="pl-stat-num" id="lc-${p.id}">${p.likes}</div>
+        <div class="pl-stat-lbl">Likes</div>
+      </div>
     </div>
     <div class="pl-tags">${p.tags.map(t => `<span class="pl-tag">${t}</span>`).join("")}</div>
     <div class="pl-card-footer">
-      <a href="${p.url}" target="_blank" class="pl-open-btn">Écouter ↗</a>
-      <div class="pl-likes">
-        <button class="${liked ? "liked" : ""}" data-id="${p.id}" onclick="toggleLike(event,${p.id})">
-          ${liked ? "♥" : "♡"}
-        </button>
-        <span id="lc-${p.id}">${p.likes}</span>
-      </div>
+      <a href="${p.url}" target="_blank" class="pl-open-btn" onclick="event.stopPropagation()">Écouter ↗</a>
+      <button
+        class="pl-like-btn${liked ? " liked" : ""}"
+        data-id="${p.id}"
+        onclick="event.stopPropagation();toggleLike(event,${p.id})"
+        title="${liked ? "Retirer le like" : "Liker cette playlist"}"
+        style="background:none;border:1px solid ${liked ? "var(--accent)" : "var(--border2)"};border-radius:3px;cursor:pointer;font-size:13px;padding:5px 10px;color:${liked ? "var(--accent)" : "var(--grey)"};transition:all .15s;display:flex;align-items:center;gap:5px;font-family:'Space Mono';font-size:9px"
+      >${liked ? "♥" : "♡"} <span id="lb-${p.id}">${p.likes}</span></button>
     </div>
   `;
+
+  // Click sur la card → ouvrir l'URL (mais pas si on clique le bouton/lien)
+  card.addEventListener("click", (e) => {
+    if (e.target.closest("button, a")) return;
+    window.open(p.url, "_blank");
+  });
+
   return card;
 }
 
@@ -931,12 +953,25 @@ window.toggleLike = async function(e, id) {
   if (error) { console.error(error); return; }
 
   pl.likes = data.likes;
-  if (data.action === 'liked') {
+  const lcEl = document.getElementById("lc-"+id);
+  const lbEl = document.getElementById("lb-"+id);
+  if (data.action === "liked") {
     state.likedIds.push(id);
-    btn.classList.add('liked'); btn.textContent = '♥';
+    btn.classList.add("liked");
+    btn.style.borderColor = "var(--accent)";
+    btn.style.color = "var(--accent)";
+    if (lcEl) lcEl.textContent = data.likes;
+    if (lbEl) lbEl.textContent = data.likes;
+    // Remplacer le texte du bouton (♡ + espace + span)
+    const span = btn.querySelector("span[id^='lb-']");
+    btn.innerHTML = `♥ <span id="lb-${id}">${data.likes}</span>`;
   } else {
     state.likedIds = state.likedIds.filter(x => x !== id);
-    btn.classList.remove('liked'); btn.textContent = '♡';
+    btn.classList.remove("liked");
+    btn.style.borderColor = "var(--border2)";
+    btn.style.color = "var(--grey)";
+    if (lcEl) lcEl.textContent = data.likes;
+    btn.innerHTML = `♡ <span id="lb-${id}">${data.likes}</span>`;
   }
   document.getElementById(`lc-${id}`).textContent = pl.likes;
 };
