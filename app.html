@@ -697,9 +697,10 @@ async function connectSC() {
   if (!tok.startsWith('2-')) { setMsg('sc','Token invalide — doit commencer par "2-" (voir guide)','var(--orange)'); }
   setSt('sc','spin','⟳ Vérification...');
   try {
-    const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
+    // api.soundcloud.com (v1) pour les tokens OAuth 2-...
+    const me = await scFetch('https://api.soundcloud.com/me', tok);
     if (!me||me.error) throw new Error('Token invalide');
-    const lk = await scFetch(`https://api-v2.soundcloud.com/users/${me.id}/likes/tracks?limit=1`,tok);
+    const lk = await scFetch(`https://api.soundcloud.com/me/favorites?limit=1`,tok);
     S.sc = {on:true,token:tok,userId:me.id};
     $('sc-name').textContent = me.username;
     $('sc-sub').textContent  = `${(lk.total_results||0).toLocaleString('fr')} likes`;
@@ -710,12 +711,17 @@ async function connectSC() {
   } catch(e) { setSt('sc','err','✕ Erreur'); setMsg('sc','✕ '+e.message,'var(--red)'); }
 }
 async function fetchSC() {
-  const tracks=[]; let url=`https://api-v2.soundcloud.com/users/${S.sc.userId}/likes/tracks?limit=200`;
-  while (url) {
+  // API v1 : /me/favorites avec pagination offset
+  const tracks=[]; let offset=0; const limit=200;
+  while (true) {
+    const url = `https://api.soundcloud.com/me/favorites?limit=${limit}&offset=${offset}`;
     const d = await scFetch(url, S.sc.token);
-    tracks.push(...(d.collection||[]));
-    url = d.next_href||null;
+    const items = Array.isArray(d) ? d : (d.collection||[]);
+    if (!items.length) break;
+    tracks.push(...items);
     log(`SC — ${tracks.length} tracks...`);
+    if (items.length < limit) break;
+    offset += limit;
     await delay(200);
   }
   return tracks.map(r=>normalizeTrack(r,'soundcloud'));
