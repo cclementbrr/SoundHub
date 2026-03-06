@@ -52,7 +52,14 @@ export const GENRE_CATEGORIES = [
       "hard house","uk hard house","hardhouse","nrg house","hard nrg",
       "bouncy techno","donk house","nu energy",
     ],
-    labels: ["locked on","defected","garage nation","pay as u go","so solid crew","big apple records"],
+    labels: [
+      "locked on","defected","garage nation","pay as u go","so solid crew","big apple records",
+      "ukd records","amsterdam dance capital","obscuur","green roll records",
+      "galactic harmony","mama told ya","pace playaz society","dalf records",
+      "no chasa","boisha","flirt with chaos","clean energy","round165",
+      "agora records","redline records","neon dreams cologne","kinky promise",
+      "esca","mrgnstrn","international chrome","sih-lest",
+    ],
   },
   {
     name: "BASS_DUBSTEP",
@@ -148,6 +155,8 @@ export const GENRE_CATEGORIES = [
     labels: [
       "defected","fxhe","trax records","dance mania","classic music company",
       "running back","raw canvas","rekids","wolf music","nocturnal grooves","glitterbox",
+      "dalf records","mama told ya","no chasa","boisha","ragel mood",
+      "37 degrees","four four magazine","linus villa",
     ],
   },
   {
@@ -203,9 +212,24 @@ export const GENRE_CATEGORIES = [
       "modular techno","post industrial techno","techno","rave techno",
     ],
     labels: [
+      // Labels production techno confirmés
       "ostgut ton","blueprint","planet rhythm","bc recordings","counter records",
-      "prologue","mote evolver","horizontal ground","frenzy records","wangan club",
-      "stem","amphibian records","selected records","bcco","primal instinct",
+      "prologue","mote evolver","horizontal ground","frenzy records",
+      "stem","amphibian records","primal instinct",
+      // Canaux promo SC (pas de tags SC) — techno underground
+      "bcco","vault sessions","duplicity","grab the groove","trucking records",
+      "selected","selected records","differentsound","techno germany","the finest techno",
+      "bipolar disorder rec","seeksicksound","phosphate records","crude",
+      "kerbela","rave your soul","oecus","club elevate","four four magazine",
+      "techno wereld","märked","beluga tracks","unfair records","deadline records",
+      "voyeuristic disorder","prx records","ri7mo","thump out traxx","dur",
+      "matiere","carefree audio","essential delights records","rave alert",
+      // Labels production techno underground
+      "wangan club","molekul","amniote editions","maison close records","agora records",
+      "gruv","laburnum","gomboc records","asw","beau didier",
+      "atom","violent cases","stannik","mmork","alyosen","sparks","kokko",
+      "statek","knisda kanisda","shz records","the brvtalist","peska",
+      "polyamor records","cult collective","pace playaz society","dalf records",
     ],
   },
   {
@@ -232,7 +256,12 @@ export const GENRE_CATEGORIES = [
       "hard groove techno","kick techno","hard acid techno",
       "warehouse hard","hard rave","berlin hard techno",
     ],
-    labels: ["uncage","intec","teksupport","hyte records","drumcode","filth on acid","compass"],
+    labels: [
+      "uncage","intec","teksupport","hyte records","drumcode","filth on acid","compass",
+      "mza","casual gabberz records","polyamor records","katek","phtm","rave alert",
+      "hannibass","nokte","gelbkreuz","rabteu","penn-ak","fun is still transgressive",
+      "southfrap alliance",
+    ],
   },
 
   // ╔══════════════════════════════════════════════════════════════════╗
@@ -275,7 +304,10 @@ export const GENRE_CATEGORIES = [
       "4x4 tekno","raggatek","ragga tek","teknoise","noisecore",
       "acidtekno","mackitek","neurotrope","kartell","the teknoist",
     ],
-    labels: ["spiral tribe","heretik sound system","neurotrope","pkdm","fullmoon"],
+    labels: [
+      "spiral tribe","heretik sound system","neurotrope","pkdm","fullmoon",
+      "torvik","zouawotek","positive vibrations","penn-ak acidcore",
+    ],
   },
 
   // ╔══════════════════════════════════════════════════════════════════╗
@@ -1110,6 +1142,70 @@ export const ARTIST_GENRE_MAP = {
   "flo rida": ["pop rap","electro pop","crunk"],
   "akon": ["rnb","pop","afropop"],
   "ne-yo": ["rnb","pop","dance pop"],
+
+  // ── TECHNO UNDERGROUND SC (canaux promo / artistes sans tags) ──
+  // Artistes techno confirmés par leurs releases
+  "ponky": ["techno","hard techno","rave"],
+  "pōnky": ["techno","hard techno","rave"],
+  "maurer": ["techno","deep techno","minimal techno"],
+  "conntex": ["techno","dark techno","hard techno"],
+  "bours?": ["techno","acid techno","hard techno"],
+  "bours": ["techno","acid techno","hard techno"],
+  "mza": ["hard techno","acid","industrial techno"],
+  "boy in nature": ["techno","melodic techno"],
+  "aidan rudd": ["techno","minimal techno"],
+  "tinex": ["techno","hard techno"],
+  "gisura": ["techno","dark techno"],
+  "fran lf": ["techno","melodic techno"],
+  "hyden": ["techno","dark techno"],
+  "nkk": ["techno","hard techno"],
+  "vilchezz": ["techno","hard techno"],
+  "jxxxo": ["techno","hard techno"],
+  "dkfsk": ["techno","industrial techno"],
+  "gcod": ["techno","dark techno"],
+  "groef": ["techno","hard techno"],
+  "satin": ["techno","acid techno"],
+  "aemn": ["techno","dark techno"],
+  "kvlr": ["techno","melodic techno"],
+  "alex wilcox": ["hard techno","techno"],
+  "fred?": ["techno","deep techno"],
+  "ben derris": ["techno","minimal techno"],
+  "linus villa": ["techno","minimal techno"],
+  "ned bennett": ["techno","uk garage","house"],
+  "panel junk": ["hard techno","techno"],
+  "sparks": ["techno","hard techno"],
+  "kokko": ["techno","dark techno","industrial techno"],
+  "torvik": ["tekno","tribe techno","free tekno"],
+  "positive vibrations": ["tekno","tribe","acidcore"],
+  "penn-ak": ["acidcore","tekno","mentalcore"],
+  "dr breinnerr": ["tekno","tribe","acidcore"],
+  "gnomen": ["techno","acid techno"],
+  "gelbkreuz": ["techno","acid techno","rave"],
+  "shiffo": ["techno","minimal techno"],
+  "deadx": ["techno","noise techno","industrial techno"],
+  "peska": ["techno","dark techno"],
+  "pinklotion": ["hard techno","techno","industrial techno"],
+  "sewerslvt": ["breakcore","industrial","noise"],
+  "cynthoni": ["breakcore","industrial"],
+
+  // ── UK GARAGE / BASSLINE SC ──
+  "osmosis jones": ["uk garage","bassline","4x4"],
+  "dj swisherman": ["uk garage","bassline","house"],
+  "ragel mood": ["uk garage","house","bassline"],
+  "no chasa": ["uk garage","house","tech house"],
+  "amsterdam dance capital": ["uk garage","house","tech house"],
+  "galactic harmony": ["uk garage","house","bassline"],
+  "green roll records": ["uk garage","house","bassline"],
+  "redline records": ["uk garage","bassline","hard house"],
+  "sih-lest": ["uk garage","bassline","house"],
+  "esca": ["uk garage","hard house","bassline"],
+  "mrgnstrn": ["uk garage","bassline","house"],
+  "boisha": ["house","tech house","uk garage"],
+  "dj freekfunk": ["uk garage","house","funk"],
+  "pace playaz society": ["uk garage","bassline","house"],
+
+  // ── RAP FRANCAIS (TKO = collectif rap fr) ──
+  "tko": ["rap francais","rap","trap"],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1130,17 +1226,32 @@ function normalize(text) {
     .trim();
 }
 
+// Tags SC sans valeur musicale — pays, plateformes, live-x, etc.
+const NOISE_TAGS = new Set([
+  "usa","uk","france","french","germany","spain","australia","sweden","swedish",
+  "netherlands","russia","russian","mexico","brazil","brazil","slovenian",
+  "all","spotify","bandcamp","soundcloud",
+  "live-1","live-2","live-3","live-4","live-5","live-6","live-7","live-8",
+  "less than 2000 listeners","less than 5000 listeners","background music",
+  "fruity loops","fl studio","ableton","logic pro","moldepunx","board shorts",
+  "lolicore","incelcore","dsbc","unrevell approved",
+]);
+
 function extractTags(tagList) {
   if (!tagList) return [];
   // Supporte les deux formats :
   //   array  : ["cloud rap", "hip hop", "trap"]   (Last.fm API enrichi)
   //   string : '"cloud rap" hip-hop techno'        (SoundCloud tag_list)
+  let tags;
   if (Array.isArray(tagList)) {
-    return tagList.map(t => normalize(String(t))).filter(Boolean);
+    tags = tagList.map(t => normalize(String(t))).filter(Boolean);
+  } else {
+    // Format string SoundCloud : mots entre guillemets ou mots séparés
+    const matches = [...String(tagList).matchAll(/"([^"]+)"|([^\s"]+)/g)];
+    tags = matches.map(m => normalize(m[1] || m[2])).filter(Boolean);
   }
-  // Format string SoundCloud : mots entre guillemets ou mots séparés
-  const matches = [...String(tagList).matchAll(/"([^"]+)"|([^\s"]+)/g)];
-  return matches.map(m => normalize(m[1] || m[2])).filter(Boolean);
+  // Filtrer les tags parasites (pays, live-x, plateformes, etc.)
+  return tags.filter(t => !NOISE_TAGS.has(t));
 }
 
 function kwRegex(kw) {
@@ -1227,7 +1338,10 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
     }
     for (const lbl of (cat.labels || [])) {
       const pat = kwRegex(normalize(lbl));
-      if (pat.test(genreNorm) || allEnrichedTags.some(t => pat.test(t)) || pat.test(labelNorm)) {
+      // Sur SC, le "artiste" est souvent le canal promo (BCCO, Vault Sessions...)
+      // → chercher aussi dans artistNorm pour attraper ces canaux
+      if (pat.test(genreNorm) || allEnrichedTags.some(t => pat.test(t))
+          || pat.test(labelNorm) || pat.test(artistNorm) || pat.test(titleNorm)) {
         score += 4; matches.push(`label:${lbl}`);
       }
     }
