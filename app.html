@@ -615,9 +615,6 @@ async function publishToHub(catName, explicitTrackCount) {
   return { ok: true, prefill: true };
 }
 async function scFetch(ep, tok) {
-  if (!SC_PROXY || SC_PROXY === 'DEPLOYER_CLOUDFLARE_WORKER') {
-    throw new Error('Configure le proxy SoundCloud — voir les instructions dans la carte SC');
-  }
   try {
     const r = await fetch(SC_PROXY, {
       method: 'POST',
@@ -625,44 +622,33 @@ async function scFetch(ep, tok) {
       body: JSON.stringify({ endpoint: ep, token: tok }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!r.ok) throw new Error('Proxy SC HTTP ' + r.status);
+    if (!r.ok) throw new Error('Worker HTTP ' + r.status);
     const d = await r.json();
     if (d.error) throw new Error('SC API : ' + d.error);
     return d;
   } catch(e) {
-    if (e.message.includes('Proxy SC') || e.message.includes('SC API') || e.message.includes('Configure')) throw e;
-    throw new Error('Proxy SC inaccessible (' + e.message + ') — déploie le Cloudflare Worker fourni');
+    throw new Error('Proxy SC : ' + e.message);
   }
 }
 
 
+
+
 function dzFetch(url) {
-  // Deezer supporte JSONP natif — contourne le CORS sans proxy
   return new Promise((resolve, reject) => {
     const cbName = '_dz_' + Math.random().toString(36).slice(2);
     const sep    = url.includes('?') ? '&' : '?';
-    const src    = url + sep + 'output=jsonp&callback=' + cbName;
     const script = document.createElement('script');
-    const timer  = setTimeout(() => {
-      cleanup();
-      reject(new Error('Deezer timeout — profil introuvable ou API inaccessible'));
-    }, 10000);
-
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('Deezer timeout')); }, 10000);
     window[cbName] = (d) => {
       cleanup();
       if (d?.error?.code === 300) return reject(new Error('Profil Deezer privé — active "Rendre mes données publiques" dans Deezer → Paramètres → Confidentialité'));
-      if (d?.error)               return reject(new Error('Erreur Deezer : ' + (d.error.message || d.error)));
+      if (d?.error) return reject(new Error('Erreur Deezer : ' + (d.error.message || d.error)));
       resolve(d);
     };
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
+    function cleanup() { clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
     script.onerror = () => { cleanup(); reject(new Error("Impossible de charger l'API Deezer")); };
-    script.src = src;
+    script.src = url + sep + 'output=jsonp&callback=' + cbName;
     document.head.appendChild(script);
   });
 }
@@ -694,66 +680,66 @@ async function fetchDZ() {
 async function connectSC() {
   const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
   if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
-  if (!tok.startsWith('2-')) { setMsg('sc','Token invalide — doit commencer par "2-" (voir guide)','var(--orange)'); }
   setSt('sc','spin','⟳ Vérification...');
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
     if (!me || me.code === 401 || me.code === 403) throw new Error('Token invalide ou expiré');
-    if (!me.id) throw new Error('Réponse SC inattendue : ' + JSON.stringify(me).slice(0,120));
-    const likesCount = me.likes_count || me.public_favorites_count || 0;
-    S.sc = {on:true, token:tok, userId:String(me.id)};
+    if (!me.id) throw new Error('Réponse SC inattendue');
+    S.sc = { on:true, token:tok, userId:String(me.id) };
+    if (me.avatar_url) { $('sc-avt').src=me.avatar_url; $('sc-avt').style.display='block'; $('sc-avt-ph').style.display='none'; }
     $('sc-name').textContent = me.username;
-    $('sc-sub').textContent  = likesCount ? `${likesCount.toLocaleString('fr')} likes` : 'Connecté ✓';
+    $('sc-sub').textContent  = (me.likes_count||0).toLocaleString('fr') + ' likes';
     $('sc-conn').classList.add('show');
     $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
     setSt('sc','ok','✓ Connecté'); setMsg('sc',''); updateRun();
   } catch(e) { setSt('sc','err','✕ Erreur'); setMsg('sc','✕ '+e.message,'var(--red)'); }
 }
-async function fetchSC() {
-  const tracks=[]; const limit=200;
 
-  const uid = S.sc.userId;
-  const endpoints = [
-    (offset) => `https://api-v2.soundcloud.com/me/likes?limit=${limit}&offset=${offset}`,
-    ...(uid ? [(offset) => `https://api-v2.soundcloud.com/users/${uid}/likes?limit=${limit}&offset=${offset}`] : []),
+async function fetchSC() {
+  const tracks = [];
+  const uid    = S.sc.userId;
+
+  // Trouver le bon endpoint
+  const candidates = [
+    `https://api-v2.soundcloud.com/me/likes?limit=200`,
+    ...(uid ? [`https://api-v2.soundcloud.com/users/${uid}/likes?limit=200`] : []),
   ];
 
-  // Tester le premier endpoint qui retourne des données
-  let workingEndpoint = null;
-  for (const ep of endpoints) {
+  let nextUrl = null;
+  for (const url of candidates) {
     try {
-      const d = await scFetch(ep(0), S.sc.token);
-      const items = Array.isArray(d) ? d : (d.collection||[]);
-      log(`SC test ${ep(0).split('/').slice(-2).join('/')} → ${items.length} items`,'info');
-      if (items.length > 0) { workingEndpoint = ep; break; }
-      // Si 0 items, c'est peut-être un compte vide sur cet endpoint — essayer quand même
-      if (d && !d.error) { workingEndpoint = ep; break; }
-    } catch(e) {
-      log(`SC endpoint test failed: ${e.message}`,'info');
-    }
+      const d = await scFetch(url, S.sc.token);
+      const items = Array.isArray(d) ? d : (d.collection || []);
+      if (items.length > 0 || (d && !d.error && !d.code)) {
+        // Premier batch déjà chargé
+        const unwrapped = items.map(i => i.track || i).filter(t => t && t.id);
+        tracks.push(...unwrapped);
+        log(`SC — ${tracks.length} tracks...`);
+        nextUrl = d.next_href || null;
+        break;
+      }
+    } catch(e) { /* essayer suivant */ }
   }
 
-  if (!workingEndpoint) throw new Error('Aucun like SC trouvé — vérifie que tes likes sont publics dans Paramètres → Confidentialité');
+  if (!tracks.length && !nextUrl) {
+    log('SC : 0 tracks — vérifie que tes likes sont publics (Paramètres → Confidentialité)', 'info');
+    return [];
+  }
 
-  // Paginer avec l'endpoint qui marche
-  let offset = 0;
-  while (true) {
-    const d = await scFetch(workingEndpoint(offset), S.sc.token);
-    // v2 retourne {collection:[...], next_href:...}, v1 retourne un tableau direct
-    const items = Array.isArray(d) ? d : (d.collection||[]);
+  // Paginer via next_href jusqu'à épuisement
+  while (nextUrl) {
+    await delay(150);
+    const d = await scFetch(nextUrl, S.sc.token);
+    const items = Array.isArray(d) ? d : (d.collection || []);
     if (!items.length) break;
-    // v2 : les likes wrappent le track dans .track
-    const normalized = items.map(item => item.track || item);
-    tracks.push(...normalized);
+    const unwrapped = items.map(i => i.track || i).filter(t => t && t.id);
+    tracks.push(...unwrapped);
     log(`SC — ${tracks.length} tracks...`);
-    if (items.length < limit) break;
-    offset += limit;
-    await delay(200);
+    nextUrl = d.next_href || null;
   }
 
-  if (!tracks.length) log('SC : 0 tracks récupérés — vérifie que tes likes sont publics dans Paramètres SC', 'info');
-  return tracks.map(r=>normalizeTrack(r,'soundcloud'));
+  return tracks.map(r => normalizeTrack(r, 'soundcloud'));
 }
 
 // ── Spotify ───────────────────────────────────────────────────────────────────
