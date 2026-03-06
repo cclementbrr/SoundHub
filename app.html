@@ -254,27 +254,40 @@ textarea.f-input{resize:none}
         <button class="disc" id="sc-disc">✕</button>
       </div>
       <div class="svc-form" id="sc-form" onclick="event.stopPropagation()">
-        <div class="f-hint" style="line-height:1.9">
-          <strong style="color:var(--white)">Comment récupérer ton token :</strong><br>
-          1. Va sur <a href="https://soundcloud.com" target="_blank" style="color:var(--sc)">soundcloud.com</a> et connecte-toi<br>
-          2. Ouvre les DevTools (<code style="color:var(--accent)">F12</code>) → onglet <code style="color:var(--accent)">Network</code><br>
-          3. Rafraîchis la page, filtre sur <code style="color:var(--accent)">api-v2</code><br>
-          4. Clique une requête → Headers → copie la valeur après <code style="color:var(--accent)">OAuth </code>
-        </div>
-        <div>
-          <div class="f-label">Token OAuth (commence par 2-)</div>
-          <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123def456..." style="margin-top:6px" onclick="event.stopPropagation()"></textarea>
-        </div>
-        <div style="margin-top:8px">
-          <div class="f-label" style="color:var(--grey2)">
-            Cookies de session <span style="opacity:.6">(optionnel — requis pour créer des playlists)</span>
+
+        <!-- ÉTAPE 1 : bookmarklet -->
+        <div style="background:rgba(255,69,0,.08);border:1px solid rgba(255,69,0,.25);border-radius:8px;padding:12px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--sc);margin-bottom:8px">⚡ Connexion en 2 clics</div>
+          <div style="font-size:10px;color:var(--grey2);line-height:1.8;margin-bottom:10px">
+            1. Glisse ce bouton dans ta barre de favoris ↓<br>
+            2. Va sur <a href="https://soundcloud.com" target="_blank" style="color:var(--sc)">soundcloud.com</a> (connecté à ton compte)<br>
+            3. Clique le favori → le token arrive ici automatiquement
           </div>
-          <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin:4px 0 6px;line-height:1.6">
-            DevTools → Network → une requête soundcloud.com → <code style="color:var(--accent)">Cookie:</code> dans Request Headers
+          <a id="sc-bookmarklet" href="#" onclick="return false"
+            style="display:inline-block;background:var(--sc);color:#fff;font-size:11px;font-weight:700;padding:7px 14px;border-radius:6px;text-decoration:none;cursor:grab;user-select:none"
+            title="Glisse ce bouton dans ta barre de favoris">
+            ☁️ SoundHub Token
+          </a>
+          <div style="font-size:9px;color:var(--grey2);margin-top:8px;opacity:.7">
+            Le bookmarklet tourne localement dans ton navigateur — il ne partage rien avec nos serveurs.
           </div>
-          <textarea class="f-input" id="sc-cookies" rows="2" placeholder="oauth_token=2-abc...; sc_anonymous_id=xyz...; datadome=..." style="margin-top:2px;font-size:9px" onclick="event.stopPropagation()"></textarea>
         </div>
-        <button class="f-btn" id="sc-btn">☁️ Connecter SoundCloud</button>
+
+        <!-- ÉTAPE 2 : fallback manuel -->
+        <details style="margin-top:4px">
+          <summary style="font-size:10px;color:var(--grey2);cursor:pointer;user-select:none;list-style:none">
+            ▸ Entrer le token manuellement
+          </summary>
+          <div style="margin-top:8px">
+            <div class="f-hint" style="line-height:1.9;font-size:9px">
+              DevTools (<code style="color:var(--accent)">F12</code>) → Network → filtre <code style="color:var(--accent)">api-v2</code> → une requête → Authorization header → copie après <code style="color:var(--accent)">OAuth </code>
+            </div>
+            <div class="f-label" style="margin-top:6px">Token OAuth</div>
+            <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123def456..." style="margin-top:4px" onclick="event.stopPropagation()"></textarea>
+          </div>
+        </details>
+
+        <button class="f-btn" id="sc-btn" style="margin-top:10px">☁️ Connecter SoundCloud</button>
         <div class="f-msg" id="sc-msg"></div>
       </div>
     </div>
@@ -694,7 +707,8 @@ async function connectSC() {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
     if (!me || me.code === 401 || me.code === 403) throw new Error('Token invalide ou expiré');
     if (!me.id) throw new Error('Réponse SC inattendue');
-    const cookieStr = ($('sc-cookies')?.value||'').trim();
+    const cookieStr = (window._pendingScCookies || $('sc-cookies')?.value || '').trim();
+    window._pendingScCookies = null; // consommé
     S.sc = { on:true, token:tok, userId:String(me.id), cookies: cookieStr };
     if (me.avatar_url && $('sc-avt')) { $('sc-avt').src=me.avatar_url; $('sc-avt').style.display='block'; if($('sc-avt-ph')) $('sc-avt-ph').style.display='none'; }
     $('sc-name').textContent = me.username;
@@ -1583,6 +1597,29 @@ $('dz-btn').onclick=connectDZ;
 $('dz-disc').onclick=e=>{e.stopPropagation();disconn('dz');};
 
 $('sc-btn').onclick=connectSC;
+
+// ── Bookmarklet SC ──────────────────────────────────────────────────────────
+(function(){
+  var code = "(function(){\n  var tok=null;\n  // Méthode 1 : sc_hydration (présent sur la page SC)\n  try{\n    var h=window.__sc_hydration||[];\n    for(var i=0;i<h.length;i++){\n      var d=h[i]&&h[i].data;\n      if(d&&d.session&&d.session.oauth_token){tok=d.session.oauth_token;break;}\n      if(d&&d.oauth_token){tok=d.oauth_token;break;}\n    }\n  }catch(e){}\n  // Méthode 2 : cookie oauth_token\n  if(!tok){\n    var m=document.cookie.match(/(?:^|;\\s*)oauth_token=([^;]+)/);\n    if(m)tok=m[1];\n  }\n  // Méthode 3 : localStorage SC\n  if(!tok){\n    try{\n      for(var k in localStorage){\n        var v=localStorage[k];\n        if(typeof v==='string'&&v.indexOf('oauth_token')>-1){\n          var p=JSON.parse(v);\n          if(p&&p.oauth_token){tok=p.oauth_token;break;}\n        }\n      }\n    }catch(e){}\n  }\n  if(tok){\n    // Récupérer aussi tous les cookies pour l'export playlist\n    var cookies=document.cookie;\n    var target=window.opener||null;\n    if(target){\n      target.postMessage({type:'soundhub_sc_token',token:tok,cookies:cookies},'*');\n      window.close();\n    } else {\n      // Ouvert directement, pas depuis SoundHub → copier dans clipboard + alert\n      navigator.clipboard.writeText(tok).then(function(){\n        alert('Token copié ! Retourne sur SoundHub et colle-le.');\n      }).catch(function(){\n        prompt('Copie ce token dans SoundHub :',tok);\n      });\n    }\n  } else {\n    alert('Token introuvable. Assure-toi d\\'être connecté sur soundcloud.com et relance le bookmarklet.');\n  }\n})();";
+  var href = 'javascript:' + encodeURIComponent(code);
+  var el = document.getElementById('sc-bookmarklet');
+  if(el) el.href = href;
+})();
+
+// Écouter le token envoyé par le bookmarklet depuis soundcloud.com
+window.addEventListener('message', function(ev){
+  if(!ev.data || ev.data.type !== 'soundhub_sc_token') return;
+  var tok = (ev.data.token||'').trim().replace(/^OAuth\s+/i,'');
+  var cookies = (ev.data.cookies||'').trim();
+  if(!tok) return;
+  // Remplir le champ et déclencher la connexion
+  var tokEl = document.getElementById('sc-tok');
+  if(tokEl){ tokEl.value = tok; }
+  // Stocker les cookies directement dans S.sc si disponibles
+  if(cookies) { window._pendingScCookies = cookies; }
+  setMsg('sc','⟳ Token reçu, connexion en cours...','var(--sc)');
+  connectSC();
+});
 $('sc-disc').onclick=e=>{e.stopPropagation();disconn('sc');};
 
 $('sp-btn').onclick=e=>{e.stopPropagation();$('sp-file').click();};
