@@ -686,7 +686,7 @@ async function connectSC() {
     if (!me || me.code === 401 || me.code === 403) throw new Error('Token invalide ou expiré');
     if (!me.id) throw new Error('Réponse SC inattendue');
     S.sc = { on:true, token:tok, userId:String(me.id) };
-    if (me.avatar_url) { $('sc-avt').src=me.avatar_url; $('sc-avt').style.display='block'; $('sc-avt-ph').style.display='none'; }
+    if (me.avatar_url && $('sc-avt')) { $('sc-avt').src=me.avatar_url; $('sc-avt').style.display='block'; if($('sc-avt-ph')) $('sc-avt-ph').style.display='none'; }
     $('sc-name').textContent = me.username;
     $('sc-sub').textContent  = (me.likes_count||0).toLocaleString('fr') + ' likes';
     $('sc-conn').classList.add('show');
