@@ -1810,13 +1810,18 @@ function _setConnectStatus(msg, color) {
 document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
-  btn.textContent = '⟳ Recherche des sessions...';
+  btn.textContent = '⟳ Recherche...';
   _setConnectStatus('', '');
 
+  if (!_extAvailable) {
+    btn.disabled = false;
+    btn.textContent = '⚡ Connexion en 1 clic';
+    _setConnectStatus('Extension non détectée — ouvre le popup extension et clique "Injecter"', 'var(--red)');
+    return;
+  }
+
   window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
-  dbg('→ Demande SC envoyée');
   window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
-  dbg('→ Demande DZ envoyée');
 
   await new Promise(r => setTimeout(r, 5000));
   btn.disabled = false;
@@ -1825,7 +1830,7 @@ document.getElementById('btn-connect-all')?.addEventListener('click', async () =
   if (connected.length) {
     _setConnectStatus('✓ ' + connected.map(p => ({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + ') + ' connectés', 'var(--green)');
   } else {
-    _setConnectStatus('Ouvre SoundCloud et Deezer dans des onglets', 'var(--red)');
+    _setConnectStatus('Aucune session — ouvre SC et Deezer dans des onglets', 'var(--red)');
   }
 });
 
