@@ -232,10 +232,15 @@ textarea.f-input{resize:none}
   <!-- ══ ÉTAPE 1 : CONNEXION ═════════════════════════════════════════════ -->
   <div id="step-1" class="step active">
 
-    <!-- Debug panel (temporaire) -->
-    <div id="debug-panel" style="font-size:8px;font-family:Space Mono,monospace;color:#888;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:6px;padding:8px;margin-bottom:8px;max-height:100px;overflow-y:auto;display:block">
-      <div style="color:#444;margin-bottom:4px">Console liaison extension :</div>
-      <div id="debug-log"></div>
+    <!-- Debug panel -->
+    <div id="debug-panel" style="font-size:9px;font-family:'Space Mono',monospace;background:#080808;border:1px solid #2a2a2a;border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div style="padding:6px 10px;border-bottom:1px solid #1a1a1a;color:#444;display:flex;justify-content:space-between;align-items:center">
+        <span>liaison extension</span>
+        <span id="debug-ext-badge" style="color:#333">⬤ inactif</span>
+      </div>
+      <div id="debug-log" style="padding:8px 10px;max-height:90px;overflow-y:auto;line-height:1.8;color:#555">
+        <div style="color:#333">En attente de l'extension...</div>
+      </div>
     </div>
 
     <!-- Plateformes connectées (apparaissent après connexion) -->
@@ -1684,15 +1689,16 @@ if(resSearch){
 // ════════════════════════════════════════════════════════════════════════════
 //  EXTENSION + CONNEXION FLOW
 function dbg(msg, color) {
-  const panel = document.getElementById('debug-panel');
-  const log   = document.getElementById('debug-log');
-  if (!panel || !log) return;
-  panel.style.display = 'block';
+  const log = document.getElementById('debug-log');
+  if (!log) { console.log('[dbg]', msg); return; }
+  // Vider le "En attente..." au premier message
+  if (log.children.length === 1 && log.children[0].style.color === 'rgb(51, 51, 51)') log.innerHTML = '';
   const d = document.createElement('div');
-  d.style.color = color || '#888';
-  d.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  d.style.color = color || '#666';
+  d.textContent = new Date().toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) + ' ' + msg;
   log.appendChild(d);
-  panel.scrollTop = panel.scrollHeight;
+  log.scrollTop = log.scrollHeight;
+  console.log('[SoundHub dbg]', msg);
 } (v9 — version unique, pas de doublon)
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1792,13 +1798,12 @@ function refreshRunBtn() {
 
 // ── Extension ────────────────────────────────────────────────────────────────
 function _showExtUI() {
-  const noExt = document.getElementById('no-ext-msg');
-  if (noExt) noExt.style.display = 'none';
-  // Log visible dans la page
+  const noExt  = document.getElementById('no-ext-msg');
+  const badge  = document.getElementById('debug-ext-badge');
+  if (noExt)  noExt.style.display = 'none';
+  if (badge) { badge.textContent = '⬤ actif'; badge.style.color = '#4a4'; }
   _setConnectStatus('⚡ Extension détectée', 'rgba(123,106,255,.9)');
-  setTimeout(() => {
-    if (!S.sc?.on && !S.dz?.on) _setConnectStatus('', '');
-  }, 3000);
+  setTimeout(() => { if (!S.sc?.on && !S.dz?.on) _setConnectStatus('', ''); }, 3000);
 }
 
 function _setConnectStatus(msg, color) {
