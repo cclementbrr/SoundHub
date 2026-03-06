@@ -232,10 +232,19 @@ textarea.f-input{resize:none}
   <!-- ══ ÉTAPE 1 : CONNEXION ═════════════════════════════════════════════ -->
   <div id="step-1" class="step active">
 
+    <!-- Debug panel (temporaire) -->
+    <div id="debug-panel" style="font-size:8px;font-family:Space Mono,monospace;color:#666;background:#0a0a0a;border:1px solid #222;border-radius:6px;padding:8px;margin-bottom:8px;max-height:80px;overflow-y:auto;display:none">
+      <div style="color:#444;margin-bottom:4px">Console liaison extension :</div>
+      <div id="debug-log"></div>
+    </div>
+
     <!-- Plateformes connectées (apparaissent après connexion) -->
     <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
 
     <!-- Bouton 1 clic centré -->
+    <!-- Debug log -->
+    <div id="debug-log" style="font-family:'Space Mono',monospace;padding:6px 8px;margin-bottom:8px;background:rgba(0,0,0,.3);border:1px solid #222;border-radius:6px;min-height:24px;max-height:90px;overflow:hidden"></div>
+
     <div id="ext-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px">
       <button id="btn-connect-all">⚡ Connexion en 1 clic</button>
       <div id="connect-status"></div>
@@ -542,7 +551,7 @@ async function enrichAll(tracks, onProg) {
 // ── Deezer ────────────────────────────────────────────────────────────────────
 // Deezer API publique — pas de CORS sur les endpoints publics GET
 async function connectDZ() {
-  const uid = $('dz-inp').value.trim();
+  const uid = ($('dz-inp')?.value || '').trim();
   if (!uid) { setMsg('dz','Enter your Deezer ID','var(--red)'); return; }
   setSt('dz','spin','⟳ Vérification...');
   try {
@@ -671,7 +680,7 @@ async function fetchDZ() {
 
 // ── SoundCloud ────────────────────────────────────────────────────────────────
 async function connectSC() {
-  const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
+  const tok = ($('sc-tok')?.value || '').trim().replace(/^OAuth\s+/i,'');
   if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
   setSt('sc','spin','⟳ Vérification...');
   try {
@@ -755,11 +764,20 @@ function importSP(e) {
         :{id:t.spotify_track_uri?.split(':').pop()||'',title:t.master_metadata_track_name||'',artist:t.master_metadata_album_artist_name||'',album:t.master_metadata_album_album_name||'',genre:'',tags:[],duration:Math.round((t.ms_played||0)/1000),description:'',label:'',source:'spotify'}
       ).filter(t=>{if(!t.id)return true;if(seen.has(t.id))return false;seen.add(t.id);return true;});
       S.sp.on = true;
-      $('sp-name').textContent = file.name;
-      $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
-      $('sp-conn').classList.add('show');
-      $('sp-card').classList.add('on');
-      setSt('sp','ok','✓ Importé'); setMsg('sp',''); updateRun();
+      // Mettre à jour les pills du nouveau DOM
+      const spName = document.getElementById('sp-pill-name');
+      const spSub  = document.getElementById('sp-pill-sub');
+      const spDisc = document.getElementById('sp-disc');
+      if (spName) spName.textContent = 'Spotify';
+      if (spSub)  spSub.textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks importés`;
+      if (spDisc) spDisc.style.display = 'block';
+      // Compatibilité ancien DOM
+      if ($('sp-name')) $('sp-name').textContent = file.name;
+      if ($('sp-sub'))  $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
+      setSt('sp','ok','✓ Importé'); setMsg('sp','');
+      try { localStorage.setItem('sp_tracks', JSON.stringify(S.sp.tracks)); } catch(e) {}
+      if (typeof updateContinueBtn === 'function') updateContinueBtn();
+      if (typeof buildSourceChecks === 'function' && document.getElementById('step-2')?.classList.contains('active')) buildSourceChecks();
     } catch(err) { setSt('sp','err','✕ Erreur'); setMsg('sp','✕ '+err.message,'var(--red)'); }
     e.target.value='';
   };
@@ -771,7 +789,7 @@ function disconn(svc) {
   S[svc].on = false;
   if (svc==='lfm') { S.lfm.user=null; localStorage.removeItem('lfm_user'); localStorage.removeItem('lfm_src'); $('lfm-avt').style.display='none'; $('lfm-avt-ph').style.display='flex'; $('lfm-form').classList.add('open'); }
   if (svc==='dz')  { S.dz.accessToken=null; localStorage.removeItem('dz_token'); $('dz-avt').style.display='none'; $('dz-avt-ph').style.display='flex'; }
-  if (svc==='sp')  S.sp.tracks=[];
+  if (svc==='sp')  { S.sp.tracks=[]; localStorage.removeItem('sp_tracks'); }
   $(`${svc}-conn`).classList.remove('show');
   $(`${svc}-card`).classList.remove('on');
   setSt(svc,'','Non connecté'); updateRun();
@@ -1536,6 +1554,7 @@ if (savedU) {
 // Events
 // Init champs clé API Last.fm
 (function(){
+  try {
   const wrap    = $('lfm-secret-wrap');
   const keyInp  = $('lfm-apikey-inp');
   const secInp  = $('lfm-secret-inp');
@@ -1557,15 +1576,16 @@ if (savedU) {
     localStorage.setItem('lfm_api_secret', s);
     if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connecte Last.fm pour export"';}
   });
+  } catch(e) {}
 })();
 $('lfm-btn').onclick=connectLFM;
 $('lfm-inp').addEventListener('keydown',e=>{if(e.key==='Enter')connectLFM();});
 $('lfm-disc').onclick=e=>{e.stopPropagation();disconn('lfm');};
 
-$('dz-btn').onclick=connectDZ;
-$('dz-disc').onclick=e=>{e.stopPropagation();disconn('dz');};
+// $('dz-btn') supprimé du HTML — connexion via extension uniquement
+document.getElementById('dz-disc')?.addEventListener('click', e=>{e.stopPropagation();disconn('dz');});
 
-$('sc-btn').onclick=connectSC;
+// $('sc-btn') supprimé du HTML — connexion via extension uniquement
 
 // ── Bookmarklet SC ──────────────────────────────────────────────────────────
 (function(){
@@ -1589,16 +1609,7 @@ window.addEventListener('message', function(ev){
   setMsg('sc','⟳ Token reçu, connexion en cours...','var(--sc)');
   connectSC();
 });
-$('sc-disc').onclick=e=>{e.stopPropagation();disconn('sc');};
-
-$('sp-btn').onclick=e=>{e.stopPropagation();$('sp-file').click();};
-$('sp-file').addEventListener('change',importSP);
-$('sp-disc').onclick=e=>{e.stopPropagation();disconn('sp');};
-
-$('run-btn').onclick=run;
-
-$('btn-export-all').onclick=exportAllJSON;
-$('btn-rerun').onclick=run;
+// (wirings handled below in FLOW block)
 
 // ── Merge / Supprimer mode ────────────────────────────────────────────────────
 let mergeMode = false;
@@ -1671,10 +1682,34 @@ if(resSearch){
 
 
 // ════════════════════════════════════════════════════════════════════════════
-//  EXTENSION + CONNEXION FLOW (v9 — version unique, pas de doublon)
+//  EXTENSION + CONNEXION FLOW
+function dbg(msg, color) {
+  const panel = document.getElementById('debug-panel');
+  const log   = document.getElementById('debug-log');
+  if (!panel || !log) return;
+  panel.style.display = 'block';
+  const d = document.createElement('div');
+  d.style.color = color || '#888';
+  d.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  log.appendChild(d);
+  panel.scrollTop = panel.scrollHeight;
+} (v9 — version unique, pas de doublon)
 // ════════════════════════════════════════════════════════════════════════════
 
 let _extAvailable = false;
+
+// ── Debug log visible ─────────────────────────────────────────────────────────
+function dbg(msg, color) {
+  console.log('[SoundHub]', msg);
+  const el = document.getElementById('debug-log');
+  if (el) {
+    const line = document.createElement('div');
+    line.style.cssText = 'font-size:8px;padding:2px 0;color:' + (color||'#888');
+    line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+    el.prepend(line);
+    if (el.children.length > 8) el.lastChild.remove();
+  }
+}
 
 // ── Steps UI ─────────────────────────────────────────────────────────────────
 function showStep(n) {
@@ -1759,6 +1794,11 @@ function refreshRunBtn() {
 function _showExtUI() {
   const noExt = document.getElementById('no-ext-msg');
   if (noExt) noExt.style.display = 'none';
+  // Log visible dans la page
+  _setConnectStatus('⚡ Extension détectée', 'rgba(123,106,255,.9)');
+  setTimeout(() => {
+    if (!S.sc?.on && !S.dz?.on) _setConnectStatus('', '');
+  }, 3000);
 }
 
 function _setConnectStatus(msg, color) {
@@ -1774,7 +1814,9 @@ document.getElementById('btn-connect-all')?.addEventListener('click', async () =
   _setConnectStatus('', '');
 
   window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
+  dbg('→ Demande SC envoyée');
   window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
+  dbg('→ Demande DZ envoyée');
 
   await new Promise(r => setTimeout(r, 5000));
   btn.disabled = false;
@@ -1790,10 +1832,13 @@ document.getElementById('btn-connect-all')?.addEventListener('click', async () =
 // Listener messages depuis content-soundhub.js
 window.addEventListener('message', async function(ev) {
   if (!ev.data?.type) return;
+  dbg('msg: ' + ev.data.type, '#666');
 
   if (ev.data.type === 'soundhub_ext_present') {
     _extAvailable = true;
     _showExtUI();
+    dbg('✓ Extension détectée!', '#a0f0a0');
+    dbg('✓ Extension détectée', '#6f6');
     const badge = document.createElement('div');
     badge.style.cssText = 'position:fixed;bottom:16px;right:16px;background:rgba(123,106,255,.15);border:1px solid rgba(123,106,255,.35);color:#b0a0ff;font-size:10px;padding:6px 14px;border-radius:20px;font-family:Space Mono,monospace;z-index:9999;pointer-events:none;transition:opacity .5s';
     badge.textContent = '⚡ Extension SoundHub active';
@@ -1803,6 +1848,7 @@ window.addEventListener('message', async function(ev) {
   }
 
   if (ev.data.type === 'soundhub_ext_init') {
+    dbg('← Init reçu depuis extension', '#6f6');
     _extAvailable = true;
     _showExtUI();
     const d = ev.data.data || {};
@@ -1811,7 +1857,14 @@ window.addEventListener('message', async function(ev) {
     return;
   }
 
+  if (ev.data.type === 'soundhub_ext_no_session') {
+    console.log('[SoundHub] Pas de session pour', ev.data.platform);
+    _setConnectStatus('Pas de session ' + ev.data.platform.toUpperCase() + ' — ouvre l'onglet', 'var(--red)');
+    return;
+  }
+
   if (ev.data.type === 'soundhub_ext_credentials') {
+    dbg('← Credentials reçus: ' + ev.data.platform, '#fa0');
     const { platform, data } = ev.data;
     if (platform === 'sc') await _extConnectSC(data);
     if (platform === 'dz') _extConnectDZ(data);
@@ -1928,6 +1981,20 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
 
 // Init : restaurer session / résultats précédents
 (function init() {
+  // Restaurer Spotify tracks depuis localStorage
+  try {
+    const spTracks = localStorage.getItem('sp_tracks');
+    if (spTracks) {
+      const tracks = JSON.parse(spTracks);
+      if (tracks?.length) {
+        S.sp = { on:true, tracks };
+        setSt('sp','ok',`✓ ${tracks.length} tracks`);
+        updateContinueBtn();
+        renderConnectedPlats();
+      }
+    }
+  } catch(e) {}
+
   // Restaurer résultats depuis sessionStorage (survive au redirect OAuth)
   try {
     const saved = sessionStorage.getItem('sh_results');
@@ -1960,6 +2027,25 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
   // Restaurer session LFM
   const sess = localStorage.getItem('lfm_session');
   if (sess) S.lfmSession = sess;
+
+  // Restaurer Spotify depuis localStorage (persist entre sessions)
+  try {
+    const spRaw = localStorage.getItem('sp_tracks');
+    if (spRaw) {
+      const tracks = JSON.parse(spRaw);
+      if (Array.isArray(tracks) && tracks.length > 0) {
+        S.sp = { on:true, tracks };
+        const spName = document.getElementById('sp-pill-name');
+        const spSub  = document.getElementById('sp-pill-sub');
+        const spDisc = document.getElementById('sp-disc');
+        if (spName) spName.textContent = 'Spotify';
+        if (spSub)  spSub.textContent  = tracks.length.toLocaleString('fr') + ' tracks';
+        if (spDisc) spDisc.style.display = 'block';
+        setSt('sp','ok','✓ Restauré');
+        updateContinueBtn();
+      }
+    }
+  } catch(e) {}
 })();
 
 </script>
