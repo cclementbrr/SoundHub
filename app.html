@@ -265,6 +265,15 @@ textarea.f-input{resize:none}
           <div class="f-label">Token OAuth (commence par 2-)</div>
           <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123def456..." style="margin-top:6px" onclick="event.stopPropagation()"></textarea>
         </div>
+        <div style="margin-top:8px">
+          <div class="f-label" style="color:var(--grey2)">
+            Cookies de session <span style="opacity:.6">(optionnel — requis pour créer des playlists)</span>
+          </div>
+          <div style="font-family:'Space Mono';font-size:9px;color:var(--grey2);margin:4px 0 6px;line-height:1.6">
+            DevTools → Network → une requête soundcloud.com → <code style="color:var(--accent)">Cookie:</code> dans Request Headers
+          </div>
+          <textarea class="f-input" id="sc-cookies" rows="2" placeholder="oauth_token=2-abc...; sc_anonymous_id=xyz...; datadome=..." style="margin-top:2px;font-size:9px" onclick="event.stopPropagation()"></textarea>
+        </div>
         <button class="f-btn" id="sc-btn">☁️ Connecter SoundCloud</button>
         <div class="f-msg" id="sc-msg"></div>
       </div>
@@ -619,7 +628,7 @@ async function scFetch(ep, tok, {method='GET', payload=null}={}) {
     const r = await fetch(SC_PROXY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: ep, token: tok, method, payload }),
+      body: JSON.stringify({ endpoint: ep, token: tok, method, payload, cookies: S.sc?.cookies || '' }),
       signal: AbortSignal.timeout(15000),
     });
     if (!r.ok) throw new Error('Worker HTTP ' + r.status);
@@ -685,7 +694,8 @@ async function connectSC() {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
     if (!me || me.code === 401 || me.code === 403) throw new Error('Token invalide ou expiré');
     if (!me.id) throw new Error('Réponse SC inattendue');
-    S.sc = { on:true, token:tok, userId:String(me.id) };
+    const cookieStr = ($('sc-cookies')?.value||'').trim();
+    S.sc = { on:true, token:tok, userId:String(me.id), cookies: cookieStr };
     if (me.avatar_url && $('sc-avt')) { $('sc-avt').src=me.avatar_url; $('sc-avt').style.display='block'; if($('sc-avt-ph')) $('sc-avt-ph').style.display='none'; }
     $('sc-name').textContent = me.username;
     $('sc-sub').textContent  = (me.likes_count||0).toLocaleString('fr') + ' likes';
