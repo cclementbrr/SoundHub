@@ -523,6 +523,10 @@
         <input class="modal-input" id="m-author" type="text" placeholder="Ex: dj_acid_teuf" maxlength="40">
       </div>
       <div id="m-tracks-status" style="font-family:'Space Mono';font-size:9px;color:var(--grey);margin-top:2px;min-height:16px"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <label class="modal-label" style="margin:0;font-size:8px;opacity:.6">Nb de tracks (si non détecté)</label>
+        <input class="modal-input" id="m-tracks-manual" type="number" min="0" max="9999" placeholder="—" style="width:80px;padding:4px 8px;font-size:11px" oninput="if(this.value){autoTrackCount=parseInt(this.value)||0}">
+      </div>
       <div>
         <label class="modal-label">Plateforme source</label>
         <select class="modal-select" id="m-service">
@@ -664,10 +668,11 @@ async function loadStats() {
   document.getElementById('stat-genres').textContent    = new Set(data.map(d=>d.genre)).size;
 }
 
-async function loadMyLikes() {
-  const fp = await getFingerprint();
-  const { data } = await db.from('playlist_likes').select('playlist_id').eq('fingerprint', fp);
-  state.likedIds = (data||[]).map(r => r.playlist_id);
+function loadMyLikes() {
+  // Likes persistés en localStorage — aucune table Supabase requise
+  try {
+    state.likedIds = JSON.parse(localStorage.getItem('sh_likes') || '[]');
+  } catch { state.likedIds = []; }
 }
 
 function subscribeRealtime() {
@@ -697,6 +702,39 @@ async function init() {
   buildFilters();
   buildGenreSelect();
 
+  // ── Pré-remplir le modal si ?prefill=1 dans l'URL (vient de app.html) ───────
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('prefill') === '1') {
+    // Ouvrir le modal avec les données pré-remplies
+    setTimeout(() => {
+      const nameEl    = document.getElementById('m-name');
+      const genreEl   = document.getElementById('m-genre');
+      const serviceEl = document.getElementById('m-service');
+      const authorEl  = document.getElementById('m-author');
+      const statusEl  = document.getElementById('m-tracks-status');
+
+      if (nameEl)    nameEl.value    = urlParams.get('name')    || '';
+      if (authorEl)  authorEl.value  = urlParams.get('author')  || '';
+      if (genreEl    && urlParams.get('genre'))   genreEl.value   = urlParams.get('genre');
+      if (serviceEl  && urlParams.get('service')) serviceEl.value = urlParams.get('service');
+
+      const trackCount = parseInt(urlParams.get('tracks') || '0');
+      if (trackCount > 0) {
+        autoTrackCount = trackCount;
+        if (statusEl) statusEl.textContent = `✓ ${trackCount} tracks (depuis SoundHub)`;
+      }
+
+      // Ouvrir le modal
+      document.getElementById('shareModal').style.display = 'flex';
+
+      // Nettoyer l'URL pour ne pas pré-remplir à chaque refresh
+      window.history.replaceState({}, '', window.location.pathname);
+
+      // Focus sur le champ URL (seul champ manquant)
+      setTimeout(() => document.getElementById('m-url')?.focus(), 100);
+    }, 500);
+  }
+
   // Auto-détection tracks quand l'URL change
   const urlInput = document.getElementById('m-url');
   if (urlInput) {
@@ -710,7 +748,8 @@ async function init() {
   document.getElementById('playlistsArea').innerHTML =
     '<div style="padding:60px;text-align:center;font-family:Space Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--grey)">CHARGEMENT...</div>';
 
-  const [playlists] = await Promise.all([loadPlaylists(), loadStats(), loadMyLikes()]);
+  loadMyLikes();
+  const [playlists] = await Promise.all([loadPlaylists(), loadStats()]);
   state.playlists = playlists;
   state.loading   = false;
 
@@ -886,79 +925,60 @@ function buildCard(p, i) {
     </div>
     <div class="pl-tags">${p.tags.map(t => `<span class="pl-tag">${t}</span>`).join("")}</div>
     <div class="pl-card-footer">
-      <a href="${p.url}" target="_blank" class="pl-open-btn" onclick="event.stopPropagation()">Écouter ↗</a>
-      <button
-        class="pl-like-btn${liked ? " liked" : ""}"
-        data-id="${p.id}"
-        onclick="event.stopPropagation();window.toggleLike(event,${p.id})"
-        style="background:none;border:1px solid ${liked ? "var(--accent)" : "var(--border2)"};border-radius:3px;cursor:pointer;padding:5px 10px;color:${liked ? "var(--accent)" : "var(--grey)"};transition:all .15s;display:flex;align-items:center;gap:5px;font-family:'Space Mono';font-size:9px;line-height:1"
-      >${liked ? "♥" : "♡"}&nbsp;<span id="lb-${p.id}">${p.likes}</span></button>
+      <a href="${p.url || '#'}" target="_blank" class="pl-open-btn" onclick="event.stopPropagation()">Écouter ↗</a>
     </div>
   `;
 
-  // Click sur la card → ouvrir l'URL (mais pas si on clique le bouton/lien)
+  // Bouton like créé en JS (évite tous les problèmes d'injection / innerHTML)
+  const footer = card.querySelector('.pl-card-footer');
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'pl-like-btn' + (liked ? ' liked' : '');
+  likeBtn.style.cssText = 'background:none;border:1px solid ' + (liked ? 'var(--accent)' : 'var(--border2)') + ';border-radius:3px;cursor:pointer;padding:5px 10px;color:' + (liked ? 'var(--accent)' : 'var(--grey)') + ';transition:all .15s;display:flex;align-items:center;gap:5px;font-family:Space Mono,monospace;font-size:9px;line-height:1';
+  likeBtn.innerHTML = (liked ? '♥' : '♡') + ' <span>' + p.likes + '</span>';
+  likeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (this._liking) return;
+    this._liking = true;
+    const isLiked = this.classList.contains('liked');
+    const countEl = this.querySelector('span');
+    const lcEl    = document.getElementById('lc-' + p.id);
+
+    // Toggle état local
+    if (isLiked) {
+      this.classList.remove('liked');
+      this.style.borderColor = 'var(--border2)';
+      this.style.color = 'var(--grey)';
+      this.innerHTML = '♡ <span>' + Math.max(0,(p.likes||0)-1) + '</span>';
+      p.likes = Math.max(0,(p.likes||0)-1);
+      state.likedIds = state.likedIds.filter(x => String(x) !== String(p.id));
+    } else {
+      this.classList.add('liked');
+      this.style.borderColor = 'var(--accent)';
+      this.style.color = 'var(--accent)';
+      this.innerHTML = '♥ <span>' + ((p.likes||0)+1) + '</span>';
+      p.likes = (p.likes||0)+1;
+      state.likedIds.push(p.id);
+    }
+    if (lcEl) lcEl.textContent = p.likes;
+    try { localStorage.setItem('sh_likes', JSON.stringify(state.likedIds)); } catch(e){}
+
+    // DB update silencieux
+    db.from('playlists').update({ likes: p.likes }).eq('id', p.id)
+      .then(() => {}).catch(() => {});
+
+    setTimeout(() => { this._liking = false; }, 400);
+  });
+  footer.appendChild(likeBtn);
+
+  // Click card → ouvrir URL
   card.addEventListener("click", (e) => {
     if (e.target.closest("button, a")) return;
-    window.open(p.url, "_blank");
+    if (p.url && p.url !== '#') window.open(p.url, "_blank");
   });
 
   return card;
 }
 
-// ─── Like ─────────────────────────────────────────────────────────────────────
-window.toggleLike = async function(e, id) {
-  e.stopPropagation();
-  const pl  = state.playlists.find(p => p.id === id);
-  if (!pl) return;
-  const btn = e.target.closest('button');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-
-  const fp       = await getFingerprint();
-  const already  = state.likedIds.includes(id);
-  const newCount = (pl.likes||0) + (already ? -1 : 1);
-
-  // Mise à jour optimiste immédiate
-  pl.likes = newCount;
-  if (already) {
-    state.likedIds = state.likedIds.filter(x => x !== id);
-  } else {
-    state.likedIds.push(id);
-  }
-  updateLikeUI(btn, id, newCount, !already);
-
-  try {
-    if (already) {
-      // Supprimer le like
-      await db.from('playlist_likes')
-        .delete()
-        .eq('playlist_id', id)
-        .eq('fingerprint', fp);
-    } else {
-      // Insérer le like (ignore si existe déjà)
-      await db.from('playlist_likes')
-        .upsert({ playlist_id: id, fingerprint: fp }, { onConflict: 'playlist_id,fingerprint' });
-    }
-    // Mettre à jour le compteur sur la playlist
-    await db.from('playlists')
-      .update({ likes: newCount })
-      .eq('id', id);
-  } catch(err) {
-    console.warn('like error (non-bloquant):', err);
-  }
-
-  btn.disabled = false;
-};
-
-function updateLikeUI(btn, id, count, liked) {
-  const heart = liked ? '♥' : '♡';
-  btn.innerHTML = heart + ' <span id="lb-' + id + '">' + count + '</span>';
-  btn.style.borderColor = liked ? 'var(--accent)' : 'var(--border2)';
-  btn.style.color       = liked ? 'var(--accent)' : 'var(--grey)';
-  if (liked) btn.classList.add('liked'); else btn.classList.remove('liked');
-  const lcEl = document.getElementById('lc-' + id);
-  if (lcEl) lcEl.textContent = count;
-}
 
 // Stats gérées par loadStats() (appel Supabase)
 
@@ -1044,24 +1064,29 @@ async function detectTrackCount(url) {
   if (statusEl) statusEl.textContent = '⟳ Détection en cours...';
 
   try {
-    // ── Deezer : API publique via notre proxy ─────────────────────────────────
+    // ── Deezer : allorigins proxy public (pas besoin de backend) ───────────────
     const dzMatch = url.match(/deezer\.com\/(?:[a-z]{2}\/)?playlist\/(\d+)/);
     if (dzMatch) {
-      const r = await fetch('https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/dz-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: `https://api.deezer.com/playlist/${dzMatch[1]}` }),
-      });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.nb_tracks) {
-          autoTrackCount = d.nb_tracks;
-          if (statusEl) statusEl.textContent = `✓ ${autoTrackCount} tracks (Deezer)`;
-          // Auto-remplir le service
-          const svcSel = document.getElementById('m-service');
-          if (svcSel) svcSel.value = 'deezer';
-          return;
-        }
+      const dzApiUrl = `https://api.deezer.com/playlist/${dzMatch[1]}`;
+      // 1. Direct
+      let d = null;
+      try {
+        const r = await fetch(dzApiUrl, { signal: AbortSignal.timeout(3000) });
+        if (r.ok) d = await r.json();
+      } catch(e) {}
+      // 2. allorigins
+      if (!d || d.error) {
+        try {
+          const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(dzApiUrl)}`, { signal: AbortSignal.timeout(8000) });
+          if (r.ok) { const raw = await r.json(); d = raw.contents ? JSON.parse(raw.contents) : null; }
+        } catch(e) {}
+      }
+      if (d && d.nb_tracks) {
+        autoTrackCount = d.nb_tracks;
+        if (statusEl) statusEl.textContent = `✓ ${d.nb_tracks} tracks (Deezer)`;
+        const svcSel = document.getElementById('m-service');
+        if (svcSel) svcSel.value = 'deezer';
+        return;
       }
     }
 

@@ -155,6 +155,7 @@ textarea.f-input{resize:none}
   .main{padding:24px 20px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -581,22 +582,65 @@ const SUPA_HEADERS = {
   'apikey':        SUPA_ANON,
   'Authorization': 'Bearer ' + SUPA_ANON,
 };
-async function scFetch(ep, tok) {
-  const r = await fetch(SC_PROXY, {
-    method: 'POST',
-    headers: SUPA_HEADERS,
-    body: JSON.stringify({endpoint: ep, token: tok}),
+
+// ── Client Supabase pour le Hub ───────────────────────────────────────────────
+const HUB_DB = window.supabase
+  ? window.supabase.createClient('https://xbkkocwrrakkgurtmzss.supabase.co', SUPA_ANON)
+  : null;
+
+async function publishToHub(catName, explicitTrackCount) {
+  const tracks = (S.results[catName]||[]);
+  const label  = S.labels?.[catName] || catName;
+  if (!tracks.length) return { ok: false, error: 'Pas de tracks' };
+  if (!HUB_DB) return { ok: false, error: 'Supabase non chargé' };
+
+  const trackCount = explicitTrackCount || tracks.length;
+  const genre  = catName;
+  const service = S.sc?.on ? 'soundcloud'
+                : S.dz?.on ? 'deezer'
+                : S.lfm?.on ? 'lastfm'
+                : S.sp?.on ? 'spotify'
+                : 'other';
+
+  // Ouvrir hub.html avec les infos pré-remplies (l'user ajoute juste l'URL publique)
+  const params = new URLSearchParams({
+    prefill: '1',
+    name:    label,
+    genre:   genre,
+    service: service,
+    tracks:  tracks.length,
+    author:  S.lfm?.username || S.dz?.username || S.sc?.username || '',
   });
-  if (!r.ok) throw new Error('Proxy SC ' + r.status);
-  return r.json();
+  window.open('hub.html?' + params.toString(), '_blank');
+  return { ok: true, prefill: true };
+}
+async function scFetch(ep, tok) {
+  // 1. Proxy Supabase (si JWT désactivé + redéployé)
+  try {
+    const r = await fetch(SC_PROXY, {
+      method: 'POST',
+      headers: SUPA_HEADERS,
+      body: JSON.stringify({ endpoint: ep, token: tok }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      if (!d.error) return d;
+    }
+  } catch(e) { /* essayer le suivant */ }
+
+  // 2. corsproxy.io pour les GET SC (ne marche pas pour les endpoints avec OAuth)
+  // SC bloque systématiquement CORS côté serveur → seul un vrai proxy backend fonctionne
+  // Message d'erreur clair pour guider l'utilisateur
+  throw new Error('Proxy SC inaccessible — vérifie que sc-proxy est déployé sur Supabase avec JWT désactivé');
 }
 
 const DZ_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/dz-proxy';
 
 async function dzFetch(url) {
-  // 1. Essai direct (marche parfois selon navigateur)
+  // 1. Essai direct
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (r.ok) {
       const d = await r.json();
       if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
@@ -606,22 +650,33 @@ async function dzFetch(url) {
     if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
   }
 
-  // 2. Proxy Supabase
+  // 2. allorigins.win (proxy GET public, pas besoin de backend)
   try {
-    const r = await fetch(DZ_PROXY, {
-      method: 'POST',
-      headers: SUPA_HEADERS,
-      body: JSON.stringify({ url }),
-    });
-    if (!r.ok) throw new Error('Proxy HTTP ' + r.status);
-    const d = await r.json();
-    if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
-    if (d.error) throw new Error(d.error.message || 'Erreur Deezer');
-    return d;
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const r = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const raw = await r.json();
+      const d = raw.contents ? JSON.parse(raw.contents) : raw;
+      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
+      if (!d.error) return d;
+    }
   } catch(e) {
     if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
-    throw new Error("Erreur proxy Deezer — déploie la fonction dz-proxy sur Supabase");
   }
+
+  // 3. corsproxy.io
+  try {
+    const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
+      if (!d.error) return d;
+    }
+  } catch(e) {
+    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
+  }
+
+  throw new Error("Impossible de contacter l\'API Deezer (CORS). Essaie dans un autre navigateur ou désactive les extensions.");
 }
 async function fetchDZ() {
   const tracks=[];
@@ -870,13 +925,12 @@ function openModal(catName) {
     <button class="btn" id="m-txt">↓ .txt</button>
     ${lfmBtnHtml}
     ${dzBtnHtml}
-    <label class="btn" style="display:flex;align-items:center;gap:8px;cursor:pointer" id="m-hub-wrap">
-      <span id="m-hub-dot" style="width:8px;height:8px;border-radius:50%;background:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};transition:background .2s;flex-shrink:0"></span>
-      Partager sur le Hub
-    </label>`;
+    <button class="btn" id="m-hub-btn" style="border-color:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};color:${S.sharedCats?.has(catName)?'var(--green)':'var(--grey)'}">
+      ${S.sharedCats?.has(catName) ? '✓ Partagée !' : '⊕ Partager sur le Hub'}
+    </button>`;
   $('m-json').onclick = ()=>exportPlaylistJSON(catName);
   $('m-txt').onclick  = ()=>exportTXT(catName);
-  $('m-hub-wrap').onclick = ()=>toggleHubShare(catName);
+  $('m-hub-btn').onclick = ()=>doHubShare(catName);
   if (lfmConnecteed) {
     $('m-lfm-scrobble').onclick = ()=>exportToLFMScrobble(catName);
     $('m-lfm-love').onclick     = ()=>exportToLFMLoved(catName);
@@ -955,13 +1009,49 @@ function closeModal() {
 }
 
 // ── Hub share ──────────────────────────────────────────────────────────────────
-function toggleHubShare(catName) {
-  if (S.sharedCats.has(catName)) S.sharedCats.delete(catName);
-  else S.sharedCats.add(catName);
-  // update dot
-  const dot = $('m-hub-dot');
-  if (dot) dot.style.background = S.sharedCats.has(catName) ? 'var(--green)' : 'var(--border2)';
-  // TODO: save to Supabase hub table
+async function doHubShare(catName) {
+  const btn = $('m-hub-btn');
+  if (!btn) return;
+
+  // Déjà partagé → retirer
+  if (S.sharedCats.has(catName)) {
+    S.sharedCats.delete(catName);
+    btn.textContent = '⊕ Partager sur le Hub';
+    btn.style.borderColor = 'var(--border2)';
+    btn.style.color = 'var(--grey)';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⟳ Publication...';
+
+  const result = await publishToHub(catName, (S.results[catName]||[]).length);
+  btn.disabled = false;
+
+  if (result.ok) {
+    S.sharedCats.add(catName);
+    btn.textContent = '✓ Partagée !';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    // Toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#161616;border:1px solid var(--green);color:var(--green);font-family:Space Mono;font-size:11px;padding:10px 22px;border-radius:4px;z-index:9999;letter-spacing:1px';
+    toast.textContent = result.prefill
+      ? '↗ Hub ouvert — ajoute l\'URL publique de ta playlist !'
+      : '✓ Playlist publiée sur le Hub !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  } else {
+    btn.textContent = '✕ Erreur';
+    btn.style.borderColor = 'var(--red)';
+    btn.style.color = 'var(--red)';
+    console.error('Hub publish error:', result.error);
+    setTimeout(() => {
+      btn.textContent = '⊕ Partager sur le Hub';
+      btn.style.borderColor = 'var(--border2)';
+      btn.style.color = 'var(--grey)';
+    }, 3000);
+  }
 }
 
 // ── Last.fm Web Auth → session key → track.love ───────────────────────────────
@@ -1144,6 +1234,21 @@ async function exportToLFMScrobble(catName) {
     console.groupEnd();
   }
   btn.disabled=false;
+
+  // ── Publier sur le Hub si demandé ─────────────────────────────────────────
+  if (S.sharedCats.has(catName)) {
+    const hubBtn = $('m-hub-btn');
+    if (hubBtn) { hubBtn.disabled = true; hubBtn.textContent = '⟳ Publication Hub...'; }
+    const result = await publishToHub(catName, tracks.length);
+    if (hubBtn) {
+      hubBtn.disabled = false;
+      if (result.ok) {
+        hubBtn.textContent = '✓ Partagée !';
+        hubBtn.style.borderColor = 'var(--green)';
+        hubBtn.style.color = 'var(--green)';
+      }
+    }
+  }
 }
 
 async function exportToLFMLoved(catName) {
