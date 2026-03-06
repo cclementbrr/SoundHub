@@ -172,6 +172,44 @@ textarea.f-input{resize:none}
   #ext-connect-all:hover { background:linear-gradient(135deg,rgba(123,106,255,.28),rgba(160,64,255,.22)); border-color:rgba(123,106,255,.65); }
   #ext-connect-all:disabled { opacity:.55; cursor:wait; }
   #ext-connect-status { font-size:9px; color:var(--grey2); text-align:center; margin-top:5px; font-family:'Space Mono',monospace; min-height:13px; }
+
+  /* ── Flow connexion / export ─────────────────────────────── */
+  .step { display:none; }
+  .step.active { display:block; }
+
+  #btn-connect-all {
+    display:block; width:100%; padding:14px 16px;
+    background:linear-gradient(135deg,rgba(123,106,255,.2),rgba(160,64,255,.15));
+    border:1px solid rgba(123,106,255,.45); border-radius:10px;
+    color:#ccc0ff; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+    cursor:pointer; letter-spacing:.8px; transition:all .2s; text-align:center;
+  }
+  #btn-connect-all:hover { background:linear-gradient(135deg,rgba(123,106,255,.3),rgba(160,64,255,.22)); border-color:rgba(123,106,255,.7); }
+  #btn-connect-all:disabled { opacity:.5; cursor:wait; }
+  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:6px; font-family:'Space Mono',monospace; min-height:14px; }
+  .plat-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; }
+  .plat-pill .pill-icon { font-size:18px; flex-shrink:0; }
+  .plat-pill .pill-info { flex:1; }
+  .plat-pill .pill-name { font-size:11px; font-weight:600; }
+  .plat-pill .pill-sub  { font-size:9px; color:var(--grey); font-family:'Space Mono',monospace; }
+  .plat-pill .pill-disc { background:none; border:1px solid var(--border2); color:var(--grey); border-radius:4px; padding:2px 7px; font-size:9px; cursor:pointer; }
+  .plat-pill .pill-disc:hover { border-color:var(--red); color:var(--red); }
+  .src-check { display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s; }
+  .src-check:hover { border-color:rgba(255,255,255,.18); }
+  .src-check input { width:14px; height:14px; accent-color:var(--accent); flex-shrink:0; cursor:pointer; }
+  #export-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:1000; align-items:center; justify-content:center; }
+  #export-modal.open { display:flex; }
+  #export-modal .em-box { background:var(--dark); border:1px solid var(--border2); border-radius:14px; padding:24px; width:340px; max-width:90vw; }
+  #export-modal h3 { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:4px; }
+  #export-modal .em-sub { font-size:10px; color:var(--grey); font-family:'Space Mono',monospace; margin-bottom:18px; }
+  .export-plat { display:flex; align-items:center; gap:10px; padding:11px 12px; margin-bottom:8px; background:var(--card); border:2px solid var(--border); border-radius:8px; cursor:pointer; transition:all .15s; }
+  .export-plat:hover { border-color:rgba(255,255,255,.2); }
+  .export-plat.selected { border-color:var(--accent); background:rgba(255,68,0,.08); }
+  .export-plat .ep-icon { font-size:20px; }
+  .export-plat .ep-name { flex:1; font-size:12px; font-weight:600; }
+  .export-plat .ep-check { width:16px; height:16px; border:2px solid var(--border2); border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:transparent; }
+  .export-plat.selected .ep-check { background:var(--accent); border-color:var(--accent); color:#fff; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -183,11 +221,12 @@ textarea.f-input{resize:none}
 </nav>
 
 <div class="app-layout">
-<aside class="sidebar">
-  <div>
-    <div class="sidebar-title">// Connexion</div>
+<aside class="side">
 
-    <!-- LAST.FM -->
+  <!-- ══ ÉTAPE 1 : CONNEXION ═════════════════════════════════════════════ -->
+  <div id="step-1" class="step active">
+
+    <!-- Last.fm (toujours visible) -->
     <div class="svc" id="lfm-card" style="--c:var(--lfm)">
       <div class="svc-head">
         <span class="svc-icon">🎵</span>
@@ -200,100 +239,93 @@ textarea.f-input{resize:none}
         <button class="disc" id="lfm-disc">✕</button>
       </div>
       <div class="svc-form open" id="lfm-form" onclick="event.stopPropagation()">
-        <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services.<br>
-          <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm);font-family:'Space Mono';font-size:9px" onclick="event.stopPropagation()">Créer un compte gratuit →</a>
+        <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services. <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm)">Créer un compte gratuit →</a></div>
+        <div id="lfm-secret-wrap">
+          <div style="font-size:9px;color:#f59e0b;margin-bottom:4px">⚡ Pour export vers Last.fm Loved</div>
+          <div class="f-hint" style="font-size:8.5px">La clé de démo ne supporte pas l'export. <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)">Crée une app gratuite en 30s →</a></div>
         </div>
-        <div id="lfm-secret-wrap" style="display:none;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--border)">
-          <div class="f-label" style="color:var(--accent2)">⚡ Pour export vers Last.fm Loved</div>
-          <div style="font-family:'Space Mono';font-size:8px;color:var(--grey2);line-height:1.8">
-            La clé de démo ne supporte pas l'export.<br>
-            Crée une app gratuite en 30s →
-            <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)" onclick="event.stopPropagation()">last.fm/api/account/create</a>
-          </div>
-          <input class="f-input" id="lfm-apikey-inp" type="text" placeholder="Clé API (API key)" onclick="event.stopPropagation()">
-          <input class="f-input" id="lfm-secret-inp" type="password" placeholder="Shared secret" onclick="event.stopPropagation()">
-          <button class="f-btn" id="lfm-save-creds" style="--c:var(--accent2)">💾 Sauvegarder</button>
-          <div class="f-msg" id="lfm-creds-msg"></div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button class="f-btn" id="lfm-save-btn" style="flex:1;font-size:9px">💾 Sauvegarder</button>
         </div>
-        <div>
-          <div class="f-label">Pseudo Last.fm</div>
-          <input class="f-input" id="lfm-inp" type="text" placeholder="ton_pseudo" style="margin-top:6px" onclick="event.stopPropagation()">
-        </div>
-        <div>
-          <div class="f-label" style="margin-bottom:7px">Source</div>
-          <div class="radio-grp">
-            <label class="radio-opt" onclick="event.stopPropagation()"><input type="radio" name="lfm-src" value="loved" checked> Loved</label>
-            <label class="radio-opt" onclick="event.stopPropagation()"><input type="radio" name="lfm-src" value="recent"> Récentes</label>
-            <label class="radio-opt" onclick="event.stopPropagation()"><input type="radio" name="lfm-src" value="top"> Top</label>
+        <div class="f-label" style="margin-top:6px">Pseudo Last.fm</div>
+        <input class="f-input" id="lfm-inp" type="text" placeholder="tonpseudo" style="margin-top:4px" onclick="event.stopPropagation()">
+        <div style="margin-top:8px">
+          <div class="f-label">Source</div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="f-tab active" id="lfm-tab-loved" onclick="setLfmTab('loved')">Loved</button>
+            <button class="f-tab" id="lfm-tab-recent" onclick="setLfmTab('recent')">Récentes</button>
+            <button class="f-tab" id="lfm-tab-top" onclick="setLfmTab('top')">Top</button>
           </div>
         </div>
+        <div class="f-msg" id="lfm-creds-msg"></div>
         <button class="f-btn" id="lfm-btn">🔴 Connecte Last.fm</button>
         <div class="f-msg" id="lfm-msg"></div>
       </div>
     </div>
 
-    <div class="sec-label" style="margin-top:14px">Sources supplémentaires (optionnel)</div>
+    <!-- Séparateur -->
+    <div style="margin:14px 0 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);letter-spacing:1px;text-transform:uppercase">Sources supplémentaires</div>
 
-    <!-- DEEZER -->
-    <!-- ═══ CONNEXION PLATEFORMES ═══════════════════════════════════════════════ -->
-
-  <!-- Bouton 1 clic (affiché si extension installée) -->
-  <div id="ext-connect-banner" style="display:none;margin:12px 0 8px">
-    <button id="ext-connect-all">⚡ Connexion en 1 clic</button>
-    <div id="ext-connect-status"></div>
-  </div>
-
-  <!-- Indicateurs de statut (lecture seule, plus de form au clic) -->
-  <div style="display:flex;flex-direction:column;gap:6px" id="platforms-status">
-
-    <div class="svc" id="sc-card" style="--c:var(--sc);cursor:default">
-      <div class="svc-head">
-        <span class="svc-icon">☁️</span>
-        <div style="flex:1"><div class="svc-name">SoundCloud</div><div class="svc-st" id="sc-st">Non connecté</div></div>
-        <div class="conn-row" id="sc-conn" style="margin:0;padding:0;border:none;background:none">
-          <img class="avt" id="sc-avt" style="display:none;width:24px;height:24px;border-radius:50%" src="" alt="">
-          <div class="avt-ph" id="sc-avt-ph" style="display:none">☁️</div>
-          <div><div class="conn-name" id="sc-name" style="font-size:11px"></div><div class="conn-sub" id="sc-sub" style="font-size:9px;color:var(--grey2)"></div></div>
-          <button class="disc" id="sc-disc">✕</button>
-        </div>
-      </div>
+    <!-- Bouton 1 clic (extension) -->
+    <div id="ext-banner" style="display:none;margin-bottom:10px">
+      <button id="btn-connect-all">⚡ Connexion en 1 clic — SC · Deezer</button>
+      <div id="connect-status"></div>
     </div>
 
-    <div class="svc" id="dz-card" style="--c:var(--dz);cursor:default">
-      <div class="svc-head">
-        <span class="svc-icon">🎶</span>
-        <div style="flex:1"><div class="svc-name">Deezer</div><div class="svc-st" id="dz-st">Non connecté</div></div>
-        <div class="conn-row" id="dz-conn" style="margin:0;padding:0;border:none;background:none">
-          <img class="avt" id="dz-avt" style="display:none;width:24px;height:24px;border-radius:50%" src="" alt="">
-          <div class="avt-ph" id="dz-avt-ph" style="display:none">🎶</div>
-          <div><div class="conn-name" id="dz-name" style="font-size:11px"></div><div class="conn-sub" id="dz-sub" style="font-size:9px;color:var(--grey2)"></div></div>
-          <button class="disc" id="dz-disc">✕</button>
-        </div>
-      </div>
+    <!-- Pas d'extension -->
+    <div id="no-ext-msg" style="font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9;margin-bottom:10px">
+      Installe l'extension SoundHub<br>pour la connexion en 1 clic
     </div>
 
-    <div class="svc" id="sp-card" style="--c:var(--sp);cursor:default">
-      <div class="svc-head">
-        <span class="svc-icon">💚</span>
-        <div style="flex:1"><div class="svc-name">Spotify</div><div class="svc-st" id="sp-st">Non connecté</div></div>
-        <div class="conn-row" id="sp-conn" style="margin:0;padding:0;border:none;background:none">
-          <div class="avt-ph" style="display:none">💚</div>
-          <div><div class="conn-name" id="sp-name" style="font-size:11px"></div><div class="conn-sub" id="sp-sub" style="font-size:9px;color:var(--grey2)"></div></div>
-          <button class="disc" id="sp-disc">✕</button>
-        </div>
-        <!-- Import Spotify JSON (caché, déclenché par lien) -->
-        <input id="sp-file" type="file" accept=".json" style="display:none">
-        <button id="sp-btn" style="font-size:9px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--grey2);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:Space Mono,monospace;white-space:nowrap;flex-shrink:0" title="Importer YourLibrary.json">📥 JSON</button>
+    <!-- Plateformes connectées (remplissent au fur et à mesure) -->
+    <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+
+    <!-- Spotify JSON (toujours dispo) -->
+    <div class="plat-pill" style="cursor:pointer" id="sp-import-pill" title="Importer YourLibrary.json">
+      <span class="pill-icon">💚</span>
+      <div class="pill-info">
+        <div class="pill-name" id="sp-pill-name">Spotify</div>
+        <div class="pill-sub" id="sp-pill-sub">Importer YourLibrary.json</div>
       </div>
-      <div class="f-msg" id="sp-msg" style="display:none"></div>
+      <input id="sp-file" type="file" accept=".json" style="display:none">
+      <button id="sp-btn" style="font-size:9px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'Space Mono',monospace">📥 JSON</button>
+      <button id="sp-disc" class="pill-disc" style="display:none">✕</button>
     </div>
+    <div class="f-msg" id="sp-msg" style="margin-top:4px"></div>
+
+    <!-- Bouton continuer (visible quand ≥1 source connectée) -->
+    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:opacity .2s">
+      CONTINUER →
+    </button>
 
   </div>
-  <div class="run-area">
-    <button class="run-btn" id="run-btn" disabled>LANCER LA CLASSIFICATION</button>
-    <div class="run-info" id="run-info">Connectee au moins un service</div>
+
+  <!-- ══ ÉTAPE 2 : SÉLECTION SOURCES ═════════════════════════════════════ -->
+  <div id="step-2" class="step">
+    <button id="btn-back" style="background:none;border:none;color:var(--grey);font-size:9px;font-family:'Space Mono',monospace;cursor:pointer;margin-bottom:10px;padding:0">← Retour</button>
+    <div class="sec-label" style="margin-bottom:8px">Analyser</div>
+    <div style="font-size:9px;color:var(--grey);font-family:'Space Mono',monospace;margin-bottom:12px">Sélectionne les plateformes à inclure dans l'analyse</div>
+    <div id="source-checks" style="display:flex;flex-direction:column;gap:7px"></div>
+    <button class="run-btn" id="run-btn" style="margin-top:16px" disabled>LANCER LA CLASSIFICATION</button>
+    <div class="run-info" id="run-info">Sélectionne au moins une source</div>
   </div>
+
 </aside>
+
+<!-- ══ MODAL EXPORT ═════════════════════════════════════════════════════════ -->
+<div id="export-modal">
+  <div class="em-box">
+    <h3>Exporter les playlists</h3>
+    <div class="em-sub" id="export-modal-sub">Sélectionne les plateformes de destination</div>
+    <div id="export-plat-list" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button id="export-cancel-btn" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
+      <button id="export-confirm-btn" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
+    </div>
+    <div id="export-progress" style="margin-top:10px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px"></div>
+  </div>
+</div>
+
 
 <main class="main">
   <div class="empty" id="empty">
@@ -318,9 +350,10 @@ textarea.f-input{resize:none}
         <div class="res-ttl">Résultats</div>
         <div class="res-meta" id="res-meta">—</div>
         <div class="res-acts">
-          <button class="btn" id="btn-export-all">↓ Exporte all JSON</button>
+          <button class="btn" id="btn-export-all">↓ JSON</button>
           <button class="btn" id="btn-rerun">↺ Reclassifier</button>
           <button class="btn" id="btn-merge-mode" style="border-color:var(--accent2);color:var(--accent2)">⊕ Fusionner / Supprimer</button>
+          <button class="btn" id="btn-export-modal" style="border-color:rgba(123,106,255,.6);color:#c0b0ff">⬆ Exporter</button>
         </div>
       </div>
     </div>
@@ -1675,89 +1708,154 @@ if(resSearch){
   });
 }
 
-// Cards SC/DZ/SP : connexion via extension uniquement (pas de form au clic)
-$('lfm-card').addEventListener('click',()=>{
-  if (S.lfm.on) return;
-  $('lfm-form').classList.toggle('open');
-});
 
-// Modal close
-$('m-close').onclick=closeModal;
-$('m-title').addEventListener('input',e=>{if(S.openCat)S.labels[S.openCat]=e.target.value;});
-$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeModal();});
-
-
-
-// ── SoundHub Connect Extension ──────────────────────────────────────────────
-// Un seul bouton "1 clic" → connecte SC + Deezer automatiquement
-// Spotify = import JSON uniquement (pas d'API accessible côté extension)
+// ════════════════════════════════════════════════════════════════════════════
+//  FLOW : CONNEXION → SÉLECTION SOURCES → RUN → RÉSULTATS → EXPORT
+// ════════════════════════════════════════════════════════════════════════════
 
 let _extAvailable = false;
 
-// Quand l'extension est présente → afficher le bouton 1 clic
+// ── Helpers UI ──────────────────────────────────────────────────────────────
+function showStep(n) {
+  document.getElementById('step-1').classList.toggle('active', n === 1);
+  document.getElementById('step-2').classList.toggle('active', n === 2);
+}
+
+function anyConnected() {
+  return S.sc?.on || S.dz?.on || S.sp?.on || S.lfm?.on;
+}
+
+function updateContinueBtn() {
+  const btn = document.getElementById('btn-continue');
+  if (!btn) return;
+  const has = S.sc?.on || S.dz?.on || S.sp?.on;
+  btn.style.display = has ? 'block' : 'none';
+}
+
+// ── Rendu des plateformes connectées (pills) ────────────────────────────────
+function renderConnectedPlats() {
+  const container = document.getElementById('connected-plats');
+  if (!container) return;
+  container.innerHTML = '';
+  const plats = [
+    { id:'sc', icon:'☁️', name:'SoundCloud', getSub: () => S.sc.userId ? `${S.sc.userId}` : '✓' },
+    { id:'dz', icon:'🎶', name:'Deezer',     getSub: () => 'Connecté' },
+  ];
+  plats.forEach(p => {
+    if (!S[p.id]?.on) return;
+    const div = document.createElement('div');
+    div.className = 'plat-pill';
+    div.innerHTML = `
+      <span class="pill-icon">${p.icon}</span>
+      <div class="pill-info">
+        <div class="pill-name">${p.name}</div>
+        <div class="pill-sub">${p.getSub()}</div>
+      </div>
+      <button class="pill-disc" data-plat="${p.id}">✕</button>`;
+    div.querySelector('.pill-disc').addEventListener('click', () => {
+      S[p.id] = { on:false };
+      setSt(p.id, '', 'Non connecté');
+      renderConnectedPlats();
+      updateContinueBtn();
+    });
+    container.appendChild(div);
+  });
+}
+
+// ── Étape 2 : checkboxes sources ────────────────────────────────────────────
+function buildSourceChecks() {
+  const container = document.getElementById('source-checks');
+  if (!container) return;
+  container.innerHTML = '';
+  const plats = [
+    { id:'lfm', icon:'🎵', name:'Last.fm',     getSub: () => S.lfm.user || '—' },
+    { id:'sc',  icon:'☁️', name:'SoundCloud',  getSub: () => `${S.sc.userId||''}` },
+    { id:'dz',  icon:'🎶', name:'Deezer',      getSub: () => 'ARL stocké' },
+    { id:'sp',  icon:'💚', name:'Spotify',     getSub: () => `${(S.sp.tracks||[]).length} tracks` },
+  ];
+  plats.forEach(p => {
+    if (!S[p.id]?.on) return;
+    const label = document.createElement('label');
+    label.className = 'src-check';
+    label.innerHTML = `
+      <input type="checkbox" value="${p.id}" checked>
+      <span style="font-size:18px">${p.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:600">${p.name}</div>
+        <div style="font-size:9px;color:var(--grey);font-family:'Space Mono',monospace">${p.getSub()}</div>
+      </div>`;
+    label.querySelector('input').addEventListener('change', refreshRunBtn);
+    container.appendChild(label);
+  });
+  refreshRunBtn();
+}
+
+function getSelectedSources() {
+  return Array.from(document.querySelectorAll('#source-checks input:checked')).map(i => i.value);
+}
+
+function refreshRunBtn() {
+  const btn = document.getElementById('run-btn');
+  const info = document.getElementById('run-info');
+  const sel = getSelectedSources();
+  if (btn) btn.disabled = sel.length === 0;
+  if (info) info.textContent = sel.length > 0 ? `${sel.length} source(s) sélectionnée(s)` : 'Sélectionne au moins une source';
+}
+
+// ── Extension : connexion ───────────────────────────────────────────────────
 function _showExtUI() {
-  const banner = document.getElementById('ext-connect-banner');
+  const banner = document.getElementById('ext-banner');
+  const noExt  = document.getElementById('no-ext-msg');
   if (banner) banner.style.display = 'block';
+  if (noExt)  noExt.style.display  = 'none';
 }
 
-function _setExtStatus(msg, color) {
-  const el = document.getElementById('ext-connect-status');
-  if (el) { el.textContent = msg; el.style.color = color || 'var(--grey2)'; }
+function _setConnectStatus(msg, color) {
+  const el = document.getElementById('connect-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--grey)'; }
 }
 
-// ── Bouton global "1 clic" ─────────────────────────────────────────────────
-document.getElementById('ext-connect-all')?.addEventListener('click', async () => {
-  const btn = document.getElementById('ext-connect-all');
+document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
   btn.textContent = '⟳ Connexion en cours...';
-  _setExtStatus('Récupération des sessions SC et Deezer...', 'var(--grey2)');
-
-  // Envoyer les deux demandes simultanément via le content script
+  _setConnectStatus('', '');
   window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
   window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
-
-  // Timeout 5s : résumé des résultats
   setTimeout(() => {
     btn.disabled = false;
-    btn.textContent = '⚡ Connexion en 1 clic';
-    const connected = [];
-    if (S.sc?.on) connected.push('SoundCloud');
-    if (S.dz?.on) connected.push('Deezer');
+    btn.textContent = '⚡ Connexion en 1 clic — SC · Deezer';
+    const connected = ['sc','dz'].filter(p => S[p]?.on);
     if (connected.length) {
-      _setExtStatus('✓ ' + connected.join(' + ') + ' connectés', 'var(--ok)');
+      _setConnectStatus('✓ ' + connected.map(p=>({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + '), 'var(--green)');
     } else {
-      _setExtStatus('Aucune session trouvée — ouvre SC et Deezer dans des onglets', 'var(--red)');
+      _setConnectStatus('Ouvre SoundCloud et Deezer dans des onglets', 'var(--red)');
     }
   }, 5000);
 });
 
-// ── Listener postMessage depuis content-soundhub.js ────────────────────────
+// Listener messages extension
 window.addEventListener('message', async function(ev) {
   if (!ev.data?.type) return;
 
-  // Extension détectée au chargement de la page
   if (ev.data.type === 'soundhub_ext_present') {
-    _extAvailable = true;
-    _showExtUI();
+    _extAvailable = true; _showExtUI();
     const badge = document.createElement('div');
     badge.style.cssText = 'position:fixed;bottom:16px;right:16px;background:rgba(123,106,255,.15);border:1px solid rgba(123,106,255,.35);color:#b0a0ff;font-size:10px;padding:6px 14px;border-radius:20px;font-family:Space Mono,monospace;z-index:9999;pointer-events:none;transition:opacity .5s';
     badge.textContent = '⚡ Extension SoundHub active';
     document.body.appendChild(badge);
-    setTimeout(() => { badge.style.opacity = '0'; setTimeout(() => badge.remove(), 500); }, 2500);
+    setTimeout(() => { badge.style.opacity='0'; setTimeout(()=>badge.remove(),500); }, 2500);
     return;
   }
 
-  // Credentials stockés au chargement → auto-connect silencieux
   if (ev.data.type === 'soundhub_ext_init') {
-    _extAvailable = true;
-    _showExtUI();
+    _extAvailable = true; _showExtUI();
     const d = ev.data.data || {};
     if (d.sc?.token && !S.sc?.on) await _extConnectSC(d.sc);
     if (d.dz?.arl   && !S.dz?.on) _extConnectDZ(d.dz);
     return;
   }
 
-  // Réponse d'une demande fetch (après clic bouton ou 1 clic)
   if (ev.data.type === 'soundhub_ext_credentials') {
     const { platform, data } = ev.data;
     if (platform === 'sc') await _extConnectSC(data);
@@ -1766,41 +1864,217 @@ window.addEventListener('message', async function(ev) {
   }
 });
 
-// ── Connecteurs ─────────────────────────────────────────────────────────────
 async function _extConnectSC(d) {
-  const tok = (d?.token || '').replace(/^OAuth\s+/i, '');
+  const tok = (d?.token||'').replace(/^OAuth\s+/i,'');
   if (!tok) return;
-  setSt('sc', 'spin', '⟳ Connexion...');
+  setSt('sc','spin','⟳...');
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
-    if (!me?.id) throw new Error('Token SC invalide');
-    S.sc = { on:true, token:tok, userId:String(me.id), cookies: d.cookies||'' };
-    if (me.avatar_url && $('sc-avt')) {
-      $('sc-avt').src = me.avatar_url; $('sc-avt').style.display = 'block';
-      if ($('sc-avt-ph')) $('sc-avt-ph').style.display = 'none';
-    }
-    $('sc-name').textContent = me.username;
-    $('sc-sub').textContent  = (me.likes_count || 0).toLocaleString('fr') + ' likes';
-    $('sc-conn').classList.add('show');
-    $('sc-card').classList.add('on');
-    setSt('sc', 'ok', d.cookies ? '✓ Connecté · export playlist actif' : '✓ Connecté via extension');
-    setMsg('sc', ''); updateRun();
-  } catch(e) {
-    setSt('sc', 'err', '✕ Échec'); setMsg('sc', '✕ ' + e.message, 'var(--red)');
-  }
+    if (!me?.id) throw new Error('Token invalide');
+    S.sc = { on:true, token:tok, userId:String(me.id), cookies:d.cookies||'' };
+    setSt('sc','ok', d.cookies ? '✓ + playlists' : '✓');
+    renderConnectedPlats();
+    updateContinueBtn();
+  } catch(e) { setSt('sc','err','✕'); }
 }
 
 function _extConnectDZ(d) {
   if (!d?.arl) return;
-  S.dz = { on:true, arl: d.arl };
-  if ($('dz-name')) $('dz-name').textContent = 'Connecté';
-  if ($('dz-conn')) $('dz-conn').classList.add('show');
-  if ($('dz-card')) $('dz-card').classList.add('on');
-  setSt('dz', 'ok', '✓ Connecté via extension'); updateRun();
+  S.dz = { on:true, arl:d.arl };
+  setSt('dz','ok','✓');
+  renderConnectedPlats();
+  updateContinueBtn();
 }
 
+// ── Spotify JSON ─────────────────────────────────────────────────────────────
+$('sp-btn')?.addEventListener('click', e => { e.stopPropagation(); $('sp-file')?.click(); });
+$('sp-file')?.addEventListener('change', e => {
+  importSP(e);
+  // après import on rafraîchit
+  setTimeout(() => {
+    if (S.sp?.on) {
+      const nameEl = document.getElementById('sp-pill-name');
+      const subEl  = document.getElementById('sp-pill-sub');
+      const discEl = document.getElementById('sp-disc');
+      if (nameEl) nameEl.textContent = 'Spotify';
+      if (subEl)  subEl.textContent  = `${(S.sp.tracks||[]).length} tracks importés`;
+      if (discEl) discEl.style.display = 'block';
+      updateContinueBtn();
+    }
+  }, 500);
+});
+$('sp-disc')?.addEventListener('click', e => {
+  e.stopPropagation();
+  S.sp = { on:false };
+  const nameEl = document.getElementById('sp-pill-name');
+  const subEl  = document.getElementById('sp-pill-sub');
+  const discEl = document.getElementById('sp-disc');
+  if (nameEl) nameEl.textContent = 'Spotify';
+  if (subEl)  subEl.textContent  = 'Importer YourLibrary.json';
+  if (discEl) discEl.style.display = 'none';
+  updateContinueBtn();
+});
+
+// ── Navigation étapes ────────────────────────────────────────────────────────
+document.getElementById('btn-continue')?.addEventListener('click', () => {
+  buildSourceChecks();
+  showStep(2);
+});
+document.getElementById('btn-back')?.addEventListener('click', () => {
+  showStep(1);
+});
+
+// ── Last.fm card toggle ──────────────────────────────────────────────────────
+$('lfm-card')?.addEventListener('click', () => {
+  if (S.lfm?.on) return;
+  $('lfm-form')?.classList.toggle('open');
+});
+$('lfm-disc')?.addEventListener('click', e => {
+  e.stopPropagation();
+  S.lfm = { on:false, user:null, src:'loved' };
+  setSt('lfm','','Non connecté');
+  $('lfm-name').textContent = '—';
+  $('lfm-sub').textContent  = '—';
+  $('lfm-conn').classList.remove('show');
+  $('lfm-card').classList.remove('on');
+});
+
+// ── Run btn ───────────────────────────────────────────────────────────────────
+$('run-btn')?.addEventListener('click', () => {
+  S._selectedSources = getSelectedSources();
+  run();
+});
+
+// ── updateRun (override minimal) ─────────────────────────────────────────────
+function updateRun() {
+  updateContinueBtn();
+  // Si on est à l'étape 2, rafraîchir le bouton
+  if (document.getElementById('step-2').classList.contains('active')) refreshRunBtn();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MODAL EXPORT
+// ════════════════════════════════════════════════════════════════════════════
+
+function openExportModal(playlistName, tracks) {
+  // Stocker la sélection courante
+  S._exportTarget = { name: playlistName, tracks };
+
+  const list = document.getElementById('export-plat-list');
+  const sub  = document.getElementById('export-modal-sub');
+  list.innerHTML = '';
+
+  sub.textContent = `"${playlistName}" — ${tracks.length} tracks`;
+
+  // Plateformes disponibles selon ce qui est connecté + a des credentials
+  const plats = [];
+  if (S.sc?.on && S.sc?.token) plats.push({ id:'sc', icon:'☁️', name:'SoundCloud', sub:'Créer une playlist' });
+  if (S.dz?.on && S.dz?.arl)   plats.push({ id:'dz', icon:'🎶', name:'Deezer',     sub:'Créer une playlist' });
+
+  if (!plats.length) {
+    list.innerHTML = '<div style="font-size:10px;color:var(--grey);font-family:Space Mono,monospace;text-align:center;padding:12px">Connecte SC ou Deezer via l\'extension pour activer l\'export</div>';
+  } else {
+    plats.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'export-plat';
+      div.dataset.id = p.id;
+      div.innerHTML = `
+        <span class="ep-icon">${p.icon}</span>
+        <div class="ep-name">${p.name}<br><span style="font-size:9px;color:var(--grey);font-weight:400;font-family:'Space Mono',monospace">${p.sub}</span></div>
+        <div class="ep-check">✓</div>`;
+      div.addEventListener('click', () => div.classList.toggle('selected'));
+      list.appendChild(div);
+    });
+    // Aussi proposer JSON/TXT toujours
+    ['json','txt'].forEach(fmt => {
+      const div = document.createElement('div');
+      div.className = 'export-plat';
+      div.dataset.id = fmt;
+      div.innerHTML = `
+        <span class="ep-icon">${fmt === 'json' ? '📄' : '📝'}</span>
+        <div class="ep-name">${fmt.toUpperCase()}<br><span style="font-size:9px;color:var(--grey);font-weight:400;font-family:'Space Mono',monospace">Télécharger le fichier</span></div>
+        <div class="ep-check">✓</div>`;
+      div.addEventListener('click', () => div.classList.toggle('selected'));
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById('export-modal').classList.add('open');
+}
+
+document.getElementById('export-cancel-btn')?.addEventListener('click', () => {
+  document.getElementById('export-modal').classList.remove('open');
+  document.getElementById('export-progress').textContent = '';
+});
+
+document.getElementById('export-confirm-btn')?.addEventListener('click', async () => {
+  const selected = Array.from(document.querySelectorAll('.export-plat.selected')).map(d => d.dataset.id);
+  if (!selected.length) {
+    document.getElementById('export-progress').textContent = 'Sélectionne au moins une destination';
+    return;
+  }
+
+  const prog = document.getElementById('export-progress');
+  const { name, tracks } = S._exportTarget || {};
+  if (!name || !tracks) return;
+
+  document.getElementById('export-confirm-btn').disabled = true;
+
+  for (const dest of selected) {
+    prog.textContent = `⟳ Export vers ${dest.toUpperCase()}...`;
+    try {
+      if (dest === 'sc')   await exportToSC(name, tracks);
+      else if (dest === 'dz') await exportToDeezer(name, tracks);
+      else if (dest === 'json') exportPlaylistJSON(name, tracks);
+      else if (dest === 'txt')  exportTXT(name, tracks);
+      prog.textContent = `✓ ${dest.toUpperCase()} exporté`;
+    } catch(e) {
+      prog.textContent = `✕ Erreur ${dest}: ${e.message}`;
+    }
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  document.getElementById('export-confirm-btn').disabled = false;
+  setTimeout(() => {
+    document.getElementById('export-modal').classList.remove('open');
+    document.getElementById('export-progress').textContent = '';
+  }, 2000);
+});
+
+// Fermer si clic hors de la box
+document.getElementById('export-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('export-modal')) {
+    document.getElementById('export-modal').classList.remove('open');
+  }
+});
+
+// ── Exposer openExportModal aux cards de résultats ──────────────────────────
+window.openExportModal = openExportModal;
+
+// ── Bouton export toolbar ─────────────────────────────────────────────────
+$('btn-export-modal')?.addEventListener('click', () => {
+  // Ouvre le modal pour exporter toutes les playlists résultats
+  const allTracks = Object.values(S.results || {}).flat();
+  openExportModal('Toutes les playlists', allTracks);
+});
+$('btn-export-all')?.addEventListener('click', exportAllJSON);
+$('btn-rerun')?.addEventListener('click', () => { showStep(1); });
 
 init();
 </script>
+
+<!-- ══ MODAL EXPORT ═════════════════════════════════════════════════════════ -->
+<div id="export-modal">
+  <div class="em-box">
+    <h3>Exporter</h3>
+    <div class="em-sub" id="export-modal-sub">Sélectionne les destinations</div>
+    <div id="export-plat-list" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button id="export-cancel-btn" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
+      <button id="export-confirm-btn" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
+    </div>
+    <div id="export-progress" style="margin-top:10px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px;text-align:center"></div>
+  </div>
+</div>
 </body>
 </html>
