@@ -395,6 +395,7 @@
   }
 
   .hub-card {
+    cursor: pointer;
     background: var(--card);
     border: 1px solid var(--border);
     padding: 24px;
@@ -630,10 +631,18 @@
     <p class="section-label">// Communauté</p>
     <h2 class="section-title">LE HUB</h2>
     <p style="color:var(--grey);font-size:16px;max-width:480px;line-height:1.7;margin-top:12px">
-      Des milliers de playlists partagées, classées par genre. Aucune donnée perso — juste des liens publics et des hashtags.
+      Des playlists partagées, classées par genre. Aucune donnée perso — juste des liens publics et des hashtags.
     </p>
   </div>
-  <div class="hub-grid reveal" id="hubPreview"></div>
+
+  <!-- Tabs Récent / Tendance -->
+  <div style="display:flex;gap:0;margin:32px 0 20px;border-bottom:1px solid var(--border)">
+    <button id="hp-tab-recent" onclick="hpSetTab('recent')" style="font-family:'Space Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--white);padding:10px 20px;cursor:pointer;transition:all .15s">// Récemment ajoutées</button>
+    <button id="hp-tab-trending" onclick="hpSetTab('trending')" style="font-family:'Space Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;background:none;border:none;border-bottom:2px solid transparent;color:var(--grey);padding:10px 20px;cursor:pointer;transition:all .15s">🔥 Tendance</button>
+  </div>
+
+  <div class="hub-grid reveal" id="hubPreview" style="min-height:120px"></div>
+
   <div style="text-align:center;margin-top:40px" class="reveal">
     <a href="hub.html" class="btn-primary">Explorer le Hub →</a>
   </div>
@@ -703,6 +712,141 @@ const marquee = document.getElementById('genreMarquee');
   pill.innerHTML = `<span class="genre-dot"></span>${g.label}`;
   marquee.appendChild(pill);
 });
+
+// ── Scroll reveal ────────────────────────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Hub preview cards — données Supabase avec onglets ───────────────────────
+const SUPABASE_URL      = 'https://xbkkocwrrakkgurtmzss.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhia2tvY3dycmFra2d1cnRtenNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjA1NDcsImV4cCI6MjA4ODI5NjU0N30.a40F8lj1VhoQN5Gy-XOqOg9UnsFqbHxjDrP0378ywNs';
+const SUPA_HDR = {
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+  'Accept': 'application/json',
+};
+
+const GENRE_COLORS = {
+  TEUF_TRIBE:'#ff2200',HARD_TECHNO:'#ff0022',HARDCORE:'#ff0055',TECHNO:'#cc0033',
+  HARD_BOUNCE:'#ff44aa',PSYTRANCE:'#cc44ff',TRANCE:'#9900ff',BASS_DUBSTEP:'#0055ff',
+  DRUM_AND_BASS:'#00dd66',BREAKBEAT:'#ff8800',UKG_GARAGE:'#00ccff',HOUSE:'#ff6600',
+  AFRO_ORGANIC_HOUSE:'#ffaa00',DISCO_NUDISCO:'#ff44cc',DOWNTEMPO:'#4455aa',
+  AMBIENT:'#334488',EXPERIMENTAL_ELECTRONIC:'#555577',EDM_MAINSTAGE:'#ff00aa',
+  RAP_CLASSIC:'#ddaa00',RAP_NEWGEN:'#ffcc00',TRAP:'#ffcc00',UNDERGROUND_RAP:'#886644',
+  RNB_SOUL:'#cc6699',FUNK_GROOVE:'#ff8800',JAZZ:'#886600',BLUES:'#225588',
+  ROCK_ALT:'#aa3300',ROCK_CLASSIC:'#882200',ROCK_POST_PUNK:'#554466',METAL:'#880000',
+  PUNK:'#dd0055',POP:'#ff66bb',CLASSICAL:'#997744',FOLK_COUNTRY:'#cc8844',
+  REGGAE_DUB:'#00aa44',LATIN_REGGAETON:'#ff4400',AFROBEATS:'#ff9900',
+  WORLD_MUSIC:'#558866',DANCEHALL_BOUYON:'#00dd88',KPOP:'#ff69b4',SETS:'#888888',IDM:'#7755cc',
+};
+const GENRE_LABELS = {
+  TEUF_TRIBE:'Teuf',HARD_TECHNO:'Hard Techno',HARDCORE:'Hardcore',TECHNO:'Techno',
+  HARD_BOUNCE:'Hard Bounce',PSYTRANCE:'Psytrance',TRANCE:'Trance',BASS_DUBSTEP:'Bass/Dubstep',
+  DRUM_AND_BASS:'Drum & Bass',BREAKBEAT:'Breakbeat',UKG_GARAGE:'UKG/Garage',HOUSE:'House',
+  AFRO_ORGANIC_HOUSE:'Afro House',DISCO_NUDISCO:'Disco/Nu-Disco',DOWNTEMPO:'Downtempo',
+  AMBIENT:'Ambient',EXPERIMENTAL_ELECTRONIC:'Expérimental',EDM_MAINSTAGE:'EDM',
+  RAP_CLASSIC:'OG Rap',RAP_NEWGEN:'Newgen Rap',TRAP:'Trap',UNDERGROUND_RAP:'Underground Rap',
+  RNB_SOUL:'R&B/Soul',FUNK_GROOVE:'Funk',JAZZ:'Jazz',BLUES:'Blues',ROCK_ALT:'Rock Indie',
+  ROCK_CLASSIC:'Rock Classique',ROCK_POST_PUNK:'Post-Punk',METAL:'Metal',PUNK:'Punk',
+  POP:'Pop',CLASSICAL:'Classique',FOLK_COUNTRY:'Folk',REGGAE_DUB:'Reggae/Dub',
+  LATIN_REGGAETON:'Latin',AFROBEATS:'Afrobeats',WORLD_MUSIC:'World',
+  DANCEHALL_BOUYON:'Dancehall',KPOP:'K-Pop',SETS:'Sets/Mixes',IDM:'IDM',
+};
+const GENRE_EMOJIS = {
+  TEUF_TRIBE:'🔩',HARD_TECHNO:'🔧',HARDCORE:'💥',TECHNO:'⚙️',HARD_BOUNCE:'🎀',
+  PSYTRANCE:'🌀',TRANCE:'✨',BASS_DUBSTEP:'🔊',DRUM_AND_BASS:'🥁',BREAKBEAT:'🔀',
+  UKG_GARAGE:'🇬🇧',HOUSE:'🏠',AFRO_ORGANIC_HOUSE:'🌍',DISCO_NUDISCO:'🪩',
+  DOWNTEMPO:'🌙',AMBIENT:'🌫️',EXPERIMENTAL_ELECTRONIC:'🔬',EDM_MAINSTAGE:'🏟️',
+  RAP_CLASSIC:'🎤',RAP_NEWGEN:'🎙️',TRAP:'🌿',UNDERGROUND_RAP:'🚇',
+  RNB_SOUL:'❤️',FUNK_GROOVE:'🕺',JAZZ:'🎷',BLUES:'🎸',ROCK_ALT:'🎸',
+  ROCK_CLASSIC:'🤘',ROCK_POST_PUNK:'🖤',METAL:'⚡',PUNK:'✊',POP:'💫',
+  CLASSICAL:'🎻',FOLK_COUNTRY:'🎻',REGGAE_DUB:'🌿',LATIN_REGGAETON:'💃',
+  AFROBEATS:'🥁',WORLD_MUSIC:'🌍',DANCEHALL_BOUYON:'🏝️',KPOP:'💜',SETS:'🎛️',IDM:'🤖',
+};
+const SVC_ICONS = {soundcloud:'☁️',spotify:'💚',deezer:'🎶',tidal:'🌊',youtube_music:'▶️',qobuz:'🎼',apple_music:'🍎',amazon_music:'📦',other:'🎵'};
+
+let hpAllPlaylists = [];
+let hpCurrentTab = 'recent';
+const hubEl = document.getElementById('hubPreview');
+
+function hpSetTab(tab) {
+  hpCurrentTab = tab;
+  document.getElementById('hp-tab-recent').style.borderBottomColor   = tab === 'recent'   ? 'var(--accent)' : 'transparent';
+  document.getElementById('hp-tab-recent').style.color               = tab === 'recent'   ? 'var(--white)'  : 'var(--grey)';
+  document.getElementById('hp-tab-trending').style.borderBottomColor = tab === 'trending' ? 'var(--accent)' : 'transparent';
+  document.getElementById('hp-tab-trending').style.color             = tab === 'trending' ? 'var(--white)'  : 'var(--grey)';
+  hpRender();
+}
+
+function hpRender() {
+  if (!hpAllPlaylists.length) return;
+  const DAY = 86400000, now = Date.now();
+  let list;
+  if (hpCurrentTab === 'recent') {
+    list = [...hpAllPlaylists].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
+  } else {
+    list = [...hpAllPlaylists].sort((a,b) => {
+      const ageA = (now - new Date(a.created_at)) / DAY;
+      const ageB = (now - new Date(b.created_at)) / DAY;
+      const fA = ageA < 15 ? 1 : ageA < 30 ? (30-ageA)/15 : 0;
+      const fB = ageB < 15 ? 1 : ageB < 30 ? (30-ageB)/15 : 0;
+      return ((b.likes||0)*(0.3+0.7*fB)) - ((a.likes||0)*(0.3+0.7*fA));
+    }).slice(0, 6);
+  }
+
+  hubEl.innerHTML = '';
+  list.forEach(p => {
+    const color = GENRE_COLORS[p.genre] || '#666';
+    const label = GENRE_LABELS[p.genre] || p.genre || '?';
+    const emoji = GENRE_EMOJIS[p.genre] || '🎵';
+    const svc   = SVC_ICONS[p.service] || '🎵';
+    const tags  = (p.tags||[]).slice(0,3);
+    const tracks = p.track_count > 0 ? p.track_count : '—';
+    const fill  = p.track_count ? Math.min(100, Math.round((p.track_count/400)*100))+'%' : '35%';
+
+    const card = document.createElement('a');
+    card.className = 'hub-card';
+    card.href = 'hub.html';
+    card.style.cssText = 'text-decoration:none;cursor:pointer;display:block';
+    card.style.setProperty('--card-color', color);
+    card.style.setProperty('--fill', fill);
+
+    card.innerHTML = `
+      <div class="hub-card-genre" style="color:${color}">${emoji} ${label}</div>
+      <div class="hub-card-title">${p.name}</div>
+      <div class="hub-card-meta">${svc} ${p.service||''} · ${tracks} tracks · ${p.author||'Anonyme'}</div>
+      <div class="hub-card-tags">${tags.map(t=>`<span class="hub-tag">${t}</span>`).join('')}</div>
+      <div class="hub-card-bar"></div>
+    `;
+    hubEl.appendChild(card);
+    observer.observe(card);
+  });
+}
+
+(async function loadHubPreview() {
+  hubEl.innerHTML = `<div style="color:var(--grey);font-family:'Space Mono';font-size:11px;letter-spacing:2px;padding:24px 0">Chargement...</div>`;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/playlists?select=id,name,genre,service,track_count,tags,likes,url,author,created_at&limit=50`,
+      { headers: SUPA_HDR }
+    );
+    if (!res.ok) throw new Error('Supabase ' + res.status);
+    hpAllPlaylists = await res.json();
+    if (!hpAllPlaylists.length) {
+      hubEl.innerHTML = `<div style="color:var(--grey);font-family:'Space Mono';font-size:11px">Aucune playlist partagée pour l'instant.</div>`;
+      return;
+    }
+    hpRender();
+  } catch(e) {
+    hubEl.innerHTML = `<div style="color:var(--grey);font-family:'Space Mono';font-size:11px">Impossible de charger les playlists.</div>`;
+  }
+})();
 
 // ── Scroll reveal ────────────────────────────────────────────────────────────
 const observer = new IntersectionObserver(entries => {

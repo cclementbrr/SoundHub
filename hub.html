@@ -465,18 +465,7 @@
   <span class="results-count" id="resultsCount">— playlists</span>
 </div>
 
-<!-- FEATURED SECTIONS (front page) -->
-<div id="featuredSections" style="max-width:1400px;margin:0 auto;padding:0 40px 8px">
-  <div id="featured-recent" style="margin-bottom:32px">
-    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">// Récently added</div>
-    <div class="cards-row" id="feat-recent-row"></div>
-  </div>
-  <div id="featured-trending">
-    <div style="font-family:'Space Mono';font-size:10px;letter-spacing:2px;color:var(--grey);margin-bottom:12px;text-transform:uppercase">🔥 Tendance</div>
-    <div class="cards-row" id="feat-trending-row"></div>
-  </div>
-  <hr style="border:none;border-top:1px solid var(--border);margin:24px 0 8px">
-</div>
+
 
 <!-- BODY -->
 <div class="hub-body">
@@ -725,7 +714,7 @@ async function init() {
   state.playlists = playlists;
   state.loading   = false;
 
-  buildTopGenres(); buildRécentActivity(); buildTagsCloud(); renderFeatured(); render();
+  buildTopGenres(); buildRécentActivity(); buildTagsCloud(); render();
   subscribeRealtime();
 
   let searchTimer = null;
@@ -733,7 +722,7 @@ async function init() {
     state.search = e.target.value.toLowerCase();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(async () => {
-      state.playlists = await loadPlaylists(); renderFeatured(); render();
+      state.playlists = await loadPlaylists(); render();
     }, 350);
   });
 }
@@ -753,9 +742,6 @@ function buildFilters() {
       state.activeGenre = g.name;
       document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
-      // Auto-collapse after selection
-      document.getElementById("filtersRow").classList.remove("expanded");
-      document.getElementById("expandBtn").textContent = "Voir tous ▾";
       render();
     };
     row.appendChild(chip);
@@ -816,25 +802,6 @@ function getFiltered() {
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
-function renderFeatured() {
-  if (!state.playlists.length) return;
-  const now = Date.now(), DAY = 86400000;
-
-  // Récentes : 6 dernières
-  const recent = [...state.playlists].sort((a,b)=>b.ts-a.ts).slice(0,6);
-  const rRow = document.getElementById("feat-recent-row");
-  if (rRow) { rRow.innerHTML=''; recent.forEach((p,i)=>rRow.appendChild(buildCard(p,i))); }
-
-  // Trending : score avec fraîcheur 30j
-  const trending = [...state.playlists].sort((a,b)=>{
-    const ageA=(now-(a.ts||0))/DAY, ageB=(now-(b.ts||0))/DAY;
-    const fA=ageA<15?1:ageA<30?(30-ageA)/15:0, fB=ageB<15?1:ageB<30?(30-ageB)/15:0;
-    return ((b.likes||0)*(0.3+0.7*fB)) - ((a.likes||0)*(0.3+0.7*fA));
-  }).slice(0,6);
-  const tRow = document.getElementById("feat-trending-row");
-  if (tRow) { tRow.innerHTML=''; trending.forEach((p,i)=>tRow.appendChild(buildCard(p,i))); }
-}
-
 function render() {
   const filtered = getFiltered();
   document.getElementById("resultsCount").textContent = `${filtered.length} playlist${filtered.length > 1 ? "s" : ""}`;
@@ -883,7 +850,7 @@ function buildCard(p, i) {
   const svc   = SERVICE_ICONS[p.service] || SERVICE_ICONS.other;
   const liked = state.likedIds.includes(p.id);
   const ago   = timeAgo(p.ts);
-  const tracks = p.tracks > 0 ? p.tracks : "—";
+  const tracks = (p.tracks > 0) ? p.tracks.toLocaleString("fr") : "—";
 
   const card = document.createElement("div");
   card.className = "pl-card";
@@ -923,10 +890,9 @@ function buildCard(p, i) {
       <button
         class="pl-like-btn${liked ? " liked" : ""}"
         data-id="${p.id}"
-        onclick="event.stopPropagation();toggleLike(event,${p.id})"
-        title="${liked ? "Retirer le like" : "Liker cette playlist"}"
-        style="background:none;border:1px solid ${liked ? "var(--accent)" : "var(--border2)"};border-radius:3px;cursor:pointer;font-size:13px;padding:5px 10px;color:${liked ? "var(--accent)" : "var(--grey)"};transition:all .15s;display:flex;align-items:center;gap:5px;font-family:'Space Mono';font-size:9px"
-      >${liked ? "♥" : "♡"} <span id="lb-${p.id}">${p.likes}</span></button>
+        onclick="event.stopPropagation();window.toggleLike(event,${p.id})"
+        style="background:none;border:1px solid ${liked ? "var(--accent)" : "var(--border2)"};border-radius:3px;cursor:pointer;padding:5px 10px;color:${liked ? "var(--accent)" : "var(--grey)"};transition:all .15s;display:flex;align-items:center;gap:5px;font-family:'Space Mono';font-size:9px;line-height:1"
+      >${liked ? "♥" : "♡"}&nbsp;<span id="lb-${p.id}">${p.likes}</span></button>
     </div>
   `;
 
@@ -944,37 +910,55 @@ window.toggleLike = async function(e, id) {
   e.stopPropagation();
   const pl  = state.playlists.find(p => p.id === id);
   if (!pl) return;
-  const fp  = await getFingerprint();
-  const btn = e.currentTarget;
+  const btn = e.target.closest('button');
+  if (!btn || btn.disabled) return;
   btn.disabled = true;
 
-  const { data, error } = await db.rpc('toggle_like', { p_playlist_id: id, p_fingerprint: fp });
-  btn.disabled = false;
-  if (error) { console.error(error); return; }
+  const fp       = await getFingerprint();
+  const already  = state.likedIds.includes(id);
+  const newCount = (pl.likes||0) + (already ? -1 : 1);
 
-  pl.likes = data.likes;
-  const lcEl = document.getElementById("lc-"+id);
-  const lbEl = document.getElementById("lb-"+id);
-  if (data.action === "liked") {
-    state.likedIds.push(id);
-    btn.classList.add("liked");
-    btn.style.borderColor = "var(--accent)";
-    btn.style.color = "var(--accent)";
-    if (lcEl) lcEl.textContent = data.likes;
-    if (lbEl) lbEl.textContent = data.likes;
-    // Remplacer le texte du bouton (♡ + espace + span)
-    const span = btn.querySelector("span[id^='lb-']");
-    btn.innerHTML = `♥ <span id="lb-${id}">${data.likes}</span>`;
-  } else {
+  // Mise à jour optimiste immédiate
+  pl.likes = newCount;
+  if (already) {
     state.likedIds = state.likedIds.filter(x => x !== id);
-    btn.classList.remove("liked");
-    btn.style.borderColor = "var(--border2)";
-    btn.style.color = "var(--grey)";
-    if (lcEl) lcEl.textContent = data.likes;
-    btn.innerHTML = `♡ <span id="lb-${id}">${data.likes}</span>`;
+  } else {
+    state.likedIds.push(id);
   }
-  document.getElementById(`lc-${id}`).textContent = pl.likes;
+  updateLikeUI(btn, id, newCount, !already);
+
+  try {
+    if (already) {
+      // Supprimer le like
+      await db.from('playlist_likes')
+        .delete()
+        .eq('playlist_id', id)
+        .eq('fingerprint', fp);
+    } else {
+      // Insérer le like (ignore si existe déjà)
+      await db.from('playlist_likes')
+        .upsert({ playlist_id: id, fingerprint: fp }, { onConflict: 'playlist_id,fingerprint' });
+    }
+    // Mettre à jour le compteur sur la playlist
+    await db.from('playlists')
+      .update({ likes: newCount })
+      .eq('id', id);
+  } catch(err) {
+    console.warn('like error (non-bloquant):', err);
+  }
+
+  btn.disabled = false;
 };
+
+function updateLikeUI(btn, id, count, liked) {
+  const heart = liked ? '♥' : '♡';
+  btn.innerHTML = heart + ' <span id="lb-' + id + '">' + count + '</span>';
+  btn.style.borderColor = liked ? 'var(--accent)' : 'var(--border2)';
+  btn.style.color       = liked ? 'var(--accent)' : 'var(--grey)';
+  if (liked) btn.classList.add('liked'); else btn.classList.remove('liked');
+  const lcEl = document.getElementById('lc-' + id);
+  if (lcEl) lcEl.textContent = count;
+}
 
 // Stats gérées par loadStats() (appel Supabase)
 
