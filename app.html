@@ -178,15 +178,21 @@ textarea.f-input{resize:none}
   .step.active { display:block; }
 
   #btn-connect-all {
-    display:block; width:100%; padding:14px 16px;
-    background:linear-gradient(135deg,rgba(123,106,255,.2),rgba(160,64,255,.15));
-    border:1px solid rgba(123,106,255,.45); border-radius:10px;
-    color:#ccc0ff; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
-    cursor:pointer; letter-spacing:.8px; transition:all .2s; text-align:center;
+    display:block; width:100%; padding:18px 20px;
+    background:linear-gradient(135deg,rgba(123,106,255,.22),rgba(160,64,255,.16));
+    border:1px solid rgba(123,106,255,.5); border-radius:12px;
+    color:#d0c4ff; font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
+    cursor:pointer; letter-spacing:1px; transition:all .2s; text-align:center;
+    box-shadow: 0 0 30px rgba(123,106,255,.12);
   }
-  #btn-connect-all:hover { background:linear-gradient(135deg,rgba(123,106,255,.3),rgba(160,64,255,.22)); border-color:rgba(123,106,255,.7); }
-  #btn-connect-all:disabled { opacity:.5; cursor:wait; }
-  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:6px; font-family:'Space Mono',monospace; min-height:14px; }
+  #btn-connect-all:hover {
+    background:linear-gradient(135deg,rgba(123,106,255,.35),rgba(160,64,255,.28));
+    border-color:rgba(123,106,255,.8);
+    box-shadow: 0 0 40px rgba(123,106,255,.22);
+    transform: translateY(-1px);
+  }
+  #btn-connect-all:disabled { opacity:.5; cursor:wait; transform:none; }
+  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:8px; font-family:'Space Mono',monospace; min-height:16px; letter-spacing:.3px; }
   .plat-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; }
   .plat-pill .pill-icon { font-size:18px; flex-shrink:0; }
   .plat-pill .pill-info { flex:1; }
@@ -226,81 +232,40 @@ textarea.f-input{resize:none}
   <!-- ══ ÉTAPE 1 : CONNEXION ═════════════════════════════════════════════ -->
   <div id="step-1" class="step active">
 
-    <!-- Last.fm (toujours visible) -->
-    <div class="svc" id="lfm-card" style="--c:var(--lfm)">
-      <div class="svc-head">
-        <span class="svc-icon">🎵</span>
-        <div><div class="svc-name">Last.fm</div><div class="svc-st" id="lfm-st">Non connecté</div></div>
-      </div>
-      <div class="conn-row" id="lfm-conn">
-        <img class="avt" id="lfm-avt" style="display:none" src="" alt="">
-        <div class="avt-ph" id="lfm-avt-ph">🎵</div>
-        <div><div class="conn-name" id="lfm-name">—</div><div class="conn-sub" id="lfm-sub">—</div></div>
-        <button class="disc" id="lfm-disc">✕</button>
-      </div>
-      <div class="svc-form open" id="lfm-form" onclick="event.stopPropagation()">
-        <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services. <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm)">Créer un compte gratuit →</a></div>
-        <div id="lfm-secret-wrap">
-          <div style="font-size:9px;color:#f59e0b;margin-bottom:4px">⚡ Pour export vers Last.fm Loved</div>
-          <div class="f-hint" style="font-size:8.5px">La clé de démo ne supporte pas l'export. <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)">Crée une app gratuite en 30s →</a></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <button class="f-btn" id="lfm-save-btn" style="flex:1;font-size:9px">💾 Sauvegarder</button>
-        </div>
-        <div class="f-label" style="margin-top:6px">Pseudo Last.fm</div>
-        <input class="f-input" id="lfm-inp" type="text" placeholder="tonpseudo" style="margin-top:4px" onclick="event.stopPropagation()">
-        <div style="margin-top:8px">
-          <div class="f-label">Source</div>
-          <div style="display:flex;gap:6px;margin-top:6px">
-            <button class="f-tab active" id="lfm-tab-loved" onclick="setLfmTab('loved')">Loved</button>
-            <button class="f-tab" id="lfm-tab-recent" onclick="setLfmTab('recent')">Récentes</button>
-            <button class="f-tab" id="lfm-tab-top" onclick="setLfmTab('top')">Top</button>
-          </div>
-        </div>
-        <div class="f-msg" id="lfm-creds-msg"></div>
-        <button class="f-btn" id="lfm-btn">🔴 Connecte Last.fm</button>
-        <div class="f-msg" id="lfm-msg"></div>
-      </div>
-    </div>
+    <!-- Plateformes connectées (apparaissent après connexion) -->
+    <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
 
-    <!-- Séparateur -->
-    <div style="margin:14px 0 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);letter-spacing:1px;text-transform:uppercase">Sources supplémentaires</div>
-
-    <!-- Bouton 1 clic (extension) -->
-    <div id="ext-banner" style="display:none;margin-bottom:10px">
-      <button id="btn-connect-all">⚡ Connexion en 1 clic — SC · Deezer</button>
+    <!-- Bouton 1 clic centré -->
+    <div id="ext-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px">
+      <button id="btn-connect-all">⚡ Connexion en 1 clic</button>
       <div id="connect-status"></div>
     </div>
 
     <!-- Pas d'extension -->
-    <div id="no-ext-msg" style="font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9;margin-bottom:10px">
+    <div id="no-ext-msg" style="display:none;font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9">
       Installe l'extension SoundHub<br>pour la connexion en 1 clic
     </div>
 
-    <!-- Plateformes connectées (remplissent au fur et à mesure) -->
-    <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-
-    <!-- Spotify JSON (toujours dispo) -->
-    <div class="plat-pill" style="cursor:pointer" id="sp-import-pill" title="Importer YourLibrary.json">
-      <span class="pill-icon">💚</span>
-      <div class="pill-info">
-        <div class="pill-name" id="sp-pill-name">Spotify</div>
-        <div class="pill-sub" id="sp-pill-sub">Importer YourLibrary.json</div>
-      </div>
-      <input id="sp-file" type="file" accept=".json" style="display:none">
-      <button id="sp-btn" style="font-size:9px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'Space Mono',monospace">📥 JSON</button>
-      <button id="sp-disc" class="pill-disc" style="display:none">✕</button>
-    </div>
-    <div class="f-msg" id="sp-msg" style="margin-top:4px"></div>
-
-    <!-- Bouton continuer (visible quand ≥1 source connectée) -->
-    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:opacity .2s">
+    <!-- Bouton continuer -->
+    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px">
       CONTINUER →
     </button>
 
+    <!-- IDs fantômes pour compatibilité JS (lfm-card toujours dans le DOM) -->
+    <div style="display:none" id="lfm-card"><div id="lfm-st"></div><div id="lfm-conn"></div><div id="lfm-avt-ph"></div><div id="lfm-name"></div><div id="lfm-sub"></div><div id="lfm-form"><div id="lfm-secret-wrap"></div><div id="lfm-creds-msg"></div><div id="lfm-msg"></div></div><input id="lfm-inp"><div id="lfm-avt"></div></div>
+    <div style="display:none" id="sp-import-pill">
+      <div id="sp-pill-name"></div><div id="sp-pill-sub"></div>
+      <input id="sp-file" type="file" accept=".json">
+      <button id="sp-btn"></button>
+      <button id="sp-disc"></button>
+    </div>
+    <div id="sp-msg" style="display:none"></div>
+    <div id="lfm-disc" style="display:none"></div>
+    <div id="lfm-btn" style="display:none"></div>
+    <div id="lfm-save-btn" style="display:none"></div>
+
   </div>
 
-  <!-- ══ ÉTAPE 2 : SÉLECTION SOURCES ═════════════════════════════════════ -->
   <div id="step-2" class="step">
     <button id="btn-back" style="background:none;border:none;color:var(--grey);font-size:9px;font-family:'Space Mono',monospace;cursor:pointer;margin-bottom:10px;padding:0">← Retour</button>
     <div class="sec-label" style="margin-bottom:8px">Analyser</div>
@@ -328,11 +293,7 @@ textarea.f-input{resize:none}
 
 
 <main class="main">
-  <div class="empty" id="empty">
-    <div class="empty-ico">🎛️</div>
-    <div class="empty-ttl">Prêt à classifier</div>
-    <div class="empty-sub">Entre ton pseudo Last.fm et lance l'analyse. Les genres sont détectés via les tags de l'artiste et une base de 100+ artistes.</div>
-  </div>
+  <div class="empty" id="empty" style="display:none"></div>
 
   <div class="prog-wrap" id="prog-wrap">
     <div class="prog-top">
@@ -1804,10 +1765,9 @@ function refreshRunBtn() {
 
 // ── Extension : connexion ───────────────────────────────────────────────────
 function _showExtUI() {
-  const banner = document.getElementById('ext-banner');
-  const noExt  = document.getElementById('no-ext-msg');
-  if (banner) banner.style.display = 'block';
-  if (noExt)  noExt.style.display  = 'none';
+  // Le banner est toujours visible — on cache juste le message "pas d'extension"
+  const noExt = document.getElementById('no-ext-msg');
+  if (noExt) noExt.style.display = 'none';
 }
 
 function _setConnectStatus(msg, color) {
@@ -1818,20 +1778,23 @@ function _setConnectStatus(msg, color) {
 document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
-  btn.textContent = '⟳ Connexion en cours...';
+  btn.textContent = '⟳ Recherche des sessions...';
   _setConnectStatus('', '');
+
+  // Demander les credentials à l'extension (SC + Deezer)
   window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
   window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.textContent = '⚡ Connexion en 1 clic — SC · Deezer';
-    const connected = ['sc','dz'].filter(p => S[p]?.on);
-    if (connected.length) {
-      _setConnectStatus('✓ ' + connected.map(p=>({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + '), 'var(--green)');
-    } else {
-      _setConnectStatus('Ouvre SoundCloud et Deezer dans des onglets', 'var(--red)');
-    }
-  }, 5000);
+
+  // Timeout 5s puis bilan
+  await new Promise(r => setTimeout(r, 5000));
+  btn.disabled = false;
+  btn.textContent = '⚡ Connexion en 1 clic';
+  const connected = ['sc','dz'].filter(p => S[p]?.on);
+  if (connected.length) {
+    _setConnectStatus('✓ ' + connected.map(p => ({sc:'SoundCloud', dz:'Deezer'}[p])).join(' + ') + ' connectés', 'var(--green)');
+  } else {
+    _setConnectStatus('Aucune session — ouvre SC et Deezer dans des onglets', 'var(--red)');
+  }
 });
 
 // Listener messages extension
