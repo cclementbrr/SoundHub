@@ -614,13 +614,13 @@ async function publishToHub(catName, explicitTrackCount) {
   window.open('hub.html?' + params.toString(), '_blank');
   return { ok: true, prefill: true };
 }
-async function scFetch(ep, tok) {
+async function scFetch(ep, tok, {method='GET', payload=null}={}) {
   try {
     const r = await fetch(SC_PROXY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint: ep, token: tok }),
-      signal: AbortSignal.timeout(10000),
+      body: JSON.stringify({ endpoint: ep, token: tok, method, payload }),
+      signal: AbortSignal.timeout(15000),
     });
     if (!r.ok) throw new Error('Worker HTTP ' + r.status);
     const d = await r.json();
@@ -929,12 +929,17 @@ function openModal(catName) {
   const dzBtnHtml = dzConnecteed
     ? `<button class="btn" id="m-dz-export" style="border-color:var(--dz);color:var(--dz)">🎶 Exporte to Deezer</button>`
     : '';
+  const scConnected = !!S.sc?.on;
+  const scBtnHtml = scConnected
+    ? `<button class="btn" id="m-sc-export" style="border-color:var(--sc);color:var(--sc)">☁ SC Playlist</button>`
+    : '';
 
   bar.innerHTML = `
     <button class="btn" id="m-json">↓ JSON</button>
     <button class="btn" id="m-txt">↓ .txt</button>
     ${lfmBtnHtml}
     ${dzBtnHtml}
+    ${scBtnHtml}
     <button class="btn" id="m-hub-btn" style="border-color:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};color:${S.sharedCats?.has(catName)?'var(--green)':'var(--grey)'}">
       ${S.sharedCats?.has(catName) ? '✓ Partagée !' : '⊕ Partager sur le Hub'}
     </button>`;
@@ -949,6 +954,9 @@ function openModal(catName) {
   }
   if (dzConnecteed) {
     $('m-dz-export').onclick = ()=>exportToDeezer(catName);
+  }
+  if (scConnected) {
+    $('m-sc-export').onclick = ()=>exportToSC(catName);
   }
 
   // Catégories disponibles pour le déplacement (celles qui ont des tracks)
@@ -1367,6 +1375,105 @@ async function exportToDeezer(catName) {
 function exportPlaylistJSON(catName) {
   const payload={playlist:S.labels[catName]||catName, tracks:S.results[catName]||[]};
   dl(JSON.stringify(payload,null,2),'application/json',`soundhub-${catName.toLowerCase()}.json`);
+}
+
+// ── Export SC → créer playlist SoundCloud ──────────────────────────────
+async function exportToSC(catName) {
+  const tracks    = (S.results[catName]||[]).filter(t => t.source === 'soundcloud' && t.id);
+  const allTracks = (S.results[catName]||[]).filter(t => t.artist && t.title);
+  const btn = $('m-sc-export');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Création...'; }
+
+  const playlistName = S.labels[catName] || catName;
+  const scIds = [];
+  const notFound = [];
+
+  if (tracks.length > 0) {
+    // Tracks SC classifiés — on a les IDs natifs
+    tracks.forEach(t => scIds.push({ id: t.id }));
+    if (btn) btn.textContent = `⟳ ${scIds.length} tracks trouvés...`;
+  } else {
+    // Tracks non-SC — recherche par titre
+    if (btn) btn.textContent = `🔍 0/${allTracks.length}...`;
+    for (let i = 0; i < allTracks.length; i++) {
+      const t = allTracks[i];
+      try {
+        const q = encodeURIComponent(`${t.artist} ${t.title}`);
+        const d = await scFetch(
+          `https://api-v2.soundcloud.com/search/tracks?q=${q}&limit=1`,
+          S.sc.token
+        );
+        const items = d.collection || d;
+        if (items?.[0]?.id) scIds.push({ id: items[0].id });
+        else notFound.push(t);
+      } catch { notFound.push(t); }
+      if (btn) btn.textContent = `🔍 ${i+1}/${allTracks.length}...`;
+      await delay(120);
+    }
+  }
+
+  if (!scIds.length) {
+    if (btn) { btn.disabled = false; btn.textContent = '☁ SC Playlist'; }
+    showToast('❌ Aucun track SC trouvé');
+    return;
+  }
+
+  // Tenter la création via API v1
+  if (btn) btn.textContent = '⟳ Création playlist...';
+  try {
+    const result = await scFetch(
+      'https://api.soundcloud.com/playlists',
+      S.sc.token,
+      { method: 'POST', payload: { playlist: { title: `SoundHub — ${playlistName}`, sharing: 'private', tracks: scIds } } }
+    );
+
+    if (result._status === 403 || result.code === 403) throw new Error('SC_403');
+    if (result.error && !result.playlist) throw new Error(result.error);
+
+    const pl    = result.playlist || result;
+    const plUrl = pl.permalink_url || pl.uri || '';
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✓ Playlist créée !';
+      btn.style.borderColor = 'var(--green)';
+      btn.style.color = 'var(--green)';
+    }
+    const sub = $('m-sub');
+    if (sub) {
+      const info = document.createElement('div');
+      info.style.cssText = 'font-family:Space Mono;font-size:9px;color:var(--grey2);margin-top:8px;line-height:1.8;padding:8px;border:1px solid var(--border);border-radius:4px;';
+      info.innerHTML = `<span style="color:var(--sc)">☁ Playlist créée (privée)</span><br>
+        <span style="color:var(--white)">${scIds.length} tracks</span>${notFound.length ? ` · <span style="color:var(--accent2)">${notFound.length} non trouvés</span>` : ''}<br>
+        ${plUrl ? `<a href="${plUrl}" target="_blank" style="color:var(--sc)">${plUrl}</a>` : 'Vérifie ton profil SoundCloud'}`;
+      sub.appendChild(info);
+    }
+
+  } catch(e) {
+    // Fallback : export JSON des IDs (utilisable avec script Python / Soundiiz)
+    const is403 = e.message.includes('SC_403') || e.message.includes('403');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = is403 ? '↓ Export IDs (403)' : '↓ Export IDs';
+      btn.style.borderColor = 'var(--accent2)';
+      btn.style.color = 'var(--accent2)';
+    }
+    dl(
+      JSON.stringify({ playlist_title: `SoundHub — ${playlistName}`, track_ids: scIds.map(t=>t.id),
+        note: is403 ? 'SC 403 — token manuel bloqué pour écriture. Utilise les IDs avec un script ou Soundiiz.' : e.message }, null, 2),
+      'application/json', `soundhub-sc-${catName.toLowerCase()}.json`
+    );
+    const sub = $('m-sub');
+    if (sub) {
+      const info = document.createElement('div');
+      info.style.cssText = 'font-family:Space Mono;font-size:9px;color:var(--grey2);margin-top:8px;line-height:1.8;padding:8px;border:1px solid var(--border);border-radius:4px;';
+      info.innerHTML = is403
+        ? `<span style="color:var(--accent2)">⚠ SC API 403</span> — création bloquée pour tokens manuels.<br>
+           ✓ <span style="color:var(--white)">${scIds.length} IDs exportés</span> en JSON → importable via Soundiiz ou script Python.`
+        : `<span style="color:var(--accent2)">⚠ ${e.message}</span><br>✓ JSON téléchargé avec ${scIds.length} IDs.`;
+      sub.appendChild(info);
+    }
+  }
 }
 
 function exportTXT(catName) {
