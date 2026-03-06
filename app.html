@@ -575,7 +575,7 @@ async function connectDZ() {
 
 // Fetch Deezer avec fallback CORS proxy
 // Proxy Deezer via notre Supabase Edge Function (fiable, pas de limite)
-const SC_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/sc-proxy';
+const SC_PROXY = 'https://odd-bush-4dec.clement-bollereddat.workers.dev';
 const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhia2tvY3dycmFra2d1cnRtenNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjA1NDcsImV4cCI6MjA4ODI5NjU0N30.a40F8lj1VhoQN5Gy-XOqOg9UnsFqbHxjDrP0378ywNs';
 const SUPA_HEADERS = {
   'Content-Type':  'application/json',
@@ -615,69 +615,58 @@ async function publishToHub(catName, explicitTrackCount) {
   return { ok: true, prefill: true };
 }
 async function scFetch(ep, tok) {
-  // 1. Proxy Supabase (si JWT désactivé + redéployé)
+  if (!SC_PROXY || SC_PROXY === 'DEPLOYER_CLOUDFLARE_WORKER') {
+    throw new Error('Configure le proxy SoundCloud — voir les instructions dans la carte SC');
+  }
   try {
     const r = await fetch(SC_PROXY, {
       method: 'POST',
-      headers: SUPA_HEADERS,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint: ep, token: tok }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(10000),
     });
-    if (r.ok) {
-      const d = await r.json();
-      if (!d.error) return d;
-    }
-  } catch(e) { /* essayer le suivant */ }
-
-  // 2. corsproxy.io pour les GET SC (ne marche pas pour les endpoints avec OAuth)
-  // SC bloque systématiquement CORS côté serveur → seul un vrai proxy backend fonctionne
-  // Message d'erreur clair pour guider l'utilisateur
-  throw new Error('Proxy SC inaccessible — vérifie que sc-proxy est déployé sur Supabase avec JWT désactivé');
+    if (!r.ok) throw new Error('Proxy SC HTTP ' + r.status);
+    const d = await r.json();
+    if (d.error) throw new Error('SC API : ' + d.error);
+    return d;
+  } catch(e) {
+    if (e.message.includes('Proxy SC') || e.message.includes('SC API') || e.message.includes('Configure')) throw e;
+    throw new Error('Proxy SC inaccessible (' + e.message + ') — déploie le Cloudflare Worker fourni');
+  }
 }
 
-const DZ_PROXY = 'https://xbkkocwrrakkgurtmzss.supabase.co/functions/v1/dz-proxy';
 
-async function dzFetch(url) {
-  // 1. Essai direct
-  try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
-    if (r.ok) {
-      const d = await r.json();
-      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
-      if (!d.error) return d;
+function dzFetch(url) {
+  // Deezer supporte JSONP natif — contourne le CORS sans proxy
+  return new Promise((resolve, reject) => {
+    const cbName = '_dz_' + Math.random().toString(36).slice(2);
+    const sep    = url.includes('?') ? '&' : '?';
+    const src    = url + sep + 'output=jsonp&callback=' + cbName;
+    const script = document.createElement('script');
+    const timer  = setTimeout(() => {
+      cleanup();
+      reject(new Error('Deezer timeout — profil introuvable ou API inaccessible'));
+    }, 10000);
+
+    window[cbName] = (d) => {
+      cleanup();
+      if (d?.error?.code === 300) return reject(new Error('Profil Deezer privé — active "Rendre mes données publiques" dans Deezer → Paramètres → Confidentialité'));
+      if (d?.error)               return reject(new Error('Erreur Deezer : ' + (d.error.message || d.error)));
+      resolve(d);
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
     }
-  } catch(e) {
-    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
-  }
 
-  // 2. allorigins.win (proxy GET public, pas besoin de backend)
-  try {
-    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const r = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
-    if (r.ok) {
-      const raw = await r.json();
-      const d = raw.contents ? JSON.parse(raw.contents) : raw;
-      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
-      if (!d.error) return d;
-    }
-  } catch(e) {
-    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
-  }
-
-  // 3. corsproxy.io
-  try {
-    const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
-    if (r.ok) {
-      const d = await r.json();
-      if (d.error?.code === 300) throw new Error('Profil privé ou introuvable');
-      if (!d.error) return d;
-    }
-  } catch(e) {
-    if (e.message.includes('rivé') || e.message.includes('rouvable')) throw e;
-  }
-
-  throw new Error("Impossible de contacter l\'API Deezer (CORS). Essaie dans un autre navigateur ou désactive les extensions.");
+    script.onerror = () => { cleanup(); reject(new Error("Impossible de charger l'API Deezer")); };
+    script.src = src;
+    document.head.appendChild(script);
+  });
 }
+
 async function fetchDZ() {
   const tracks=[];
   let index = 0;
@@ -705,7 +694,7 @@ async function fetchDZ() {
 async function connectSC() {
   const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
   if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
-  if (!tok.startsWith('2-')) { setMsg('sc','Token invalide — doit commencer par "2-"','var(--orange)'); }
+  if (!tok.startsWith('2-')) { setMsg('sc','Token invalide — doit commencer par "2-" (voir guide)','var(--orange)'); }
   setSt('sc','spin','⟳ Vérification...');
   try {
     const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
