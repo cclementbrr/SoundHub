@@ -368,8 +368,1486 @@ textarea.f-input{resize:none}
   </div>
 </div>
 
-<script type="module">
-import { GENRE_CATEGORIES, classifyTrack, normalizeTrack, isSet, ARTIST_GENRE_MAP } from './soundhub-genres.js';
+<script>
+// ── soundhub-genres.js inliné ──────────────────────────────
+/**
+ * SoundHub — Universal Genre Engine v2
+ * ======================================
+ * Taxonomie complète couvrant tous les styles musicaux.
+ * Accent fort sur l'électronique (UKG, Techno, HardTechno, House, Trance, Downtempo).
+ *
+ * Scoring par champ :
+ *   genre field            → +5 pts
+ *   tags                   → +3 pts
+ *   titre/artiste/desc/label → +2 pts
+ *   label connu (labels[]) → +4 pts
+ *   Seuil minimum          : 2 pts
+ *   En cas d'égalité de score → priority (plus haut = prioritaire)
+ */
+
+const GENRE_CATEGORIES = [
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — UKG / BASS / GARAGE / BREAKS / DNB            ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "UKG_GARAGE",
+    label: "UK Garage / Speed Garage",
+    emoji: "🚗",
+    color: "#00ccff",
+    priority: 97,  // > IDM (96) — uk garage est plus spécifique qu'electronica générique
+    strongKeywords: [
+      "uk garage",
+      "ukg",
+      "speed garage",
+      "garage",
+      "2step",
+      "2 step",
+      "two step",
+      "bassline house",
+      "soulful garage",
+      "vocal garage",
+      "uk funky",
+      "hard house",
+      "uk hard house",
+      "hardhouse",
+      "nrg house",
+      "hard nrg",
+      "nu energy",
+    ],
+    keywords: [
+      "uk garage","ukg","speed garage","2 step","2step","two step",
+      "uk funky","funky house","4x4","bassline","bassline house",
+      "grime","sublow","soulful garage","vocal garage","garage house",
+      "uk urban","niche","urban house","garage uk","sub low",
+      "hard house","uk hard house","hardhouse","nrg house","hard nrg",
+      "bouncy techno","donk house","nu energy",
+    ],
+    labels: [
+      "locked on","defected","garage nation","pay as u go","so solid crew","big apple records",
+      "ukd records","amsterdam dance capital","obscuur","green roll records",
+      "galactic harmony","mama told ya","pace playaz society","dalf records",
+      "no chasa","boisha","flirt with chaos","clean energy","round165",
+      "agora records","redline records","neon dreams cologne","kinky promise",
+      "esca","mrgnstrn","international chrome","sih-lest",
+    ],
+  },
+  {
+    name: "BASS_DUBSTEP",
+    label: "Bass Music / Dubstep",
+    emoji: "💥",
+    color: "#0055ff",
+    priority: 85,
+    keywords: [
+      "dubstep","brostep","riddim","tearout","melodic dubstep",
+      "future garage","post dubstep","deep dubstep","dark dubstep",
+      "bass music","uk bass","140","140 bpm",
+      "trap edm","trap bass","hybrid trap","future bass",
+      "wave","dark wave","deconstructed club","club music",
+      "wonky","grime bass","dub music",
+    ],
+    labels: ["deep medi","metalheadz dubstep","tempa","hessle audio","tectonic","swamp81","black box music"],
+  },
+  {
+    name: "BREAKBEAT",
+    label: "Breakbeat / Big Beat / Nu-Skool Breaks",
+    emoji: "🔀",
+    color: "#ff8800",
+    priority: 82,
+    keywords: [
+      "breakbeat","nu skool breaks","nu-skool breaks","big beat",
+      "florida breaks","chemical breaks","acid breaks","hardcore breaks",
+      "breakbeat hardcore","progressive breaks","breaks","broken beat","bruk",
+    ],
+    labels: ["skint","wall of sound","stress records","neo records","medicine records"],
+  },
+  {
+    name: "DRUM_AND_BASS",
+    label: "Drum & Bass / Jungle",
+    emoji: "🥁",
+    color: "#00dd66",
+    priority: 84,
+    keywords: [
+      "drum and bass","drum & bass","drumandbass","d&b","dnb",
+      "liquid dnb","liquid funk","liquid drum and bass","jazzstep",
+      "neurofunk","techstep","darkstep","jump up","rollers",
+      "halftime","atmospheric dnb","sambass","drumfunk",
+      "jungle","darkside jungle","oldschool jungle","ragga jungle",
+      "jump up jungle","hardcore jungle","amen break","jungle rave",
+      "clownstep","artcore","darkcore dnb","minimal dnb",
+    ],
+    labels: ["metalheadz","ram records","v recordings","soul:r","hospital records","moving shadow","reinforced records","good looking records"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — HOUSE                                          ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "DISCO_NUDISCO",
+    label: "Disco / Nu-Disco / Italo Disco",
+    emoji: "🪩",
+    color: "#ff44cc",
+    priority: 70,
+    keywords: [
+      "disco","nu disco","nudisco","italo disco","italo","afro disco",
+      "cosmic disco","space disco","eurobeat","city pop",
+      "boogie","disco funk","salsoul","hi-nrg","hi nrg","eurodisco",
+      "funk disco","post disco","neo soul disco","filter disco",
+      "electro disco","synth funk","french filter","french touch",
+    ],
+    labels: ["ed banger","codek","permanent vacation","bordello a parigi","running back","especial records"],
+  },
+  {
+    name: "HOUSE",
+    label: "House",
+    emoji: "🏠",
+    color: "#ff6600",
+    priority: 72,
+    strongKeywords: [
+      "house",
+      "deep house",
+      "tech house",
+      "progressive house",
+      "jackin house",
+      "funky house",
+      "chicago house",
+      "nu disco house",
+      "soulful house",
+    ],
+    keywords: [
+      "house music","deep house","soulful house","vocal house",
+      "chicago house","disco house","funky house","diva house",
+      "micro house","minimal house","microhouse","progressive house",
+      "electro house","tribal house","tech house","jackin house",
+      "jackin","filter house","french house","acid house",
+      "garage house","piano house","underground house","house",
+    ],
+    labels: [
+      "defected","fxhe","trax records","dance mania","classic music company",
+      "running back","raw canvas","rekids","wolf music","nocturnal grooves","glitterbox",
+      "dalf records","mama told ya","no chasa","boisha","ragel mood",
+      "37 degrees","four four magazine","linus villa",
+    ],
+  },
+  {
+    name: "AFRO_ORGANIC_HOUSE",
+    label: "Afro House / Organic House / Amapiano",
+    emoji: "🌍",
+    color: "#ffaa00",
+    priority: 71,
+    keywords: [
+      "afro house","afro tech","organic house","neo melodic",
+      "melodic house","afro melodic","afro deep","afro soul house",
+      "amapiano","gqom","kwaito","south african house",
+      "ethno house","organic techno","world techno","afro spiritual",
+    ],
+    labels: ["black butter","kalawa jazmee","platoon africa","ubuntu music"],
+  },
+
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — TECHNO                                         ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "TECHNO",
+    label: "Techno (Mental / Deep / Hypnotic / Hardgroove)",
+    emoji: "⚙️",
+    color: "#cc0033",
+    priority: 90,
+    strongKeywords: [
+      "techno",
+      "mental techno",
+      "techno mental",
+      "hypnotic techno",
+      "deep techno",
+      "detroit techno",
+      "berlin techno",
+      "hardgroove",
+      "hard groove",
+      "acid techno",
+      "minimal techno",
+      "raw techno",
+      "rave techno",
+      "peak time techno",
+      "warehouse techno",
+      "industrial techno",
+    ],
+    keywords: [
+      "techno mental","mental techno","hypnotic techno","deep techno",
+      "hardgroove","hard groove","detroit techno","berlin techno",
+      "peak time techno","warehouse techno","industrial techno",
+      "acid techno","dark techno","drone techno","minimal techno",
+      "raw techno","raw rave","noise techno","doomcore",
+      "modular techno","post industrial techno","techno","rave techno",
+    ],
+    labels: [
+      // Labels production techno confirmés
+      "ostgut ton","blueprint","planet rhythm","bc recordings","counter records",
+      "prologue","mote evolver","horizontal ground","frenzy records",
+      "stem","amphibian records","primal instinct",
+      // Canaux promo SC (pas de tags SC) — techno underground
+      "bcco","vault sessions","duplicity","grab the groove","trucking records",
+      "selected","selected records","differentsound","techno germany","the finest techno",
+      "bipolar disorder rec","seeksicksound","phosphate records","crude",
+      "kerbela","rave your soul","oecus","club elevate","four four magazine",
+      "techno wereld","märked","beluga tracks","unfair records","deadline records",
+      "voyeuristic disorder","prx records","ri7mo","thump out traxx","dur",
+      "matiere","carefree audio","essential delights records","rave alert",
+      // Labels production techno underground
+      "wangan club","molekul","amniote editions","maison close records","agora records",
+      "gruv","laburnum","gomboc records","asw","beau didier",
+      "atom","violent cases","stannik","mmork","alyosen","sparks","kokko",
+      "statek","knisda kanisda","shz records","the brvtalist","peska",
+      "polyamor records","cult collective","pace playaz society","dalf records",
+    ],
+  },
+  {
+    name: "HARD_TECHNO",
+    label: "Hard Techno / Schranz / Raw",
+    emoji: "🔧",
+    color: "#ff0022",
+    priority: 95,
+    strongKeywords: [
+      "hard techno",
+      "hardtechno",
+      "schranz",
+      "terror techno",
+      "brutal techno",
+      "distorted techno",
+      "aggressive techno",
+      "industrial hard techno",
+      "kick techno",
+    ],
+    keywords: [
+      "hard techno","hardtechno","schranz","raw techno hard",
+      "industrial hard techno","peak time hard","terror techno",
+      "brutal techno","distorted techno","aggressive techno",
+      "hard groove techno","kick techno","hard acid techno",
+      "warehouse hard","hard rave","berlin hard techno",
+    ],
+    labels: [
+      "uncage","intec","teksupport","hyte records","drumcode","filth on acid","compass",
+      "mza","casual gabberz records","polyamor records","katek","phtm","rave alert",
+      "hannibass","nokte","gelbkreuz","rabteu","penn-ak","fun is still transgressive",
+      "southfrap alliance",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — TEUF / TRIBE / FREE PARTY                     ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "TEUF_TRIBE",
+    label: "Teuf / Tribe / Acidcore / Mentalcore",
+    emoji: "🔩",
+    color: "#ff2200",
+    priority: 100,
+    strongKeywords: [
+      "tekno",
+      "tek",
+      "tekno libre",
+      "free tekno",
+      "freetekno",
+      "acidcore",
+      "tribecore",
+      "tribe techno",
+      "tribe tekno",
+      "acidtekno",
+      "hardtek",
+      "hard tek",
+      "teknival",
+      "free party",
+      "freeparty",
+      "spiral tribe",
+      "mentalcore",
+      "4x4 tekno",
+    ],
+    keywords: [
+      "acidcore","acid core","tribecore","tribe core",
+      "tribe tekno","tribe techno","tribe","hardtek","hard tek",
+      "teuf","teufeur","teknival","free party","freeparty",
+      "free tekno","freetekno","tekno libre","tekno",
+      "acid tekno","acid free","acid rave","lsd tekno",
+      "mentalcore","mental core","spiral tribe","heretik",
+      "4x4 tekno","raggatek","ragga tek","teknoise","noisecore",
+      "acidtekno","mackitek","neurotrope","kartell","the teknoist",
+    ],
+    labels: [
+      "spiral tribe","heretik sound system","neurotrope","pkdm","fullmoon",
+      "torvik","zouawotek","positive vibrations","penn-ak acidcore",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — TRANCE / PSY                                   ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "TRANCE",
+    label: "Trance / Progressive / Hard Trance",
+    emoji: "🌀",
+    color: "#9900ff",
+    priority: 86,
+    keywords: [
+      "trance","progressive trance","hard trance","hardtrance",
+      "uplifting trance","epic trance","vocal trance","eurotrance",
+      "trancecore","classic trance","oldschool trance","90s trance",
+      "2000s trance","powertrance","nitzhonot","dream trance",
+      "hands up","euro trance","tech trance",
+    ],
+    labels: ["anjunabeats","armada music","black hole recordings","vandit","monster tunes","enhanced music"],
+  },
+  {
+    name: "PSYTRANCE",
+    label: "Psytrance / Goa / Dark Psy / Hitech",
+    emoji: "🍄",
+    color: "#cc44ff",
+    priority: 87,
+    keywords: [
+      "psytrance","psy trance","goa trance","goa","dark psy",
+      "full on","forest psy","hitech","hi-tech psy","hi tech trance",
+      "progressive psytrance","twilight psy","suomi","finnish psy",
+      "psygressive","deep psy","psychedelic trance","zenonesque","zenon",
+      "daytime psy","morning psy","nitzhonot psy",
+    ],
+    labels: ["tesseract studio","vision quest","nano records","iono music","dacru records","zenon records","padang records"],
+  },
+
+
+  {
+    name: "HARD_BOUNCE",
+    label: "Hard Bounce / Makina / Bubbling",
+    emoji: "🪀",
+    color: "#ff44aa",
+    priority: 91,
+    // Hard trance sans la mélodie planante — kick ravageur, BPM élevé,
+    // basses synthétiques crues, énergie de dancefloor survoltée.
+    // Makina (Espagne/UK), bubbling (Pays-Bas), hardbounce (France/Belgique).
+    keywords: [
+      "hard bounce","hardbounce","hard bouncing","bouncing",
+      "makina","makinero","makinera",
+      "bubbling","bubbeling","dutch bubbling",
+      "happy bounce","bounce techno",
+      "hard dance","hard dance music","nrg","n-r-g","nu-nrg",
+      "bouncy trance","bouncy hard","donk","scouse house donk",
+      "uk bounce","bounce rave","hard rave bounce",
+    ],
+    labels: ["evolution records","hard2beat","rezerection","evolution rave"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — HARDCORE                                       ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "HARDCORE",
+    label: "Hardcore / Gabber / Frenchcore / Hardstyle",
+    emoji: "💀",
+    color: "#ff0055",
+    priority: 93,
+    keywords: [
+      "hardcore","gabber","happy hardcore","frenchcore","uptempo",
+      "industrial hardcore","crossbreed","uk hardcore","freeform",
+      "hardstyle","reverse bass hardstyle","rawstyle","euphoric hardstyle",
+      "mainstage hardstyle","old school hardcore","bouncing hardcore",
+      "rotterdam hardcore","makina hardcore","speedcore","terrorcore",
+      "extratone","darkcore","bouncy techno","hard bounce hardcore",
+    ],
+    labels: ["industrial strength","rotterdam records","enzyme records","id&t","masters of hardcore","megarave records"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ÉLECTRONIQUE — DOWNTEMPO / AMBIENT / CHILLOUT / EXPERIMENTAL  ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "AMBIENT",
+    label: "Ambient / Dark Ambient / New Age",
+    emoji: "🌫️",
+    color: "#334488",
+    priority: 40,
+    keywords: [
+      "dark ambient","drone ambient","ambient dub",
+      "dungeon synth","new age","space music","kosmische",
+      "isolationism","astral","ethereal","meditative","meditation music",
+      "soundscape","field recording","nature sounds",
+      "atmospheric ambient","black metal ambient","deep listening",
+    ],
+    labels: ["touch music","sub rosa","kranky","warp ambient","force and form","edition blixa bargeld"],
+  },
+  {
+    name: "DOWNTEMPO",
+    label: "Downtempo / Chillout / Trip-Hop / Psybient",
+    emoji: "🌙",
+    color: "#4455aa",
+    priority: 42,
+    keywords: [
+      "downtempo","chillout","chill out","trip hop","triphop",
+      "trip-hop","psybient","ambient house","ambient techno",
+      "lo fi hip hop","lofi hip hop","lofi","lo-fi","chillhop",
+      "chillwave","bedroom beats","beats","instrumental hip hop",
+      "nu dub","dub ambient","dub techno","dub electronic",
+      "liquid electronica","downtempo lounge","bossa electronica",
+    ],
+    labels: ["ninja tune","mo wax","warp","echospace","leng records","apollo records"],
+  },
+  {
+    // IDM = "Intelligent Dance Music" — attrape tous les artistes avec un mix de tags
+    // électroniques non-catégorisables : idm, electronica, experimental, glitch, ambient techno...
+    // Priorité 96 > TECHNO (90) — dès que idm/electronica présent, IDM gagne sur techno générique
+    name: "IDM",
+    label: "IDM / Electronica / Expérimental",
+    emoji: "🔬",
+    color: "#7755cc",
+    priority: 96,
+    // strongKeywords : +5 chacun — un seul suffit pour indiquer IDM fort
+    strongKeywords: [
+      "idm","intelligent dance music","electronica","braindance",
+      "glitch","microsound","drill n bass","clicks and cuts",
+      "experimental electronic","abstract electronic","post digital",
+    ],
+    keywords: [
+      "idm","intelligent dance music","electronica","braindance",
+      "glitch","microsound","drill n bass",
+      "acousmatic","musique concrete","musique concrète","electroacoustic",
+      "noise music","deconstructed club","avant garde electronic",
+      "experimental electronic","post digital","abstract electronic",
+      "generative","algorithmic","sound art",
+      "witch house","hypnagogic","lowercase","onkyo",
+    ],
+    labels: ["warp","raster noton","mego","editions mego","12k","sub rosa","erstwhile","artificial intelligence"],
+  },
+  {
+    name: "EDM_MAINSTAGE",
+    label: "EDM / Mainstage",
+    emoji: "🎆",
+    color: "#ff00aa",
+    priority: 50,
+    keywords: [
+      "edm","big room","festival trap","future rave","complextro",
+      "dutch house","electro house","progressive electro",
+      "hands up edm","melbourne bounce","tropical house",
+      "moombahton","moombahcore","electro pop edm",
+    ],
+    labels: ["spinnin records","protocol recordings","revealed recordings","ultra music","monstercat"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  HIP-HOP / RAP                                                 ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "RAP_CLASSIC",
+    label: "OG Rap / Hip-Hop / Boom Bap",
+    emoji: "🎤",
+    color: "#ddaa00",
+    priority: 68,
+    keywords: [
+      "hip hop","hiphop","hip-hop","boom bap","boombap",
+      "east coast hip hop","west coast hip hop","southern hip hop",
+      "old school hip hop","golden age hip hop","conscious rap",
+      "gangsta rap","jazzy hip hop","jazz rap","horrorcore",
+      "underground hip hop","nerdcore","political rap","battle rap",
+      "freestyle rap","freestyle","mc","emcee","lyricism",
+      "rap francais","rap fr","rap francophone","rap belge","rap suisse",
+    ],
+    labels: ["def jam","interscope","roc-a-fella","bad boy records","death row","rawkus","duck down"],
+  },
+  {
+    // TRAP : priority 88 > RAP_CLASSIC (68) > EDM (50)
+    // "trap" EDM (festival trap) est dans EDM_MAINSTAGE → ce tag seul ne suffit pas ici
+    // Pour override EDM : besoin d'au moins un strongKeyword spécifiquement rap
+    name: "TRAP",
+    label: "Trap / Drill / Cloud Rap",
+    emoji: "🌩️",
+    color: "#ffcc00",
+    priority: 88,
+    strongKeywords: [
+      "trap","trap music","cloud rap","cloudrap",
+      "drill","uk drill","brooklyn drill","chicago drill","french drill","afrotrap","afro trap",
+      "phonk","dark phonk","memphis rap","memphis phonk",
+      "mumble rap","plugg","pluggnb",
+    ],
+    keywords: [
+      "trap","trap music","cloud rap","cloudrap","mumble rap",
+      "drill","uk drill","brooklyn drill","chicago drill","french drill",
+      "jersey club","jerk","crunk","snap music",
+      "afrotrap","afro trap","ghetto music trap",
+      "phonk","dark phonk","memphis rap","memphis phonk",
+      "plugg","pluggnb","rage","opium rap",
+    ],
+    labels: ["slaughter gang","young money","quality control","1017 records","empire"],
+    // Pas de override si EDM_MAINSTAGE marque plus fort (festival trap context)
+    antiKeywords: ["edm","mainstage","festival trap"],
+  },
+  {
+    // UNDERGROUND_RAP : rap alternatif, expérimental, lo-fi, drain gang, plugg
+    name: "UNDERGROUND_RAP",
+    label: "Underground Rap / Lo-Fi Rap / Expérimental",
+    emoji: "🕳️",
+    color: "#886644",
+    priority: 75,
+    strongKeywords: [
+      "underground hip hop","underground rap","underground",
+      "drain","drain gang","surf gang","digicore","emo rap","sad rap",
+      "lo-fi rap","lofi rap","bedroom rap","indie rap",
+      "alternative hip hop","alternative rap","experimental hip hop",
+      "abstract hip hop","left field hip hop",
+    ],
+    keywords: [
+      "underground hip hop","underground rap","underground",
+      "drain","drain gang","surf gang",
+      "lo-fi rap","lofi rap","bedroom rap","indie rap",
+      "alternative hip hop","alternative rap","experimental hip hop",
+      "abstract hip hop","left field hip hop","digicore","emo rap","sad rap",
+      "noise rap","death rap","dark rap","horror rap",
+      "instrumental rap","jazzy rap","art rap",
+    ],
+    labels: ["rubber bandits","deathbomb arc","anticon","rhymesayers","mello music group"],
+  },
+  {
+    // RAP_NEWGEN : reste pour hyperpop, génération post-2018 inclassable
+    name: "RAP_NEWGEN",
+    label: "Newgen Rap / Hyperpop / Melodic Trap",
+    emoji: "⚡",
+    color: "#ff6666",
+    priority: 82,
+    strongKeywords: [
+      "hyperpop","digicore","melodic trap","melodic rap","sad trap",
+      "rage","plugg trap","opium","SoundCloud rap",
+    ],
+    keywords: [
+      "hyperpop","digicore","melodic trap","melodic rap",
+      "sad trap","emo trap","rage","plugg trap","opium",
+      "SoundCloud rap","new gen rap","gen z rap",
+    ],
+    labels: ["transgressive","columbia hyperpop"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  R&B / SOUL / FUNK / GOSPEL                                    ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "RNB_SOUL",
+    label: "R&B / Soul / Neo-Soul",
+    emoji: "🎶",
+    color: "#cc6699",
+    priority: 62,
+    keywords: [
+      "rnb","r&b","r n b","soul","neo soul","nu soul","motown",
+      "doo-wop","doo wop","northern soul","new jack swing",
+      "contemporary r&b","alternative r&b","indie r&b",
+      "blue-eyed soul","british soul","quiet storm",
+      "psychedelic soul","smooth r&b","bedroom r&b","urban contemporary",
+    ],
+    labels: ["stax","atlantic","tamla","fantasy records","def soul"],
+  },
+  {
+    name: "FUNK_GROOVE",
+    label: "Funk / Groove / Gospel",
+    emoji: "🕺",
+    color: "#ff8800",
+    priority: 60,
+    keywords: [
+      "funk","groove","p-funk","parliament funkadelic","funkadelic",
+      "soul funk","disco funk","boogie funk","afro funk",
+      "deep funk","rare groove","funk rock","jazz funk",
+      "new funk","future funk","retro funk","70s funk","80s funk",
+      "funk carioca","gospel","urban contemporary gospel",
+      "southern gospel","traditional gospel","blues gospel",
+    ],
+    labels: ["people records","mojo records","brown bag"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  JAZZ                                                          ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "JAZZ",
+    label: "Jazz (Early, Bebop, Fusion, Free, Modern)",
+    emoji: "🎷",
+    color: "#886600",
+    priority: 48,
+    keywords: [
+      "jazz","bebop","hard bop","cool jazz","modal jazz",
+      "free jazz","free improvisation","avant-garde jazz",
+      "swing","big band","dixieland","new orleans jazz",
+      "jazz fusion","latin jazz","afro cuban jazz","bossa nova",
+      "acid jazz","nu jazz","jazztronica","smooth jazz",
+      "gypsy jazz","manouche","neo swing","ethno jazz",
+      "spiritual jazz","astral jazz","post bop","jazz standards",
+    ],
+    labels: ["blue note","prestige","impulse","verve","ecm records","nonesuch jazz"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  BLUES                                                         ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "BLUES",
+    label: "Blues",
+    emoji: "🎸",
+    color: "#225588",
+    priority: 45,
+    keywords: [
+      "blues","delta blues","chicago blues","electric blues",
+      "acoustic blues","piedmont blues","texas blues","country blues",
+      "jump blues","urban blues","soul blues","contemporary blues","blues rock",
+    ],
+    labels: ["chess records","stax blues","fat possum"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  ROCK                                                          ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "ROCK_ALT",
+    label: "Rock Alternatif / Indie / Grunge / Shoegaze",
+    emoji: "🎸",
+    color: "#aa3300",
+    priority: 55,
+    keywords: [
+      "alternative rock","alt rock","indie rock","grunge","shoegaze",
+      "dream pop","noise pop","lo fi rock","jangle pop",
+      "slacker rock","post grunge","britpop","madchester",
+      "college rock","paisley underground","neo psychedelia",
+      "garage rock revival","indie garage",
+    ],
+    labels: ["sub pop","matador","4ad","rough trade","domino records","merge records"],
+  },
+  {
+    name: "ROCK_CLASSIC",
+    label: "Rock Classique / Hard Rock / Psychédélique / Prog",
+    emoji: "🤟",
+    color: "#882200",
+    priority: 52,
+    keywords: [
+      "classic rock","hard rock","arena rock","glam rock",
+      "southern rock","desert rock","stoner rock",
+      "psychedelic rock","acid rock","neo psychedelia",
+      "progressive rock","prog rock","art rock","symphonic rock",
+      "space rock","canterbury scene","avant-prog","krautrock",
+      "surf rock","rockabilly","skiffle","folk rock","celtic rock","country rock",
+    ],
+  },
+  {
+    name: "ROCK_POST_PUNK",
+    label: "Post-Punk / New Wave / Cold Wave",
+    emoji: "🖤",
+    color: "#554466",
+    priority: 57,
+    keywords: [
+      "post punk","new wave","cold wave","dark wave","gothic rock",
+      "goth","deathrock","minimal wave","post punk revival",
+      "art punk","no wave","dance punk","noise rock","math rock",
+      "experimental rock","post rock","slowcore","emo","screamo",
+    ],
+    labels: ["factory records","4ad goth","mute records","cherry red records"],
+  },
+  {
+    name: "METAL",
+    label: "Metal",
+    emoji: "🤘",
+    color: "#880000",
+    priority: 72,
+    keywords: [
+      "metal","heavy metal","nwobhm","speed metal","power metal",
+      "thrash metal","groove metal","crossover thrash",
+      "death metal","melodic death","deathgrind","slam death","brutal death",
+      "black metal","symphonic black metal","melodic black metal",
+      "blackgaze","post black metal","atmospheric black metal",
+      "depressive black metal","war metal",
+      "doom metal","stoner doom","funeral doom","sludge metal","drone doom",
+      "folk metal","celtic metal","viking metal","pagan metal","medieval metal",
+      "avant-garde metal","industrial metal","grindcore","goregrind","noisegrind",
+      "nu metal","rap metal","metalcore","mathcore","djent","kawaii metal",
+    ],
+    labels: ["season of mist","century media","nuclear blast","relapse records","earache","profound lore"],
+  },
+  {
+    name: "PUNK",
+    label: "Punk / Hardcore Punk",
+    emoji: "✊",
+    color: "#dd0055",
+    priority: 67,
+    keywords: [
+      "punk","punk rock","hardcore punk","anarcho punk","crust punk",
+      "d-beat","powerviolence","skate punk","pop punk","folk punk",
+      "gothic punk","cowpunk","electropunk","horror punk","garage punk",
+      "synth punk","street punk","oi punk","psychobilly",
+      "post-hardcore","crossover hardcore","ska punk",
+    ],
+    labels: ["epitaph records","fat wreck chords","dischord","revelation records","sst records"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  POP                                                           ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "POP",
+    label: "Pop",
+    emoji: "⭐",
+    color: "#ff66bb",
+    priority: 30,
+    keywords: [
+      "pop","indie pop","art pop","baroque pop","power pop",
+      "chamber pop","sophisti pop","bubblegum pop","teen pop",
+      "dance pop","electropop","synth pop","synthpop","hyperpop",
+      "bedroom pop","dream pop","folk pop","country pop",
+      "britpop","europop","j-pop","k-pop","c-pop","mandopop","cantopop",
+      "singer songwriter","twee pop","indie dance","sunshine pop",
+      "space age pop","yacht rock",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  CLASSIQUE / NÉOCLASSIQUE                                      ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "CLASSICAL",
+    label: "Classique / Néoclassique / Contemporain",
+    emoji: "🎻",
+    color: "#997744",
+    priority: 44,
+    keywords: [
+      "classical","neoclassical","neo classical","contemporary classical",
+      "modern classical","orchestral","orchestra","chamber music",
+      "string quartet","strings","piano classical","solo piano",
+      "minimal classical","post-classical","film score","cinematic",
+      "soundtrack classical","baroque","romantic classical","impressionism",
+      "avant-garde classical","spectralism","opera","choral","a cappella",
+    ],
+    labels: ["deutsche grammophon","ecm classical","nonesuch","sony classical","decca"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  FOLK / COUNTRY / CHANSON                                      ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "FOLK_COUNTRY",
+    label: "Folk / Country / Americana / Chanson",
+    emoji: "🪕",
+    color: "#cc8844",
+    priority: 42,
+    keywords: [
+      "folk","indie folk","freak folk","psychedelic folk","anti folk",
+      "american folk revival","british folk revival",
+      "country","outlaw country","alt country","americana","bluegrass",
+      "country rock","neo traditional country","honky tonk","western swing",
+      "chanson francaise","chanson populaire","variete francaise","variete",
+      "chanson","celtic music","cajun","creole","zydeco","tejano",
+      "protest songs","filk","texas folk","appalachian",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  REGGAE / DUB / DANCEHALL                                      ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "REGGAE_DUB",
+    label: "Reggae / Dub / Roots",
+    emoji: "🌿",
+    color: "#00aa44",
+    priority: 64,
+    strongKeywords: [
+      "reggae",
+      "dub",
+      "roots reggae",
+      "conscious reggae",
+    ],
+    keywords: [
+      "reggae","roots reggae","classic reggae",
+      "dub","dub reggae","dub poetry","digital dub","digital dancehall","mento","bouyon",
+      "soca","calypso","one drop","steppers",
+      "nyahbinghi","conscious reggae","jamaican music","ragga jungle",
+    ],
+    labels: ["heartbeat records","trojan records","studio one","greensleeves","vp records"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  LATIN / REGGAETON                                             ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "DANCEHALL_BOUYON",
+    label: "Dancehall / Bouyon / Shatta / Zouk",
+    emoji: "🌴",
+    color: "#00dd88",
+    priority: 78,
+    strongKeywords: [
+      "dancehall","bouyon","shatta","zouk","soca","kompa","bélé",
+      "ragga","bashment","riddim dancehall","afrobeats dancehall",
+      "tropical dancehall","conscious dancehall","lover's rock",
+    ],
+    keywords: [
+      "dancehall","bouyon","shatta","zouk","soca","kompa",
+      "ragga","bashment","riddim","conscious dancehall",
+      "jamaican dancehall","trinidadian soca","caribbean music",
+      "tropical","antillais","gwoka","biguine","zouk love",
+    ],
+    labels: ["vp records","greensleeves","jet star","xterminator"],
+  },
+  {
+    name: "LATIN_REGGAETON",
+    label: "Latin / Reggaeton / Tropical",
+    emoji: "💃",
+    color: "#ff4400",
+    priority: 63,
+    strongKeywords: [
+      "reggaeton",
+      "dembow",
+      "perreo",
+      "latin urban",
+      "latin trap",
+      "urbano",
+      "reggaeton old school",
+      "new school reggaeton",
+    ],
+    keywords: [
+      "reggaeton","latin trap","urban latino","perreo","dembow",
+      "bachata","salsa","cumbia","merengue","vallenato","bolero",
+      "samba","bossa nova","mpb","axe","forro","pagode",
+      "mambo","cha cha","latin jazz","latin pop",
+      "flamenco","rumba","corrido","norteño","banda","ranchera",
+      "nueva cancion","mariachi","latin","latino",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  AFROBEATS / MUSIQUES AFRICAINES                               ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "AFROBEATS",
+    label: "Afrobeats / Afropop / Afro House",
+    emoji: "🌍",
+    color: "#ff9900",
+    priority: 65,
+    keywords: [
+      "afrobeats","afrobeat","afropop","afroswing","afrotrap",
+      "afro fusion","amapiano","gqom","kwaito","highlife","juju",
+      "fuji","apala","makossa","bikutsi","bongo flava","naija",
+      "azonto","afrowave","afro soul","west african","congolese music",
+      "ndombolo","soukous","south african music",
+    ],
+    labels: ["mavin records","empire distribution africa","platoon"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  MUSIQUES ASIATIQUES                                           ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "ASIAN_MUSIC",
+    label: "Musiques Asiatiques (K-Pop, J-Pop, Bollywood…)",
+    emoji: "🎌",
+    color: "#ff3366",
+    priority: 35,
+    keywords: [
+      "k-pop","kpop","korean pop","trot","k-indie",
+      "j-pop","jpop","japanese pop","enka","city pop japanese","anime songs","anime ost",
+      "j-rock","japanese rock","visual kei",
+      "c-pop","cpop","mandopop","cantopop","taiwanese pop",
+      "bollywood","filmi music","bhangra","qawwali","sufi devotional",
+      "baul","indipop","hindi pop","dangdut","pinoy pop","opm","morlam",
+    ],
+  },
+  {
+    name: "KPOP",
+    label: "K-Pop / K-Hip-Hop / K-R&B",
+    emoji: "🎀",
+    color: "#ff69b4",
+    priority: 85,
+    strongKeywords: [
+      "k-pop","kpop","korean pop","k pop",
+      "k-hip-hop","k-r&b","k-indie","k-rnb",
+      "idol","hallyu","kdrama ost","kpop girl group","kpop boy group",
+    ],
+    keywords: [
+      "k-pop","kpop","korean pop","k pop",
+      "k-hip-hop","k-r&b","k-indie","k-rnb","k-soul",
+      "idol","hallyu","korean","j-pop","j-rock","japanese pop",
+      "mandopop","c-pop","cantopop","asian pop",
+      "bts","blackpink","twice","exo","nct","aespa","stray kids",
+    ],
+    labels: ["sm entertainment","yg entertainment","jyp entertainment","hybe","starship"],
+  },
+
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  MOYEN-ORIENT / AFRIQUE DU NORD (MENA)                        ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "MENA_MUSIC",
+    label: "Musiques MENA (Arabe, Persan, Turc…)",
+    emoji: "🌙",
+    color: "#cc8800",
+    priority: 36,
+    keywords: [
+      "arabic classical","maqam","arabic pop","turkish pop","egyptian pop",
+      "persian pop","persian classical","iranian music","kurdish folk",
+      "andalusi music","maghreb","berber music","gnawa","chaabi",
+      "rai","algerian rai","moroccan music","khaleeji",
+      "mizrahi","sephardic","oriental music","middle eastern",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  MUSIQUES DU MONDE / WORLD / WORLDBEAT                        ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "WORLD_MUSIC",
+    label: "Musiques du Monde / World / Worldbeat",
+    emoji: "🌏",
+    color: "#558866",
+    priority: 32,
+    keywords: [
+      "world music","ethnic","traditional music",
+      "celtic music","irish folk","scottish folk","scandinavian folk",
+      "balkan folk","bulgarian music","romanian folk","klezmer","roma music",
+      "fado","tango argentino","flamenco",
+      "indian classical","hindustani","carnatic","raga",
+      "tuvan","throat singing","mongolian folk","tibetan music",
+      "maori","pacific music","indigenous australian","didgeridoo",
+      "worldbeat","ethnopop","global electronica","afro celtic",
+    ],
+    labels: ["real world records","womad","nonesuch world","hemisphere"],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  MICROGENRES / VAPORWAVE / UNDERGROUND                         ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "MICROGENRES",
+    label: "Microgenres / Vaporwave / Internet Music",
+    emoji: "📼",
+    color: "#ff88ff",
+    priority: 28,
+    keywords: [
+      "vaporwave","future funk vaporwave","slushwave","hardvapour",
+      "witch house","seapunk","chillwave",
+      "hypnagogic pop","lolipop","crunkcore","electronicore",
+      "trap metal","wonky pop","sadcore","midwest emo","post emo",
+      "digicore","bedroom pop micro",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  AVANT-GARDE & EXPÉRIMENTAL (CROSSOVER)                        ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "AVANT_GARDE",
+    label: "Avant-Garde / Expérimental / Noise",
+    emoji: "🎭",
+    color: "#333333",
+    priority: 25,
+    keywords: [
+      "avant garde","avant-garde","experimental","drone","noise",
+      "progressive experimental","crossover experimental",
+      "free improvisation","concrete poetry","sound poetry",
+      "harsh noise","harsh noise wall","power electronics",
+      "lowercase","fluxus","new complexity","spectral music",
+    ],
+  },
+
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║  FALLBACK                                                      ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+
+  {
+    name: "NON_CLASSES",
+    label: "Non classés",
+    emoji: "❓",
+    color: "#444444",
+    priority: 0,
+    keywords: [],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// BASE ARTISTES → GENRE (fallback quand l'API ne donne rien)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Format : "artiste normalisé (lowercase)" → [tags genre]
+const ARTIST_GENRE_MAP = {
+  // ── RAP / HIP-HOP ──
+  "lil wayne": ["rap","hip hop","hip-hop"],
+  "lil' wayne": ["rap","hip hop","hip-hop"],
+  "jay z": ["rap","hip hop"],
+  "jay-z": ["rap","hip hop"],
+  "kanye west": ["rap","hip hop","trap"],
+  "drake": ["rap","hip hop","rnb"],
+  "kendrick lamar": ["rap","hip hop","conscious rap"],
+  "travis scott": ["trap","rap","hip hop"],
+  "21 savage": ["trap","rap"],
+  "young thug": ["trap","rap"],
+  "future": ["trap","rap","mumble rap"],
+  "post malone": ["rap","hip hop","pop"],
+  "j cole": ["rap","hip hop","conscious rap"],
+  "big sean": ["rap","hip hop"],
+  "wiz khalifa": ["rap","hip hop"],
+  "asap rocky": ["trap","rap","hip hop"],
+  "chance the rapper": ["rap","hip hop","conscious rap"],
+  "eminem": ["rap","hip hop","boom bap"],
+  "snoop dogg": ["rap","hip hop","west coast hip hop"],
+  "nas": ["rap","hip hop","boom bap"],
+  "wu-tang clan": ["rap","hip hop","east coast hip hop"],
+  "method man": ["rap","hip hop"],
+  "biggie": ["rap","hip hop","east coast hip hop"],
+  "notorious b.i.g": ["rap","hip hop","east coast hip hop"],
+  "2pac": ["rap","hip hop","west coast hip hop"],
+  "nicki minaj": ["rap","hip hop","pop rap"],
+  "cardi b": ["rap","hip hop","trap"],
+  "migos": ["trap","rap"],
+  "quavo": ["trap","rap"],
+  "offset": ["trap","rap"],
+  "lil uzi vert": ["trap","rap","emo rap"],
+  "juice wrld": ["emo rap","trap","melodic rap"],
+  "xxxtentacion": ["emo rap","trap","rap"],
+  "lil peep": ["emo rap","cloud rap"],
+  "bladee": ["cloud rap","digicore","drain"],
+  "ecco2k": ["cloud rap","digicore","experimental"],
+  "yeule": ["dream pop","shoegaze","experimental"],
+  "yeat": ["trap","rap"],
+  "playboi carti": ["trap","rap"],
+  "jeune morty": ["rap","rap francais","trap"],
+  "nej": ["rap francais","rap"],
+  "ninho": ["rap francais","trap"],
+  "booba": ["rap francais","rap"],
+  "rohff": ["rap francais","rap"],
+  "lacrim": ["rap francais","rap"],
+  "nekfeu": ["rap francais","rap","conscious rap"],
+  "kaaris": ["rap francais","trap"],
+  "scarlxrd": ["trap metal","rap","metal"],
+  "doja cat": ["pop","rap","rnb"],
+  "toobris": ["rap","hip hop","rap francais"],
+  // ── EDM / ÉLECTRONIQUE POP ──
+  "david guetta": ["edm","electro house","big room"],
+  "calvin harris": ["edm","electro house","dance pop"],
+  "avicii": ["edm","progressive house","trance"],
+  "tiesto": ["trance","edm","big room"],
+  "martin garrix": ["edm","big room","future house"],
+  "skrillex": ["dubstep","edm","future bass"],
+  "diplo": ["edm","trap","future bass"],
+  "marshmello": ["edm","future bass","big room"],
+  "the chainsmokers": ["edm","electropop","dance pop"],
+  "deadmau5": ["progressive house","techno","electro house"],
+  "daft punk": ["french touch","electro","house"],
+  "justice": ["french touch","electro","ed banger"],
+  "gesaffelstein": ["techno","electro","dark electro"],
+  "kavinsky": ["french touch","synthwave","electro"],
+  "modjo": ["french touch","filter house"],
+  "cassius": ["french touch","house","electro"],
+  "bob sinclar": ["french touch","house","electro"],
+  "tchami": ["future house","deep house","french house"],
+  "disclosure": ["uk garage","deep house","house"],
+  "flume": ["future bass","electronic","indie dance"],
+  "zedd": ["edm","electro house","complextro"],
+  "kygo": ["tropical house","edm","chillout"],
+  "odesza": ["edm","indie dance","electronica"],
+  "rufus du sol": ["indie dance","deep house","melodic techno"],
+  // ── HOUSE / TECHNO UNDERGROUND ──
+  "interplanetary criminal": ["uk garage","bassline","house"],
+  "crudo means raw": ["rap","hip hop","colombian rap"],
+  "pauly": ["house","deep house"],
+  "bicep": ["house","techno","uk rave"],
+  "adam beyer": ["techno","drumcode"],
+  "charlotte de witte": ["techno","dark techno"],
+  "amelie lens": ["techno","hard techno"],
+  "solomun": ["melodic house","deep house","indie dance"],
+  "tale of us": ["melodic techno","dark house","afterlife"],
+  "fisher": ["tech house","jackin house"],
+  "chris lake": ["tech house","deep house"],
+  "black coffee": ["afro house","deep house","organic house"],
+  "peggy gou": ["house","techno","uk garage"],
+  "honey dijon": ["house","techno","disco"],
+  "dj koze": ["house","indie dance","organic house"],
+  "bicep": ["house","techno","rave"],
+  "techno animal": ["techno","industrial","experimental electronic"],
+  "gabber subculture": ["hardcore","gabber","rave"],
+  "surgeon": ["techno","industrial techno","birmingham techno"],
+  // ── R&B / SOUL ──
+  "the weeknd": ["rnb","pop","dark rnb"],
+  "frank ocean": ["rnb","alternative r&b","indie r&b"],
+  "beyonce": ["rnb","pop","soul"],
+  "sza": ["rnb","alternative r&b","neo soul"],
+  "h.e.r": ["rnb","soul","neo soul"],
+  "miguel": ["rnb","soul","neo soul"],
+  "daniel caesar": ["rnb","neo soul","soul"],
+  "biga ranx": ["reggae","dub","roots reggae"],
+  // ── ROCK / METAL / PUNK ──
+  "nirvana": ["grunge","alternative rock","rock"],
+  "radiohead": ["alternative rock","art rock","experimental rock"],
+  "arctic monkeys": ["indie rock","alternative rock","rock"],
+  "the strokes": ["indie rock","garage rock revival","alternative rock"],
+  "metallica": ["heavy metal","thrash metal","metal"],
+  "black sabbath": ["heavy metal","doom metal","metal"],
+  "tool": ["progressive metal","metal","alternative metal"],
+  "nine inch nails": ["industrial rock","alternative metal","noise rock"],
+  "white stripes": ["blues rock","garage rock","alternative rock"],
+  "jack white": ["blues rock","garage rock"],
+  // ── POP ──
+  "taylor swift": ["pop","country pop","indie pop"],
+  "rihanna": ["pop","rnb","dance pop"],
+  "ariana grande": ["pop","rnb","dance pop"],
+  "billie eilish": ["indie pop","pop","dark pop"],
+  "olivia rodrigo": ["pop","pop rock","indie pop"],
+  "harry styles": ["pop","indie pop","rock"],
+  "dua lipa": ["pop","dance pop","disco pop"],
+  "sia": ["pop","dance pop","electropop"],
+  "flo rida": ["pop rap","electro pop","crunk"],
+  "akon": ["rnb","pop","afropop"],
+  "ne-yo": ["rnb","pop","dance pop"],
+
+  // ── TECHNO UNDERGROUND SC (canaux promo / artistes sans tags) ──
+  // Artistes techno confirmés par leurs releases
+  "ponky": ["techno","hard techno","rave"],
+  "pōnky": ["techno","hard techno","rave"],
+  "maurer": ["techno","deep techno","minimal techno"],
+  "conntex": ["techno","dark techno","hard techno"],
+  "bours?": ["techno","acid techno","hard techno"],
+  "bours": ["techno","acid techno","hard techno"],
+  "mza": ["hard techno","acid","industrial techno"],
+  "boy in nature": ["techno","melodic techno"],
+  "aidan rudd": ["techno","minimal techno"],
+  "tinex": ["techno","hard techno"],
+  "gisura": ["techno","dark techno"],
+  "fran lf": ["techno","melodic techno"],
+  "hyden": ["techno","dark techno"],
+  "nkk": ["techno","hard techno"],
+  "vilchezz": ["techno","hard techno"],
+  "jxxxo": ["techno","hard techno"],
+  "dkfsk": ["techno","industrial techno"],
+  "gcod": ["techno","dark techno"],
+  "groef": ["techno","hard techno"],
+  "satin": ["techno","acid techno"],
+  "aemn": ["techno","dark techno"],
+  "kvlr": ["techno","melodic techno"],
+  "alex wilcox": ["hard techno","techno"],
+  "fred?": ["techno","deep techno"],
+  "ben derris": ["techno","minimal techno"],
+  "linus villa": ["techno","minimal techno"],
+  "ned bennett": ["techno","uk garage","house"],
+  "panel junk": ["hard techno","techno"],
+  "sparks": ["techno","hard techno"],
+  "kokko": ["techno","dark techno","industrial techno"],
+  "torvik": ["tekno","tribe techno","free tekno"],
+  "positive vibrations": ["tekno","tribe","acidcore"],
+  "penn-ak": ["acidcore","tekno","mentalcore"],
+  "dr breinnerr": ["tekno","tribe","acidcore"],
+  "gnomen": ["techno","acid techno"],
+  "gelbkreuz": ["techno","acid techno","rave"],
+  "shiffo": ["techno","minimal techno"],
+  "deadx": ["techno","noise techno","industrial techno"],
+  "peska": ["techno","dark techno"],
+  "pinklotion": ["hard techno","techno","industrial techno"],
+  "sewerslvt": ["breakcore","industrial","noise"],
+  "cynthoni": ["breakcore","industrial"],
+
+  // ── UK GARAGE / BASSLINE SC ──
+  "osmosis jones": ["uk garage","bassline","4x4"],
+  "dj swisherman": ["uk garage","bassline","house"],
+  "ragel mood": ["uk garage","house","bassline"],
+  "no chasa": ["uk garage","house","tech house"],
+  "amsterdam dance capital": ["uk garage","house","tech house"],
+  "galactic harmony": ["uk garage","house","bassline"],
+  "green roll records": ["uk garage","house","bassline"],
+  "redline records": ["uk garage","bassline","hard house"],
+  "sih-lest": ["uk garage","bassline","house"],
+  "esca": ["uk garage","hard house","bassline"],
+  "mrgnstrn": ["uk garage","bassline","house"],
+  "boisha": ["house","tech house","uk garage"],
+  "dj freekfunk": ["uk garage","house","funk"],
+  "pace playaz society": ["uk garage","bassline","house"],
+
+  // ── RAP FRANCAIS (TKO = collectif rap fr) ──
+  "tko": ["rap francais","rap","trap"],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOTEUR DE CLASSIFICATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SCORE_THRESHOLD  = 2;
+const SETS_DURATION_MS = 30 * 60 * 1000; // 30 min
+
+function normalize(text) {
+  if (!text) return "";
+  return String(text)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Tags SC sans valeur musicale — pays, plateformes, live-x, etc.
+const NOISE_TAGS = new Set([
+  "usa","uk","france","french","germany","spain","australia","sweden","swedish",
+  "netherlands","russia","russian","mexico","brazil","brazil","slovenian",
+  "all","spotify","bandcamp","soundcloud",
+  "live-1","live-2","live-3","live-4","live-5","live-6","live-7","live-8",
+  "less than 2000 listeners","less than 5000 listeners","background music",
+  "fruity loops","fl studio","ableton","logic pro","moldepunx","board shorts",
+  "lolicore","incelcore","dsbc","unrevell approved",
+]);
+
+function extractTags(tagList) {
+  if (!tagList) return [];
+  // Supporte les deux formats :
+  //   array  : ["cloud rap", "hip hop", "trap"]   (Last.fm API enrichi)
+  //   string : '"cloud rap" hip-hop techno'        (SoundCloud tag_list)
+  let tags;
+  if (Array.isArray(tagList)) {
+    tags = tagList.map(t => normalize(String(t))).filter(Boolean);
+  } else {
+    // Format string SoundCloud : mots entre guillemets ou mots séparés
+    const matches = [...String(tagList).matchAll(/"([^"]+)"|([^\s"]+)/g)];
+    tags = matches.map(m => normalize(m[1] || m[2])).filter(Boolean);
+  }
+  // Filtrer les tags parasites (pays, live-x, plateformes, etc.)
+  return tags.filter(t => !NOISE_TAGS.has(t));
+}
+
+function kwRegex(kw) {
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`);
+}
+
+/**
+ * Classifie un track normalisé.
+ * @param {object} track  — résultat de normalizeTrack()
+ * @param {Array}  cats   — tableau de catégories (défaut: GENRE_CATEGORIES)
+ * @returns {{ category: string, score: number, matches: string[] }}
+ */
+function classifyTrack(track, cats = GENRE_CATEGORIES) {
+  const genreNorm  = normalize(track.genre || "");
+  const tagNorms   = extractTags(track.tags || "");
+  const titleNorm  = normalize(track.title || "");
+  const artistNorm = normalize(track.artist || "");
+  const descNorm   = normalize(track.description || "").slice(0, 600);
+  const labelNorm  = normalize(track.label || "");
+
+  // ── Règle "Premiere" / Track promo ─────────────────────────────────────
+  // Un titre avec "premiere", ou un code label [XXX###], indique un canal de
+  // promo électronique underground. Les tags artiste non-électroniques (metal,
+  // punk, rock) de ces canaux ne doivent pas contaminer le classement.
+  const PREMIERE_RE = /premiere|gtg\b|bcco\b|vault sessions/i;
+  const LABEL_CODE_RE = /\[[A-Z]{2,6}[A-Z0-9]*\d{2,4}[A-Z0-9]*\]/i;
+  const isPromoTrack = PREMIERE_RE.test(track.title || "") ||
+                       LABEL_CODE_RE.test(track.title || "");
+  // Contexte séparé pour contrôler le poids :
+  // - genre field  → +5  (champ explicite, le plus fiable)
+  // - tags API     → +3  (enrichissement Last.fm / base artiste)
+  // - description/label → +2  (contexte riche)
+  // - titre        → +1  (faible : évite "House Is Gettin Raw" → HOUSE si tags rap)
+  // - artiste seul → +1  (faible : "Techno Animal" ne doit pas forcer TECHNO)
+  const richContext = `${descNorm} ${labelNorm}`;
+
+  // Enrichissement par base artiste — injecte les genres connus comme pseudo-tags
+  const artistKey    = artistNorm.trim();
+  const firstArtist  = artistKey.split(/[,\s&]/)[0].trim();
+  // Combiner tags réels + base artiste :
+  // Les tags réels (Last.fm enrichissement) scorent comme d'habitude.
+  // La base artiste s'ajoute UNIQUEMENT si les tags réels ne couvrent pas le genre principal.
+  // Ex : David Guetta a tags ['house','dance','techno'] → base artiste ajoute ['edm','big room']
+  //      → EDM score monte et l'emporte sur HOUSE
+  // Ex : Crudo Means Raw a tags ['rap','hip hop','colombia'] → base artiste dit ['rap'] → cohérent
+  const knownTags = [
+    ...(ARTIST_GENRE_MAP[artistKey]   || []),
+    ...(ARTIST_GENRE_MAP[firstArtist] || []),
+  ].map(normalize);
+  const realGenreStr = tagNorms.join(' ');
+  // Cas 1 : tags réels = rap/trap, base artiste = electronic → skip base
+  const isReallyRap  = /\b(rap|hip.?hop|trap|drill|cloud rap)\b/.test(realGenreStr) && tagNorms.length >= 2;
+  const baseIsElec   = knownTags.some(t => /\b(edm|house|techno|electronic)\b/.test(t));
+  const skipBaseRap  = isReallyRap && baseIsElec && tagNorms.length >= 3;
+  // Cas 2 : tags réels = purement électroniques, base artiste = rap → skip base
+  const isReallyElec = tagNorms.length >= 1 && tagNorms.every(t =>
+    /\b(techno|electronic|idm|house|ambient|trance|drum|bass|dnb|electro|synth|rave|acid|industrial|garage|jungle|glitch|electronica|experimental)\b/.test(t)
+  );
+  const baseIsRap    = knownTags.some(t => /\b(rap|hip.?hop|trap|drill)\b/.test(t));
+  const skipBaseElec = isReallyElec && baseIsRap && tagNorms.length >= 1;
+  // Cas 3 : track de promo (premiere/label code) → ignorer les tags artiste non-électroniques
+  //         HATE (death metal) publie des tracks techno → ses tags "death metal" ne doivent pas s'appliquer
+  const baseIsNonElec = knownTags.some(t =>
+    /\b(metal|punk|rock|rap|hip.?hop|trap|country|folk|classical|jazz|blues|reggae|rnb|soul|kpop|pop)\b/.test(t)
+  );
+  const skipBasePromo = isPromoTrack && baseIsNonElec;
+  const skipBase     = skipBaseRap || skipBaseElec || skipBasePromo;
+  // Pour les tracks promo, on neutralise aussi les tags SC non-musicaux hérités de l'artiste
+  const effectiveTags = (isPromoTrack && skipBasePromo) ? [] : tagNorms;
+  const mergedTags   = skipBase ? effectiveTags : [...new Set([...tagNorms, ...knownTags])];
+  const allEnrichedTags = mergedTags;
+  const hasStrongTags = allEnrichedTags.length >= 3;
+
+  let bestCat    = "NON_CLASSES";
+  let bestScore  = 0;
+  let bestPrio   = -1;
+  let bestMatches = [];
+
+  // Catégories électroniques (pour la règle premiere)
+  const ELEC_CATS = new Set(["TECHNO","HARD_TECHNO","HOUSE","UKG_GARAGE","TRANCE","PSYTRANCE",
+    "HARD_BOUNCE","TEUF_TRIBE","BREAKBEAT","DRUM_AND_BASS","IDM","AMBIENT","DOWNTEMPO",
+    "HARDCORE","BASS_DUBSTEP","FUNK_GROOVE","DISCO_NUDISCO","EDM_MAINSTAGE","BREAKBEAT","SETS"]);
+  const NON_ELEC_CATS = new Set(["METAL","PUNK","ROCK_CLASSIC","ROCK_ALT","ROCK_POST_PUNK",
+    "RAP_CLASSIC","TRAP","UNDERGROUND_RAP","POP","FOLK_COUNTRY","CLASSICAL","JAZZ",
+    "REGGAE_DUB","RNB_SOUL","BLUES","KPOP","LATIN_REGGAETON","AVANT_GARDE"]);
+
+  for (const cat of cats) {
+    if (cat.name === "NON_CLASSES") continue;
+    let score = 0;
+    const matches = [];
+
+    // strongKeywords : tags très spécifiques au genre → scorent +5 comme un genre field
+    for (const kw of (cat.strongKeywords || [])) {
+      const pat = kwRegex(normalize(kw));
+      if (allEnrichedTags.some(t => pat.test(t))) { score += 5; matches.push(`strong:${kw}`); }
+    }
+    for (const kw of (cat.keywords || [])) {
+      const pat = kwRegex(normalize(kw));
+      if (pat.test(genreNorm))                        { score += 5; matches.push(`genre:${kw}`); }
+      if (allEnrichedTags.some(t => pat.test(t)))     { score += 3; matches.push(`tag:${kw}`); }
+      if (pat.test(richContext))                      { score += 2; matches.push(`ctx:${kw}`); }
+      if (pat.test(titleNorm))                        { score += 1; matches.push(`title:${kw}`); }
+      if (pat.test(artistNorm))                       { score += 1; matches.push(`artist:${kw}`); }
+    }
+    for (const lbl of (cat.labels || [])) {
+      const pat = kwRegex(normalize(lbl));
+      if (pat.test(genreNorm) || allEnrichedTags.some(t => pat.test(t))
+          || pat.test(labelNorm) || pat.test(artistNorm) || pat.test(titleNorm)) {
+        score += 4; matches.push(`label:${lbl}`);
+      }
+    }
+
+    // Règle premiere : pénaliser les genres non-électroniques pour les tracks de promo
+    if (isPromoTrack && NON_ELEC_CATS.has(cat.name) && score > 0) {
+      score = Math.max(0, score - 8); // soustrait 8pts → efface quasi tout sauf signal très fort
+      matches.push('promo_penalty');
+    }
+
+    if (score >= SCORE_THRESHOLD) {
+      if (score > bestScore || (score === bestScore && cat.priority > bestPrio)) {
+        bestScore   = score;
+        bestPrio    = cat.priority;
+        bestCat     = cat.name;
+        bestMatches = [...new Set(matches)];
+      }
+    }
+  }
+
+  return { category: bestCat, score: bestScore, matches: bestMatches };
+}
+
+function isSet(track) {
+  return (track.durationMs || 0) >= SETS_DURATION_MS;
+}
+
+/**
+ * Normalise un objet raw vers le format commun.
+ */
+function normalizeTrack(raw, source = "soundcloud") {
+  if (source === "soundcloud") {
+    return {
+      id:          raw.id,
+      title:       raw.title || "",
+      artist:      raw.user?.username || "",
+      genre:       raw.genre || "",
+      tags:        raw.tag_list || "",
+      description: raw.description || "",
+      label:       raw.label_name || raw.publisher_metadata?.publisher || "",
+      durationMs:  raw.duration || 0,
+      url:         raw.permalink_url || "",
+      artwork:     raw.artwork_url || "",
+      source,
+    };
+  }
+  if (source === "spotify") {
+    return {
+      id:          raw.id,
+      title:       raw.name || "",
+      artist:      (raw.artists || []).map(a => a.name).join(", "),
+      genre:       (raw.genres || []).join(" "),
+      tags:        "",
+      description: "",
+      label:       raw.album?.label || "",
+      durationMs:  raw.duration_ms || 0,
+      url:         raw.external_urls?.spotify || "",
+      artwork:     raw.album?.images?.[0]?.url || "",
+      source,
+    };
+  }
+  if (source === "deezer") {
+    return {
+      id:          raw.id,
+      title:       raw.title || "",
+      artist:      raw.artist?.name || "",
+      genre:       raw.genre?.name || "",
+      tags:        "",
+      description: "",
+      label:       "",
+      durationMs:  (raw.duration || 0) * 1000,
+      url:         raw.link || "",
+      artwork:     raw.album?.cover_xl || "",
+      source,
+    };
+  }
+  return {
+    id:          raw.id || Math.random(),
+    title:       raw.title || raw.name || "",
+    artist:      raw.artist || raw.author || "",
+    genre:       raw.genre || "",
+    tags:        raw.tags || raw.tag_list || "",
+    description: raw.description || "",
+    label:       raw.label || "",
+    durationMs:  raw.duration_ms || raw.duration || 0,
+    url:         raw.url || raw.permalink_url || "",
+    artwork:     raw.artwork || raw.cover || "",
+    source,
+  };
+}
+
+/**
+ * Classifie un tableau de tracks bruts → { catName: [tracks] }
+ */
+function classifyAll(tracks, source = "soundcloud", cats = GENRE_CATEGORIES) {
+  const result = {};
+  [...cats, { name: "SETS" }].forEach(c => { result[c.name] = []; });
+  if (!result["NON_CLASSES"]) result["NON_CLASSES"] = [];
+
+  for (const raw of tracks) {
+    const track = normalizeTrack(raw, source);
+    if (isSet(track)) {
+      result["SETS"].push(track);
+    } else {
+      const { category } = classifyTrack(track, cats);
+      if (!result[category]) result[category] = [];
+      result[category].push(track);
+    }
+  }
+  return result;
+}
+
+export default { GENRE_CATEGORIES, classifyTrack, classifyAll, normalizeTrack, isSet };
+
+// ── fin genres ─────────────────────────────────────────────
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const S = {
