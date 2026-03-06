@@ -156,6 +156,12 @@ textarea.f-input{resize:none}
 }
 
   /* Bouton 1 clic extension */
+  /* Cards en mode statut inline */
+  #platforms-status .svc { cursor:default !important; }
+  #platforms-status .conn-row { display:none; margin:0; padding:0; border:none; background:none; }
+  #platforms-status .svc.on .conn-row { display:flex; align-items:center; gap:8px; }
+  #platforms-status .svc-head { gap:10px; }
+
   #ext-connect-all {
     width:100%; padding:12px 16px; margin-bottom:4px;
     background:linear-gradient(135deg,rgba(123,106,255,.18),rgba(160,64,255,.12));
@@ -231,80 +237,57 @@ textarea.f-input{resize:none}
     <!-- DEEZER -->
     <!-- ═══ CONNEXION PLATEFORMES ═══════════════════════════════════════════════ -->
 
-  <!-- Bouton 1 clic (extension) -->
-  <div id="ext-connect-banner" style="display:none;margin-bottom:12px">
+  <!-- Bouton 1 clic (affiché si extension installée) -->
+  <div id="ext-connect-banner" style="display:none;margin:12px 0 8px">
     <button id="ext-connect-all">⚡ Connexion en 1 clic</button>
     <div id="ext-connect-status"></div>
   </div>
 
-  <!-- SoundCloud -->
-  <div class="svc" id="sc-card" style="--c:var(--sc)">
-    <div class="svc-head" id="sc-head">
-      <span class="svc-icon">☁️</span>
-      <div><div class="svc-name">SoundCloud</div><div class="svc-st" id="sc-st">Non connecté</div></div>
-    </div>
-    <div class="conn-row" id="sc-conn">
-      <img class="avt" id="sc-avt" style="display:none" src="" alt="">
-      <div class="avt-ph" id="sc-avt-ph">☁️</div>
-      <div><div class="conn-name" id="sc-name">—</div><div class="conn-sub" id="sc-sub">—</div></div>
-      <button class="disc" id="sc-disc">✕</button>
-    </div>
-    <div class="svc-form" id="sc-form" onclick="event.stopPropagation()">
-      <div class="f-hint" style="line-height:1.9">
-        DevTools (<code style="color:var(--accent)">F12</code>) → Network → filtre <code style="color:var(--accent)">api-v2</code> → copie la valeur après <code style="color:var(--accent)">OAuth </code>
-      </div>
-      <div>
-        <div class="f-label">Token OAuth (commence par 2-)</div>
-        <textarea class="f-input" id="sc-tok" rows="2" placeholder="2-abc123def456..." style="margin-top:6px" onclick="event.stopPropagation()"></textarea>
-      </div>
-      <button class="f-btn" id="sc-btn" style="margin-top:10px">☁️ Connecter SoundCloud</button>
-      <div class="f-msg" id="sc-msg"></div>
-    </div>
-  </div>
+  <!-- Indicateurs de statut (lecture seule, plus de form au clic) -->
+  <div style="display:flex;flex-direction:column;gap:6px" id="platforms-status">
 
-  <!-- Deezer -->
-  <div class="svc" id="dz-card" style="--c:var(--dz);margin-top:8px">
-    <div class="svc-head" id="dz-head">
-      <span class="svc-icon">🎶</span>
-      <div><div class="svc-name">Deezer</div><div class="svc-st" id="dz-st">Non connecté</div></div>
-    </div>
-    <div class="conn-row" id="dz-conn">
-      <img class="avt" id="dz-avt" style="display:none" src="" alt="">
-      <div class="avt-ph" id="dz-avt-ph">🎶</div>
-      <div><div class="conn-name" id="dz-name">—</div><div class="conn-sub" id="dz-sub">—</div></div>
-      <button class="disc" id="dz-disc">✕</button>
-    </div>
-    <div class="svc-form" id="dz-form" onclick="event.stopPropagation()">
-      <div class="f-hint">Via l'API publique Deezer. Ton profil doit être public.</div>
-      <div>
-        <div class="f-label">ID utilisateur Deezer</div>
-        <input class="f-input" id="dz-inp" type="text" placeholder="123456789" style="margin-top:6px" onclick="event.stopPropagation()">
+    <div class="svc" id="sc-card" style="--c:var(--sc);cursor:default">
+      <div class="svc-head">
+        <span class="svc-icon">☁️</span>
+        <div style="flex:1"><div class="svc-name">SoundCloud</div><div class="svc-st" id="sc-st">Non connecté</div></div>
+        <div class="conn-row" id="sc-conn" style="margin:0;padding:0;border:none;background:none">
+          <img class="avt" id="sc-avt" style="display:none;width:24px;height:24px;border-radius:50%" src="" alt="">
+          <div class="avt-ph" id="sc-avt-ph" style="display:none">☁️</div>
+          <div><div class="conn-name" id="sc-name" style="font-size:11px"></div><div class="conn-sub" id="sc-sub" style="font-size:9px;color:var(--grey2)"></div></div>
+          <button class="disc" id="sc-disc">✕</button>
+        </div>
       </div>
-      <button class="f-btn" id="dz-btn">🎶 Connecter Deezer</button>
-      <div class="f-msg" id="dz-msg"></div>
     </div>
-  </div>
 
-  <!-- Spotify -->
-  <div class="svc" id="sp-card" style="--c:var(--sp);margin-top:8px">
-    <div class="svc-head" id="sp-head">
-      <span class="svc-icon">💚</span>
-      <div><div class="svc-name">Spotify</div><div class="svc-st" id="sp-st">Non connecté</div></div>
-    </div>
-    <div class="conn-row" id="sp-conn">
-      <div class="avt-ph">💚</div>
-      <div><div class="conn-name" id="sp-name">—</div><div class="conn-sub" id="sp-sub">—</div></div>
-      <button class="disc" id="sp-disc">✕</button>
-    </div>
-    <div class="svc-form" id="sp-form" onclick="event.stopPropagation()">
-      <div class="f-hint">Exporte <strong style="color:var(--white)">YourLibrary.json</strong> depuis <a href="https://www.spotify.com/account/privacy" target="_blank" style="color:var(--sp)">spotify.com/account/privacy</a> et importe-le ici.</div>
-      <div>
-        <div class="f-label">Fichier YourLibrary.json</div>
-        <input class="f-input" id="sp-file" type="file" accept=".json" style="margin-top:6px" onclick="event.stopPropagation()">
+    <div class="svc" id="dz-card" style="--c:var(--dz);cursor:default">
+      <div class="svc-head">
+        <span class="svc-icon">🎶</span>
+        <div style="flex:1"><div class="svc-name">Deezer</div><div class="svc-st" id="dz-st">Non connecté</div></div>
+        <div class="conn-row" id="dz-conn" style="margin:0;padding:0;border:none;background:none">
+          <img class="avt" id="dz-avt" style="display:none;width:24px;height:24px;border-radius:50%" src="" alt="">
+          <div class="avt-ph" id="dz-avt-ph" style="display:none">🎶</div>
+          <div><div class="conn-name" id="dz-name" style="font-size:11px"></div><div class="conn-sub" id="dz-sub" style="font-size:9px;color:var(--grey2)"></div></div>
+          <button class="disc" id="dz-disc">✕</button>
+        </div>
       </div>
-      <button class="f-btn" id="sp-btn" style="margin-top:8px">💚 Importer Spotify</button>
-      <div class="f-msg" id="sp-msg"></div>
     </div>
+
+    <div class="svc" id="sp-card" style="--c:var(--sp);cursor:default">
+      <div class="svc-head">
+        <span class="svc-icon">💚</span>
+        <div style="flex:1"><div class="svc-name">Spotify</div><div class="svc-st" id="sp-st">Non connecté</div></div>
+        <div class="conn-row" id="sp-conn" style="margin:0;padding:0;border:none;background:none">
+          <div class="avt-ph" style="display:none">💚</div>
+          <div><div class="conn-name" id="sp-name" style="font-size:11px"></div><div class="conn-sub" id="sp-sub" style="font-size:9px;color:var(--grey2)"></div></div>
+          <button class="disc" id="sp-disc">✕</button>
+        </div>
+        <!-- Import Spotify JSON (caché, déclenché par lien) -->
+        <input id="sp-file" type="file" accept=".json" style="display:none">
+        <button id="sp-btn" style="font-size:9px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--grey2);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:Space Mono,monospace;white-space:nowrap;flex-shrink:0" title="Importer YourLibrary.json">📥 JSON</button>
+      </div>
+      <div class="f-msg" id="sp-msg" style="display:none"></div>
+    </div>
+
   </div>
   <div class="run-area">
     <button class="run-btn" id="run-btn" disabled>LANCER LA CLASSIFICATION</button>
@@ -708,7 +691,6 @@ async function connectSC() {
     $('sc-name').textContent = me.username;
     $('sc-sub').textContent  = (me.likes_count||0).toLocaleString('fr') + ' likes';
     $('sc-conn').classList.add('show');
-    $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
     setSt('sc','ok','✓ Connecté'); setMsg('sc',''); updateRun();
   } catch(e) { setSt('sc','err','✕ Erreur'); setMsg('sc','✕ '+e.message,'var(--red)'); }
@@ -782,7 +764,6 @@ function importSP(e) {
       $('sp-name').textContent = file.name;
       $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
       $('sp-conn').classList.add('show');
-      $('sp-form').classList.remove('open');
       $('sp-card').classList.add('on');
       setSt('sp','ok','✓ Importé'); setMsg('sp',''); updateRun();
     } catch(err) { setSt('sp','err','✕ Erreur'); setMsg('sp','✕ '+err.message,'var(--red)'); }
@@ -1694,13 +1675,7 @@ if(resSearch){
   });
 }
 
-// Toggle cartes secondaires
-['dz','sc','sp'].forEach(svc=>{
-  $(`${svc}-card`).addEventListener('click',()=>{
-    if (S[svc].on) return;
-    $(`${svc}-form`).classList.toggle('open');
-  });
-});
+// Cards SC/DZ/SP : connexion via extension uniquement (pas de form au clic)
 $('lfm-card').addEventListener('click',()=>{
   if (S.lfm.on) return;
   $('lfm-form').classList.toggle('open');
@@ -1807,7 +1782,6 @@ async function _extConnectSC(d) {
     $('sc-name').textContent = me.username;
     $('sc-sub').textContent  = (me.likes_count || 0).toLocaleString('fr') + ' likes';
     $('sc-conn').classList.add('show');
-    $('sc-form').classList.remove('open');
     $('sc-card').classList.add('on');
     setSt('sc', 'ok', d.cookies ? '✓ Connecté · export playlist actif' : '✓ Connecté via extension');
     setMsg('sc', ''); updateRun();
@@ -1821,7 +1795,6 @@ function _extConnectDZ(d) {
   S.dz = { on:true, arl: d.arl };
   if ($('dz-name')) $('dz-name').textContent = 'Connecté';
   if ($('dz-conn')) $('dz-conn').classList.add('show');
-  if ($('dz-form')) $('dz-form').classList.remove('open');
   if ($('dz-card')) $('dz-card').classList.add('on');
   setSt('dz', 'ok', '✓ Connecté via extension'); updateRun();
 }
