@@ -1272,6 +1272,15 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
   const artistNorm = normalize(track.artist || "");
   const descNorm   = normalize(track.description || "").slice(0, 600);
   const labelNorm  = normalize(track.label || "");
+
+  // ── Règle "Premiere" / Track promo ─────────────────────────────────────
+  // Un titre avec "premiere", ou un code label [XXX###], indique un canal de
+  // promo électronique underground. Les tags artiste non-électroniques (metal,
+  // punk, rock) de ces canaux ne doivent pas contaminer le classement.
+  const PREMIERE_RE = /premiere|gtg\b|bcco\b|vault sessions/i;
+  const LABEL_CODE_RE = /\[[A-Z]{2,6}[A-Z0-9]*\d{2,4}[A-Z0-9]*\]/i;
+  const isPromoTrack = PREMIERE_RE.test(track.title || "") ||
+                       LABEL_CODE_RE.test(track.title || "");
   // Contexte séparé pour contrôler le poids :
   // - genre field  → +5  (champ explicite, le plus fiable)
   // - tags API     → +3  (enrichissement Last.fm / base artiste)
@@ -1293,22 +1302,27 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
     ...(ARTIST_GENRE_MAP[artistKey]   || []),
     ...(ARTIST_GENRE_MAP[firstArtist] || []),
   ].map(normalize);
-  // On n'ajoute les tags de la base artiste que s'ils ne contredisent pas les tags réels.
-  // "Contradire" = le genre principal des tags réels est totalement différent de la base artiste.
-  // Heuristique simple : si tags réels ont ≥2 mots-clés rap/hip-hop ET base dit electronic → ignorer base.
   const realGenreStr = tagNorms.join(' ');
-  // Cas 1 : tags réels = rap/trap, base artiste = electronic → skip base (Crudo Means Raw)
+  // Cas 1 : tags réels = rap/trap, base artiste = electronic → skip base
   const isReallyRap  = /\b(rap|hip.?hop|trap|drill|cloud rap)\b/.test(realGenreStr) && tagNorms.length >= 2;
   const baseIsElec   = knownTags.some(t => /\b(edm|house|techno|electronic)\b/.test(t));
   const skipBaseRap  = isReallyRap && baseIsElec && tagNorms.length >= 3;
-  // Cas 2 : tags réels = purement électroniques, base artiste = rap → skip base (Toobris taggué techno)
+  // Cas 2 : tags réels = purement électroniques, base artiste = rap → skip base
   const isReallyElec = tagNorms.length >= 1 && tagNorms.every(t =>
     /\b(techno|electronic|idm|house|ambient|trance|drum|bass|dnb|electro|synth|rave|acid|industrial|garage|jungle|glitch|electronica|experimental)\b/.test(t)
   );
   const baseIsRap    = knownTags.some(t => /\b(rap|hip.?hop|trap|drill)\b/.test(t));
   const skipBaseElec = isReallyElec && baseIsRap && tagNorms.length >= 1;
-  const skipBase     = skipBaseRap || skipBaseElec;
-  const mergedTags   = skipBase ? tagNorms : [...new Set([...tagNorms, ...knownTags])];
+  // Cas 3 : track de promo (premiere/label code) → ignorer les tags artiste non-électroniques
+  //         HATE (death metal) publie des tracks techno → ses tags "death metal" ne doivent pas s'appliquer
+  const baseIsNonElec = knownTags.some(t =>
+    /\b(metal|punk|rock|rap|hip.?hop|trap|country|folk|classical|jazz|blues|reggae|rnb|soul|kpop|pop)\b/.test(t)
+  );
+  const skipBasePromo = isPromoTrack && baseIsNonElec;
+  const skipBase     = skipBaseRap || skipBaseElec || skipBasePromo;
+  // Pour les tracks promo, on neutralise aussi les tags SC non-musicaux hérités de l'artiste
+  const effectiveTags = (isPromoTrack && skipBasePromo) ? [] : tagNorms;
+  const mergedTags   = skipBase ? effectiveTags : [...new Set([...tagNorms, ...knownTags])];
   const allEnrichedTags = mergedTags;
   const hasStrongTags = allEnrichedTags.length >= 3;
 
@@ -1316,6 +1330,14 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
   let bestScore  = 0;
   let bestPrio   = -1;
   let bestMatches = [];
+
+  // Catégories électroniques (pour la règle premiere)
+  const ELEC_CATS = new Set(["TECHNO","HARD_TECHNO","HOUSE","UKG_GARAGE","TRANCE","PSYTRANCE",
+    "HARD_BOUNCE","TEUF_TRIBE","BREAKBEAT","DRUM_AND_BASS","IDM","AMBIENT","DOWNTEMPO",
+    "HARDCORE","BASS_DUBSTEP","FUNK_GROOVE","DISCO_NUDISCO","EDM_MAINSTAGE","BREAKBEAT","SETS"]);
+  const NON_ELEC_CATS = new Set(["METAL","PUNK","ROCK_CLASSIC","ROCK_ALT","ROCK_POST_PUNK",
+    "RAP_CLASSIC","TRAP","UNDERGROUND_RAP","POP","FOLK_COUNTRY","CLASSICAL","JAZZ",
+    "REGGAE_DUB","RNB_SOUL","BLUES","KPOP","LATIN_REGGAETON","AVANT_GARDE"]);
 
   for (const cat of cats) {
     if (cat.name === "NON_CLASSES") continue;
@@ -1332,18 +1354,21 @@ export function classifyTrack(track, cats = GENRE_CATEGORIES) {
       if (pat.test(genreNorm))                        { score += 5; matches.push(`genre:${kw}`); }
       if (allEnrichedTags.some(t => pat.test(t)))     { score += 3; matches.push(`tag:${kw}`); }
       if (pat.test(richContext))                      { score += 2; matches.push(`ctx:${kw}`); }
-      // Titre & artiste ont poids réduit (1pt) pour éviter les faux positifs
       if (pat.test(titleNorm))                        { score += 1; matches.push(`title:${kw}`); }
       if (pat.test(artistNorm))                       { score += 1; matches.push(`artist:${kw}`); }
     }
     for (const lbl of (cat.labels || [])) {
       const pat = kwRegex(normalize(lbl));
-      // Sur SC, le "artiste" est souvent le canal promo (BCCO, Vault Sessions...)
-      // → chercher aussi dans artistNorm pour attraper ces canaux
       if (pat.test(genreNorm) || allEnrichedTags.some(t => pat.test(t))
           || pat.test(labelNorm) || pat.test(artistNorm) || pat.test(titleNorm)) {
         score += 4; matches.push(`label:${lbl}`);
       }
+    }
+
+    // Règle premiere : pénaliser les genres non-électroniques pour les tracks de promo
+    if (isPromoTrack && NON_ELEC_CATS.has(cat.name) && score > 0) {
+      score = Math.max(0, score - 8); // soustrait 8pts → efface quasi tout sauf signal très fort
+      matches.push('promo_penalty');
     }
 
     if (score >= SCORE_THRESHOLD) {
