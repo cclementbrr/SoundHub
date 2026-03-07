@@ -194,6 +194,9 @@ textarea.f-input{resize:none}
   #export-modal .em-box { background:var(--dark); border:1px solid var(--border2); border-radius:14px; padding:24px; width:340px; max-width:90vw; }
   #export-modal h3 { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:4px; }
   #export-modal .em-sub { font-size:10px; color:var(--grey); font-family:'Space Mono',monospace; margin-bottom:18px; }
+
+#multi-export-modal { background:var(--dark2); color:var(--white); }
+#multi-export-modal::backdrop { background:rgba(0,0,0,.8); }
   .export-plat { display:flex; align-items:center; gap:10px; padding:11px 12px; margin-bottom:8px; background:var(--card); border:2px solid var(--border); border-radius:8px; cursor:pointer; transition:all .15s; }
   .export-plat:hover { border-color:rgba(255,255,255,.2); }
   .export-plat.selected { border-color:var(--accent); background:rgba(255,68,0,.08); }
@@ -3110,10 +3113,13 @@ document.getElementById('overlay')?.addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 document.getElementById('multi-export-cancel')?.addEventListener('click', function() {
-  document.getElementById('multi-export-modal').style.display = 'none';
+  document.getElementById('multi-export-modal').close();
 });
 document.getElementById('multi-export-modal')?.addEventListener('click', function(e) {
-  if (e.target === this) this.style.display = 'none';
+  const r = this.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+    this.close();
+  }
 });
 
 // ── Mode sélection (fusionner / supprimer / exporter) ────────────────────────
@@ -3226,7 +3232,7 @@ function openMultiExportModal(cats) {
     dests.appendChild(row);
   });
 
-  modal.style.display = 'flex';
+  modal.showModal();
   modal._cats = cats;
 }
 
@@ -3262,7 +3268,7 @@ document.getElementById('multi-export-confirm')?.addEventListener('click', async
   prog.textContent = '✓ Export terminé !';
   confirmBtn.disabled = false;
   exitSelectMode();
-  setTimeout(() => { modal.style.display = 'none'; }, 2000);
+  setTimeout(() => { modal.close(); }, 2000);
 });
 
 // ── Barre de recherche résultats ─────────────────────────────────────────────
@@ -3635,19 +3641,19 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
   </div>
 </div>
 
+
 <!-- ══ MODAL EXPORT MULTI-PLAYLISTS ═════════════════════════════════════════ -->
-<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;align-items:center;justify-content:center">
-  <div style="background:var(--dark2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;max-width:90vw;position:relative;z-index:10001;pointer-events:all">
-    <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
-    <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
-    <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
-    <div id="multi-export-dests" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
-    <div style="display:flex;gap:8px">
-      <button id="multi-export-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
-      <button id="multi-export-confirm" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
-    </div>
-    <div id="multi-export-progress" style="margin-top:12px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px"></div>
+<dialog id="multi-export-modal" style="border:none;border-radius:12px;padding:24px;width:340px;max-width:90vw;background:var(--dark2);color:var(--white)">
+  <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
+  <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
+  <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
+  <div id="multi-export-dests" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+  <div style="display:flex;gap:8px">
+    <button id="multi-export-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
+    <button id="multi-export-confirm" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
   </div>
-</div>
+  <div id="multi-export-progress" style="margin-top:12px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px"></div>
+</dialog>
+</body>
 </body>
 </html>
