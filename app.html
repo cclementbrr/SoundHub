@@ -109,7 +109,8 @@ textarea.f-input{resize:none}
 
 /* GRID */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:2px}
-.cat-card{background:var(--card);border:1px solid var(--border);padding:17px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,background .15s}
+.cat-card.selected{outline:2px solid rgba(123,106,255,.8);background:rgba(123,106,255,.08);}
+  .cat-card{background:var(--card);border:1px solid var(--border);padding:17px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,background .15s}
 .cat-card:hover{border-color:var(--cc,var(--accent));background:#1a1a1a}
 .cat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
 .cat-emo{font-size:20px}
@@ -335,10 +336,8 @@ textarea.f-input{resize:none}
         <div class="res-ttl">Résultats</div>
         <div class="res-meta" id="res-meta">—</div>
         <div class="res-acts">
-          <button class="btn" id="btn-export-all">↓ JSON</button>
           <button class="btn" id="btn-rerun">↺ Reclassifier</button>
-          <button class="btn" id="btn-merge-mode" style="border-color:var(--accent2);color:var(--accent2)">⊕ Fusionner / Supprimer</button>
-          <button class="btn" id="btn-export-modal" style="border-color:rgba(123,106,255,.6);color:#c0b0ff">⬆ Exporter</button>
+          <button class="btn" id="btn-select-mode" style="border-color:rgba(123,106,255,.5);color:#c0b0ff">☑ Sélectionner</button>
         </div>
       </div>
     </div>
@@ -353,11 +352,14 @@ textarea.f-input{resize:none}
       <div id="res-search-results" style="display:none;position:fixed;z-index:500;background:var(--dark);border:1px solid var(--border);border-radius:4px;max-height:300px;overflow-y:auto;min-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.8)"></div>
     </div>
     <!-- Merge mode bar -->
-    <div id="merge-bar" style="display:none;background:rgba(255,100,0,.08);border:1px solid var(--accent2);border-radius:6px;padding:10px 16px;margin-bottom:12px;display:none;align-items:center;gap:12px">
-      <span style="font-family:'Space Mono';font-size:9px;color:var(--accent2)" id="merge-count">0 playlist(s) sélectionnée(s)</span>
+    <div id="select-bar" style="display:none;flex-wrap:wrap;background:rgba(123,106,255,.07);border:1px solid rgba(123,106,255,.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:8px">
+      <span style="font-family:'Space Mono';font-size:9px;color:#c0b0ff;margin-right:4px" id="select-count">0 sélectionnée(s)</span>
+      <button class="btn" id="btn-select-all" style="border-color:rgba(123,106,255,.5);color:#c0b0ff;font-size:8px">Tout sélectionner</button>
+      <div style="flex:1"></div>
       <button class="btn" id="btn-do-merge" style="border-color:var(--green);color:var(--green)">⊕ Fusionner</button>
+      <button class="btn" id="btn-do-export" style="border-color:rgba(123,106,255,.7);color:#c0b0ff">⬆ Exporter</button>
       <button class="btn" id="btn-do-delete" style="border-color:var(--red);color:var(--red)">✕ Supprimer</button>
-      <button class="btn" id="btn-cancel-merge">Annuler</button>
+      <button class="btn" id="btn-cancel-select" style="color:var(--grey)">Annuler</button>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -2387,13 +2389,13 @@ function renderGrid(buckets) {
       <div class="cat-bar"></div>`;
     // En merge mode : toggle sélection au lieu d'ouvrir la modale
     card.addEventListener('click',()=>{
-      if(mergeMode){
-        if(mergeSelected.has(cat.name)){mergeSelected.delete(cat.name);card.style.outline='';}
-        else{mergeSelected.add(cat.name);card.style.outline='2px solid var(--accent2)';}
-        $('merge-count').textContent=`${mergeSelected.size} playlist(s) sélectionnée(s)`;
+      if(selectMode){
+        if(selectSelected.has(cat.name)){selectSelected.delete(cat.name);card.classList.remove('selected');}
+        else{selectSelected.add(cat.name);card.classList.add('selected');}
+        updateSelectCount();
       } else { openModal(cat.name); }
     });
-    if(mergeMode && mergeSelected.has(cat.name)) card.style.outline='2px solid var(--accent2)';
+    if(selectMode && selectSelected.has(cat.name)) card.classList.add('selected');
     grid.appendChild(card);
     requestAnimationFrame(()=>card.querySelector('.cat-bar').style.width=pct+'%');
   });
@@ -3102,50 +3104,158 @@ $('btn-export-all')?.addEventListener('click', exportAllJSON);
 $('btn-rerun')?.addEventListener('click', run);
 
 // ── Merge / Supprimer mode ────────────────────────────────────────────────────
-let mergeMode = false;
-const mergeSelected = new Set();
+// ── Mode sélection (fusionner / supprimer / exporter) ────────────────────────
+let selectMode = false;
+const selectSelected = new Set();
 
-document.getElementById('btn-merge-mode')?.addEventListener('click', ()=>{
-  mergeMode = !mergeMode;
-  document.getElementById('merge-bar').style.display = mergeMode ? 'flex' : 'none';
-  document.getElementById('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Fusionner / Supprimer';
-  document.getElementById('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
-  mergeSelected.clear(); renderGrid(S.results);
+function enterSelectMode() {
+  selectMode = true;
+  document.getElementById('select-bar').style.display = 'flex';
+  document.getElementById('btn-select-mode').textContent = '✕ Quitter';
+  document.getElementById('btn-select-mode').style.borderColor = 'var(--red)';
+  document.getElementById('btn-select-mode').style.color = 'var(--red)';
+  selectSelected.clear();
+  updateSelectCount();
+  renderGrid(S.results);
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectSelected.clear();
+  document.getElementById('select-bar').style.display = 'none';
+  document.getElementById('btn-select-mode').textContent = '☑ Sélectionner';
+  document.getElementById('btn-select-mode').style.borderColor = 'rgba(123,106,255,.5)';
+  document.getElementById('btn-select-mode').style.color = '#c0b0ff';
+  renderGrid(S.results);
+}
+
+function updateSelectCount() {
+  document.getElementById('select-count').textContent = selectSelected.size + ' sélectionnée(s)';
+}
+
+document.getElementById('btn-select-mode')?.addEventListener('click', () => {
+  selectMode ? exitSelectMode() : enterSelectMode();
 });
-document.getElementById('btn-cancel-merge')?.addEventListener('click', ()=>{
-  mergeMode = false; mergeSelected.clear();
-  document.getElementById('merge-bar').style.display = 'none';
-  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
-  document.getElementById('btn-merge-mode').style.borderColor = 'var(--accent2)';
+
+document.getElementById('btn-cancel-select')?.addEventListener('click', exitSelectMode);
+
+document.getElementById('btn-select-all')?.addEventListener('click', () => {
+  const allCats = Object.keys(S.results || {}).filter(k => S.results[k]?.length);
+  const allSelected = allCats.every(k => selectSelected.has(k));
+  if (allSelected) {
+    selectSelected.clear();
+  } else {
+    allCats.forEach(k => selectSelected.add(k));
+  }
+  updateSelectCount();
   renderGrid(S.results);
 });
-document.getElementById('btn-do-merge')?.addEventListener('click', ()=>{
-  if (mergeSelected.size < 2) { alert('Sélectionne au moins 2 playlists'); return; }
-  const cats = [...mergeSelected], dest = cats[0];
+
+document.getElementById('btn-do-merge')?.addEventListener('click', () => {
+  if (selectSelected.size < 2) { alert('Sélectionne au moins 2 playlists'); return; }
+  const cats = [...selectSelected], dest = cats[0];
   for (let i = 1; i < cats.length; i++) {
     S.results[dest].push(...(S.results[cats[i]] || []));
     S.results[cats[i]] = [];
   }
   const nom = prompt('Nom de la playlist fusionnée :', S.labels[dest] || dest);
   if (nom) S.labels[dest] = nom;
-  mergeMode = false; mergeSelected.clear();
-  document.getElementById('merge-bar').style.display = 'none';
-  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
-  document.getElementById('btn-merge-mode').style.borderColor = 'var(--accent2)';
+  exitSelectMode();
   const total = Object.values(S.results).reduce((s,a) => s+a.length, 0);
   document.getElementById('res-meta').textContent = total.toLocaleString('fr') + ' tracks · ' + Object.values(S.results).filter(b=>b.length).length + ' catégories';
-  renderGrid(S.results);
 });
-document.getElementById('btn-do-delete')?.addEventListener('click', ()=>{
-  if (!mergeSelected.size) return;
-  if (!confirm('Supprimer ' + mergeSelected.size + ' playlist(s) ? Les morceaux seront perdus.')) return;
-  for (const cat of mergeSelected) S.results[cat] = [];
-  mergeMode = false; mergeSelected.clear();
-  document.getElementById('merge-bar').style.display = 'none';
-  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
+
+document.getElementById('btn-do-delete')?.addEventListener('click', () => {
+  if (!selectSelected.size) return;
+  if (!confirm('Supprimer ' + selectSelected.size + ' playlist(s) ? Les morceaux seront perdus.')) return;
+  for (const cat of selectSelected) S.results[cat] = [];
+  exitSelectMode();
   const total = Object.values(S.results).reduce((s,a) => s+a.length, 0);
   document.getElementById('res-meta').textContent = total.toLocaleString('fr') + ' tracks · ' + Object.values(S.results).filter(b=>b.length).length + ' catégories';
-  renderGrid(S.results);
+});
+
+document.getElementById('btn-do-export')?.addEventListener('click', () => {
+  if (!selectSelected.size) { alert('Sélectionne au moins une playlist'); return; }
+  openMultiExportModal([...selectSelected]);
+});
+
+// ── Modal export multi-playlists ──────────────────────────────────────────────
+function openMultiExportModal(cats) {
+  const modal = document.getElementById('multi-export-modal');
+  const sub = document.getElementById('multi-export-sub');
+  const dests = document.getElementById('multi-export-dests');
+  const prog = document.getElementById('multi-export-progress');
+
+  sub.textContent = cats.length + ' playlist(s) · ' +
+    cats.reduce((s,k) => s + (S.results[k]?.length||0), 0).toLocaleString('fr') + ' tracks';
+  prog.textContent = '';
+  dests.innerHTML = '';
+
+  const available = [];
+  if (S.sc?.on && S.sc?.token) available.push({ id:'sc', icon:'☁️', name:'SoundCloud', color:'var(--sc)' });
+  if (S.dz?.on && S.dz?.userId) available.push({ id:'dz', icon:'🎶', name:'Deezer', color:'var(--dz)' });
+  available.push({ id:'json', icon:'📄', name:'JSON', color:'var(--grey)' });
+  available.push({ id:'txt',  icon:'📝', name:'TXT',  color:'var(--grey)' });
+
+  available.forEach(p => {
+    const row = document.createElement('div');
+    row.dataset.dest = p.id;
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s;font-family:Space Mono,monospace';
+    row.innerHTML = '<span style="font-size:16px">' + p.icon + '</span>' +
+      '<span style="font-size:10px;color:var(--white);flex:1">' + p.name + '</span>' +
+      '<span class="dest-check" style="font-size:11px;opacity:0">✓</span>';
+    row.addEventListener('click', () => {
+      row.classList.toggle('dest-on');
+      const on = row.classList.contains('dest-on');
+      row.style.borderColor = on ? p.color : 'var(--border)';
+      row.style.background = on ? 'rgba(123,106,255,.08)' : 'none';
+      row.querySelector('.dest-check').style.opacity = on ? '1' : '0';
+    });
+    dests.appendChild(row);
+  });
+
+  modal.style.display = 'flex';
+  modal._cats = cats;
+}
+
+document.getElementById('multi-export-cancel')?.addEventListener('click', () => {
+  document.getElementById('multi-export-modal').style.display = 'none';
+});
+document.getElementById('multi-export-modal')?.addEventListener('click', e => {
+  if (e.target.id === 'multi-export-modal') e.target.style.display = 'none';
+});
+
+document.getElementById('multi-export-confirm')?.addEventListener('click', async () => {
+  const modal = document.getElementById('multi-export-modal');
+  const cats = modal._cats || [];
+  const selected = [...document.querySelectorAll('#multi-export-dests .dest-on')].map(el => el.dataset.dest);
+  if (!selected.length) { document.getElementById('multi-export-progress').textContent = 'Sélectionne une destination'; return; }
+
+  const prog = document.getElementById('multi-export-progress');
+  const confirmBtn = document.getElementById('multi-export-confirm');
+  confirmBtn.disabled = true;
+
+  for (const dest of selected) {
+    for (const cat of cats) {
+      const name = S.labels[cat] || cat;
+      prog.textContent = '⟳ ' + dest.toUpperCase() + ' — ' + name + '...';
+      try {
+        if (dest === 'sc')   await exportToSC(cat);
+        else if (dest === 'dz')   await exportToDeezer(cat);
+        else if (dest === 'json') exportPlaylistJSON(cat);
+        else if (dest === 'txt')  exportTXT(cat);
+        await new Promise(r => setTimeout(r, 400));
+      } catch(e) {
+        prog.textContent = '✕ ' + name + ': ' + e.message;
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+  }
+
+  prog.textContent = '✓ Export terminé !';
+  confirmBtn.disabled = false;
+  exitSelectMode();
+  setTimeout(() => { modal.style.display = 'none'; }, 2000);
 });
 
 // ── Barre de recherche résultats ─────────────────────────────────────────────
@@ -3515,6 +3625,21 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
       <button id="export-confirm-btn" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
     </div>
     <div id="export-progress" style="margin-top:10px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL EXPORT MULTI-PLAYLISTS ═════════════════════════════════════════ -->
+<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--dark2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;max-width:90vw">
+    <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
+    <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
+    <div id="multi-export-dests" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button id="multi-export-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
+      <button id="multi-export-confirm" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
+    </div>
+    <div id="multi-export-progress" style="margin-top:12px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px"></div>
   </div>
 </div>
 </body>
