@@ -3636,8 +3636,8 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
 </div>
 
 <!-- ══ MODAL EXPORT MULTI-PLAYLISTS ═════════════════════════════════════════ -->
-<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center">
-  <div style="background:var(--dark2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;max-width:90vw">
+<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:var(--dark2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;max-width:90vw;position:relative;z-index:10001;pointer-events:all">
     <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
     <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
     <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
