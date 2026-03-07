@@ -3104,6 +3104,18 @@ $('btn-export-all')?.addEventListener('click', exportAllJSON);
 $('btn-rerun')?.addEventListener('click', run);
 
 // ── Merge / Supprimer mode ────────────────────────────────────────────────────
+// ── Fermeture modals ─────────────────────────────────────────────────────────
+document.getElementById('m-close')?.addEventListener('click', closeModal);
+document.getElementById('overlay')?.addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('multi-export-cancel')?.addEventListener('click', function() {
+  document.getElementById('multi-export-modal').style.display = 'none';
+});
+document.getElementById('multi-export-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
 // ── Mode sélection (fusionner / supprimer / exporter) ────────────────────────
 let selectMode = false;
 const selectSelected = new Set();
@@ -3218,12 +3230,7 @@ function openMultiExportModal(cats) {
   modal._cats = cats;
 }
 
-document.getElementById('multi-export-cancel')?.addEventListener('click', () => {
-  document.getElementById('multi-export-modal').style.display = 'none';
-});
-document.getElementById('multi-export-modal')?.addEventListener('click', e => {
-  if (e.target.id === 'multi-export-modal') e.target.style.display = 'none';
-});
+
 
 document.getElementById('multi-export-confirm')?.addEventListener('click', async () => {
   const modal = document.getElementById('multi-export-modal');
@@ -3629,7 +3636,7 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
 </div>
 
 <!-- ══ MODAL EXPORT MULTI-PLAYLISTS ═════════════════════════════════════════ -->
-<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center">
+<div id="multi-export-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center">
   <div style="background:var(--dark2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;max-width:90vw">
     <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
     <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
