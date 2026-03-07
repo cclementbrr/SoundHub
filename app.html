@@ -3285,25 +3285,30 @@ function _extConnectDZ(d) {
 }
 
 function _showDZUserIdInput() {
-  // Créer un mini-champ si pas déjà présent
   if (document.getElementById('dz-uid-wrap')) return;
   const wrap = document.createElement('div');
   wrap.id = 'dz-uid-wrap';
   wrap.style.cssText = 'margin-top:8px;display:flex;gap:6px;align-items:center';
-  wrap.innerHTML = \`<input id="dz-uid-inp" placeholder="Ton ID Deezer (deezer.com/profile/XXXXXXX)" 
-    style="flex:1;padding:6px 8px;background:#111;border:1px solid #333;border-radius:6px;color:#ccc;font-family:'Space Mono',monospace;font-size:9px">
-    <button id="dz-uid-btn" style="padding:6px 10px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer">OK</button>\`;
-  const plats = document.getElementById('connected-plats');
-  if (plats) plats.after(wrap);
-  document.getElementById('dz-uid-btn')?.addEventListener('click', () => {
-    const uid = document.getElementById('dz-uid-inp')?.value.trim().replace(/.*\/profile\//, '').replace(/[^0-9]/g,'');
+  const inp = document.createElement('input');
+  inp.id = 'dz-uid-inp';
+  inp.placeholder = 'ID Deezer (deezer.com/profile/XXXXXXX)';
+  inp.style.cssText = 'flex:1;padding:6px 8px;background:#111;border:1px solid #333;border-radius:6px;color:#ccc;font-family:Space Mono,monospace;font-size:9px';
+  const btn = document.createElement('button');
+  btn.textContent = 'OK';
+  btn.style.cssText = 'padding:6px 10px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:Space Mono,monospace;font-size:9px;cursor:pointer';
+  btn.addEventListener('click', function() {
+    var uid = (inp.value || '').trim().replace(/.*\/profile\//, '').replace(/[^0-9]/g, '');
     if (!uid) return;
     S.dz.userId = uid;
     localStorage.setItem('dz_user_id', uid);
     wrap.remove();
-    dbg('DZ: userId=' + uid + ' ✓', '#4f4');
+    dbg('DZ: userId=' + uid + ' OK', '#4f4');
     renderConnectedPlats();
   });
+  wrap.appendChild(inp);
+  wrap.appendChild(btn);
+  var plats = document.getElementById('connected-plats');
+  if (plats) plats.after(wrap);
 }
 
 // Exposer sur window pour injection directe par l'extension
