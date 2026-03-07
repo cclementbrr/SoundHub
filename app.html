@@ -177,17 +177,7 @@ textarea.f-input{resize:none}
   .step { display:none; }
   .step.active { display:block; }
 
-  #btn-connect-all {
-    display:block; width:100%; padding:16px;
-    background:linear-gradient(135deg,rgba(123,106,255,.22),rgba(160,64,255,.16));
-    border:1px solid rgba(123,106,255,.5); border-radius:10px;
-    color:#ccc0ff; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
-    cursor:pointer; letter-spacing:.8px; transition:all .2s; text-align:center;
-    box-shadow:0 0 24px rgba(123,106,255,.1);
-  }
-  #btn-connect-all:hover { background:linear-gradient(135deg,rgba(123,106,255,.35),rgba(160,64,255,.28)); border-color:rgba(123,106,255,.8); transform:translateY(-1px); }
-  #btn-connect-all:disabled { opacity:.5; cursor:wait; transform:none; }
-  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:6px; font-family:'Space Mono',monospace; min-height:14px; }
+
   .plat-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; }
   .plat-pill .pill-icon { font-size:18px; flex-shrink:0; }
   .plat-pill .pill-info { flex:1; }
@@ -264,19 +254,11 @@ textarea.f-input{resize:none}
       </div>
     </div>
 
-    <!-- Séparateur -->
-    <div style="margin:14px 0 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);letter-spacing:1px;text-transform:uppercase">Sources supplémentaires</div>
 
-    <!-- Bouton 1 clic (extension) -->
-    <div id="ext-banner" style="display:block;margin-bottom:10px">
-      <button id="btn-connect-all">⚡ Connexion en 1 clic — SC · Deezer</button>
-      <div id="connect-status"></div>
-    </div>
 
-    <!-- Pas d'extension -->
-    <div id="no-ext-msg" style="display:none;font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9;margin-bottom:10px">
-      Installe l'extension SoundHub<br>pour la connexion en 1 clic
-    </div>
+
+
+
 
     <!-- Plateformes connectées (remplissent au fur et à mesure) -->
     <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
@@ -294,13 +276,10 @@ textarea.f-input{resize:none}
     </div>
     <div class="f-msg" id="sp-msg" style="margin-top:4px"></div>
 
-    <!-- Bouton test debug -->
-    <button id="btn-test-inject" style="display:block;width:100%;padding:7px;margin-bottom:8px;background:none;border:1px dashed #2a2a2a;border-radius:6px;color:#444;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer">
-      🧪 Test pipeline (sans extension)
-    </button>
+
 
     <!-- Bouton continuer (visible quand ≥1 source connectée) -->
-    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;position:relative;z-index:10">
+    <button id="btn-continue" onclick="buildSourceChecks();showStep(2);" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px">
       CONTINUER →
     </button>
 
