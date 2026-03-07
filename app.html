@@ -2828,71 +2828,74 @@ async function exportToLFMLoved(catName) {
 // Flow : recherche les tracks sur Deezer → génère un CSV à importer
 async function exportToDeezer(catName) {
   const tracks = (S.results[catName]||[]).filter(t=>t.artist&&t.title);
-  if (!tracks.length) return;
-  const btn = $('m-dz-export');
-  btn.disabled = true;
+  if (!tracks.length) { showToast('Aucun track'); return; }
 
-  // Étape 1 : rechercher les Deezer IDs via API publique
-  btn.textContent = '🔍 0/' + tracks.length + '...';
+  const playlistName = 'SoundHub — ' + (S.labels[catName] || catName);
+  const prog = document.getElementById('multi-export-progress');
+  const setP = t => { if (prog) prog.textContent = t; };
+
+  // Étape 1 : chercher les IDs Deezer via API publique (JSONP, pas besoin d'auth)
+  setP('🔍 Recherche des tracks sur Deezer...');
   const found = [], notFound = [];
-
-  for (let i=0; i<tracks.length; i++) {
+  for (let i = 0; i < tracks.length; i++) {
     const t = tracks[i];
     try {
-      const q = encodeURIComponent(`artist:"${t.artist}" track:"${t.title}"`);
-      let d = await dzFetch(`https://api.deezer.com/search?q=${q}&limit=1`);
+      const q = encodeURIComponent('artist:"' + t.artist + '" track:"' + t.title + '"');
+      let d = await dzFetch('https://api.deezer.com/search?q=' + q + '&limit=1');
       if (!d.data?.length) {
         const q2 = encodeURIComponent(t.artist + ' ' + t.title);
-        d = await dzFetch(`https://api.deezer.com/search?q=${q2}&limit=1`);
+        d = await dzFetch('https://api.deezer.com/search?q=' + q2 + '&limit=1');
       }
-      if (d.data?.[0]) found.push(d.data[0]);
+      if (d.data?.[0]?.id) found.push(d.data[0].id);
       else notFound.push(t);
     } catch { notFound.push(t); }
-    btn.textContent = `🔍 ${i+1}/${tracks.length}...`;
+    if (i % 10 === 0) setP('🔍 ' + (i+1) + '/' + tracks.length + ' tracks...');
     await delay(80);
   }
 
-  // Étape 2 : générer CSV
-  const playlistName = S.labels[catName] || catName;
-  const csvRows = ['Artist,Title,Album'].concat(
-    found.map(tr => {
-      const a  = (tr.artist?.name||'').replace(/"/g,'""');
-      const ti = (tr.title_short||tr.title||'').replace(/"/g,'""');
-      const al = (tr.album?.title||'').replace(/"/g,'""');
-      return `"${a}","${ti}","${al}"`;
-    })
-  );
-  const csv = csvRows.join('\n');
-  dl(csv, 'text/csv', `soundhub-${catName.toLowerCase()}.csv`);
+  if (!found.length) { showToast('❌ Aucun track trouvé sur Deezer'); return; }
+  setP('✓ ' + found.length + ' tracks trouvés — création playlist...');
 
-  // Étape 3 : afficher instructions
-  const sub = $('m-sub');
-  const info = document.createElement('div');
-  info.style.cssText = 'font-family:Space Mono;font-size:9px;color:var(--grey2);margin-top:8px;line-height:1.8;padding:8px;border:1px solid var(--border);border-radius:4px;';
-  info.innerHTML = `<span style="color:var(--dz)">🎶 ${found.length} tracks trouvés</span>${notFound.length ? ` · <span style="color:var(--accent2)">${notFound.length} non trouvés</span>` : ''}<br>
-    <span style="color:var(--grey)">✓ CSV téléchargé — importe-le dans Deezer : Mes playlists → Importer → nom : "${playlistName}"</span>`;
-  $('overlay').querySelector('.modal-body')?.appendChild(info) || sub?.insertAdjacentElement('afterend', info);
-
-  if (notFound.length === 0) {
-    btn.textContent = `✓ ${found.length} tracks — CSV prêt`;
-    btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
-  } else {
-    btn.textContent = `✓ ${found.length}/${tracks.length} — CSV prêt`;
-    btn.style.borderColor='var(--accent2)'; btn.style.color='var(--accent2)';
-    console.group('Tracks non trouvés sur Deezer:');
-    notFound.forEach(t=>console.warn(`${t.artist} — ${t.title}`));
-    console.groupEnd();
+  // Étape 2 : créer la playlist via l'extension (onglet Deezer ouvert requis)
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { action: 'create_dz_playlist', name: playlistName, trackIds: found },
+          res => {
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else resolve(res);
+          }
+        );
+      });
+      if (result?.ok) {
+        setP('✓ Playlist Deezer créée ! ' + found.length + ' tracks');
+        showToast('✓ Playlist Deezer créée !');
+        if (result.url) {
+          setP('✓ ' + found.length + ' tracks — <a href="' + result.url + '" target="_blank" style="color:var(--dz)">' + result.url + '</a>');
+        }
+        return;
+      } else {
+        throw new Error(result?.error || 'Échec création');
+      }
+    } catch(e) {
+      console.warn('Extension Deezer:', e.message);
+      setP('⚠ Extension: ' + e.message + ' — export CSV en fallback');
+    }
   }
-  btn.disabled = false;
+
+  // Fallback : CSV si pas d'extension ou erreur
+  const rows = ['Artist,Title,Album'].concat(found.map((id, i) => {
+    const t = tracks[i] || {};
+    const a = (t.artist||'').replace(/"/g,'""');
+    const ti = (t.title||'').replace(/"/g,'""');
+    return '"' + a + '","' + ti + '",""';
+  }));
+  dl(rows.join('\n'), 'text/csv', 'soundhub-' + catName.toLowerCase() + '.csv');
+  setP('CSV téléchargé — ' + found.length + ' tracks trouvés');
 }
 
 
-function exportPlaylistJSON(catName) {
-  const payload={playlist:S.labels[catName]||catName, tracks:S.results[catName]||[]};
-  dl(JSON.stringify(payload,null,2),'application/json',`soundhub-${catName.toLowerCase()}.json`);
-}
-
-// ── Export SC → créer playlist SoundCloud ──────────────────────────────
 async function exportToSC(catName) {
   const tracks    = (S.results[catName]||[]).filter(t => t.source === 'soundcloud' && t.id);
   const allTracks = (S.results[catName]||[]).filter(t => t.artist && t.title);
