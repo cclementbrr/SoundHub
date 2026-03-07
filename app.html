@@ -2438,20 +2438,20 @@ function openModal(catName) {
     <button class="btn" id="m-hub-btn" style="border-color:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};color:${S.sharedCats?.has(catName)?'var(--green)':'var(--grey)'}">
       ${S.sharedCats?.has(catName) ? '✓ Partagée !' : '⊕ Partager sur le Hub'}
     </button>`;
-  $('m-json')?.onclick = ()=>exportPlaylistJSON(catName);
-  $('m-txt')?.onclick  = ()=>exportTXT(catName);
-  $('m-hub-btn')?.onclick = ()=>doHubShare(catName);
+  document.getElementById('m-json')?.addEventListener('click', ()=>exportPlaylistJSON(catName));
+  document.getElementById('m-txt')?.addEventListener('click', ()=>exportTXT(catName));
+  document.getElementById('m-hub-btn')?.addEventListener('click', ()=>doHubShare(catName));
   if (lfmConnecteed) {
-    $('m-lfm-scrobble')?.onclick = ()=>exportToLFMScrobble(catName);
-    $('m-lfm-love')?.onclick     = ()=>exportToLFMLoved(catName);
+    document.getElementById('m-lfm-scrobble')?.addEventListener('click', ()=>exportToLFMScrobble(catName));
+    document.getElementById('m-lfm-love')?.addEventListener('click', ()=>exportToLFMLoved(catName));
   } else {
-    $('m-lfm-auth')?.onclick = ()=>startLFMAuth(catName);
+    document.getElementById('m-lfm-auth')?.addEventListener('click', ()=>startLFMAuth(catName));
   }
   if (dzConnecteed) {
-    $('m-dz-export')?.onclick = ()=>exportToDeezer(catName);
+    document.getElementById('m-dz-export')?.addEventListener('click', ()=>exportToDeezer(catName));
   }
   if (scConnected) {
-    $('m-sc-export')?.onclick = ()=>exportToSC(catName);
+    document.getElementById('m-sc-export')?.addEventListener('click', ()=>exportToSC(catName));
   }
 
   // Catégories disponibles pour le déplacement (celles qui ont des tracks)
@@ -3105,45 +3105,48 @@ $('btn-rerun')?.addEventListener('click', run);
 let mergeMode = false;
 const mergeSelected = new Set();
 
-$('btn-merge-mode')?.onclick = ()=>{
+document.getElementById('btn-merge-mode')?.addEventListener('click', ()=>{
   mergeMode = !mergeMode;
-  $('merge-bar').style.display = mergeMode ? 'flex' : 'none';
-  $('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Fusionner / Supprimer';
-  $('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
+  document.getElementById('merge-bar').style.display = mergeMode ? 'flex' : 'none';
+  document.getElementById('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Fusionner / Supprimer';
+  document.getElementById('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
   mergeSelected.clear(); renderGrid(S.results);
-};
-$('btn-cancel-merge')?.onclick = ()=>{
-  mergeMode=false; mergeSelected.clear();
-  $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
-  $('btn-merge-mode').style.borderColor='var(--accent2)';
+});
+document.getElementById('btn-cancel-merge')?.addEventListener('click', ()=>{
+  mergeMode = false; mergeSelected.clear();
+  document.getElementById('merge-bar').style.display = 'none';
+  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
+  document.getElementById('btn-merge-mode').style.borderColor = 'var(--accent2)';
   renderGrid(S.results);
-};
-$('btn-do-merge')?.onclick = ()=>{
-  if (mergeSelected.size<2){alert('Sélectionne au moins 2 playlists');return;}
-  const cats=[...mergeSelected], dest=cats[0];
-  for(let i=1;i<cats.length;i++){S.results[dest].push(...(S.results[cats[i]]||[]));S.results[cats[i]]=[];}
-  const nom=prompt('Nom de la playlist fusionnée :',S.labels[dest]||dest);
-  if(nom) S.labels[dest]=nom;
-  mergeMode=false; mergeSelected.clear();
-  $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
-  $('btn-merge-mode').style.borderColor='var(--accent2)';
-  const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
-  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
+});
+document.getElementById('btn-do-merge')?.addEventListener('click', ()=>{
+  if (mergeSelected.size < 2) { alert('Sélectionne au moins 2 playlists'); return; }
+  const cats = [...mergeSelected], dest = cats[0];
+  for (let i = 1; i < cats.length; i++) {
+    S.results[dest].push(...(S.results[cats[i]] || []));
+    S.results[cats[i]] = [];
+  }
+  const nom = prompt('Nom de la playlist fusionnée :', S.labels[dest] || dest);
+  if (nom) S.labels[dest] = nom;
+  mergeMode = false; mergeSelected.clear();
+  document.getElementById('merge-bar').style.display = 'none';
+  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
+  document.getElementById('btn-merge-mode').style.borderColor = 'var(--accent2)';
+  const total = Object.values(S.results).reduce((s,a) => s+a.length, 0);
+  document.getElementById('res-meta').textContent = total.toLocaleString('fr') + ' tracks · ' + Object.values(S.results).filter(b=>b.length).length + ' catégories';
   renderGrid(S.results);
-};
-$('btn-do-delete')?.onclick = ()=>{
-  if(!mergeSelected.size)return;
-  if(!confirm(`Delete ${mergeSelected.size} playlist(s)? Les morceaux seront perdus.`))return;
-  for(const cat of mergeSelected) S.results[cat]=[];
-  mergeMode=false; mergeSelected.clear();
-  $('merge-bar').style.display='none';
-  $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
-  const total=Object.values(S.results).reduce((s,a)=>s+a.length,0);
-  $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
+});
+document.getElementById('btn-do-delete')?.addEventListener('click', ()=>{
+  if (!mergeSelected.size) return;
+  if (!confirm('Supprimer ' + mergeSelected.size + ' playlist(s) ? Les morceaux seront perdus.')) return;
+  for (const cat of mergeSelected) S.results[cat] = [];
+  mergeMode = false; mergeSelected.clear();
+  document.getElementById('merge-bar').style.display = 'none';
+  document.getElementById('btn-merge-mode').textContent = '⊕ Fusionner / Supprimer';
+  const total = Object.values(S.results).reduce((s,a) => s+a.length, 0);
+  document.getElementById('res-meta').textContent = total.toLocaleString('fr') + ' tracks · ' + Object.values(S.results).filter(b=>b.length).length + ' catégories';
   renderGrid(S.results);
-};
+});
 
 // ── Barre de recherche résultats ─────────────────────────────────────────────
 const resSearch=$('res-search'), rsr=$('res-search-results');
