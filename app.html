@@ -1850,7 +1850,6 @@ function classifyAll(tracks, source = "soundcloud", cats = GENRE_CATEGORIES) {
   return result;
 }
 
-export default { GENRE_CATEGORIES, classifyTrack, classifyAll, normalizeTrack, isSet };
 
 // ── fin genres ─────────────────────────────────────────────
 
@@ -3294,51 +3293,41 @@ function _setConnectStatus(msg, color) {
   if (el) { el.textContent = msg; el.style.color = color || 'var(--grey)'; }
 }
 
-// Bouton "1 clic" → demande les creds à l'extension
+// Bouton principal : lit window.__shCreds déposé par l'extension
 document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
   btn.textContent = '⟳ Connexion...';
-  _setConnectStatus('', '');
-  dbg('→ Bouton cliqué', '#fa0');
+  dbg('Bouton cliqué — lecture window.__shCreds', '#fa0');
 
-  // Étape 1 : essayer via postMessage (si content script actif)
-  window.postMessage({ type:'soundhub_ext_request', platform:'sc' }, '*');
-  window.postMessage({ type:'soundhub_ext_request', platform:'dz' }, '*');
+  const creds = window.__shCreds || {};
+  dbg('sc=' + !!creds.sc + ' dz=' + !!creds.dz, '#888');
 
-  // Étape 2 : attendre 1.5s que les credentials arrivent
-  await new Promise(r => setTimeout(r, 1500));
+  let n = 0;
+  if (creds.sc?.token) { await _extConnectSC(creds.sc); n++; }
+  if (creds.dz?.arl)   { _extConnectDZ(creds.dz);       n++; }
 
-  // Étape 3 : vérifier si connecté
-  const connected = ['sc','dz'].filter(p => S[p]?.on);
-  if (connected.length) {
+  if (n > 0) {
+    btn.textContent = '✓ Connecté';
+    _setConnectStatus('✓ ' + ['sc','dz'].filter(p=>S[p]?.on).map(p=>({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + '), 'var(--green)');
+  } else {
     btn.disabled = false;
     btn.textContent = '⚡ Connexion en 1 clic';
-    _setConnectStatus('✓ ' + connected.map(p => ({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + ') + ' connectés', 'var(--green)');
-    dbg('✓ Connecté via content script', '#4f4');
-    return;
+    _setConnectStatus('Utilise le popup extension : Récupérer → Injecter', '#888');
+    dbg('Aucune donnée dans __shCreds — relance l'injection', '#f66');
   }
-
-  // Étape 4 : content script inactif — demander d'utiliser le popup extension
-  btn.disabled = false;
-  btn.textContent = '⚡ Connexion en 1 clic';
-  _setConnectStatus('Clique sur l'icône extension → Récupérer → sélectionne cet onglet → Injecter', 'var(--grey)');
-  dbg('⚠ Content script inactif — utilise le popup extension', '#fa0');
 });
 
-// Bouton test : simuler une injection directe (debug)
+// Bouton test : simuler une injection (toujours visible pour debug)
 document.getElementById('btn-test-inject')?.addEventListener('click', async () => {
-  dbg('→ Test injection simulée', '#fa0');
-  await _extConnectSC({ token: 'TEST_TOKEN_FAKE', cookies: '' });
-  _extConnectDZ({ arl: 'TEST_ARL_FAKE' });
-  dbg('✓ Test OK — pipeline fonctionne', '#4f4');
+  dbg('Test : injection simulée', '#fa0');
+  await _extConnectSC({ token: '2-test-fake-token-1234567890', cookies: '' });
+  _extConnectDZ({ arl: 'arl_test_fake_1234567890' });
 });
 
-// Afficher le bouton test si on est en dev (localhost ou file://)
-if (window.location.hostname === 'localhost' || window.location.protocol === 'file:' || window.location.hostname === '127.0.0.1') {
-  const testBtn = document.getElementById('btn-test-inject');
-  if (testBtn) testBtn.style.display = 'block';
-}
+// Bouton test toujours visible pour debug
+const testBtn = document.getElementById('btn-test-inject');
+if (testBtn) testBtn.style.display = 'block';
 
 // Listener messages depuis content-soundhub.js
 window.addEventListener('message', async function(ev) {
@@ -3409,6 +3398,10 @@ function _extConnectDZ(d) {
   updateContinueBtn();
   dbg('DZ: ✓ connecté', '#4f4');
 }
+
+// Exposer sur window pour que l'extension puisse les appeler directement
+window._extConnectSC = _extConnectSC;
+window._extConnectDZ = _extConnectDZ;
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 document.getElementById('btn-continue')?.addEventListener('click', () => {
