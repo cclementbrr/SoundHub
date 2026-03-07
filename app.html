@@ -2299,7 +2299,7 @@ async function run() {
     }
     const sel = S._selectedSources || ['sc','dz','sp','lfm'];
     if (S.dz.on && sel.includes('dz')) {
-      if (!S.dz.userId) throw new Error('Deezer: userId manquant — attends 2s et relance');
+      if (!S.dz.userId) throw new Error('Deezer: ID utilisateur manquant. Ouvre deezer.com, relance l\'injection depuis l\'extension, ou entre ton ID manuellement dans les paramètres.');
       log('Deezer — fetching...','info');
       const t = await fetchDZ();
       all.push(...t);
@@ -2438,20 +2438,20 @@ function openModal(catName) {
     <button class="btn" id="m-hub-btn" style="border-color:${S.sharedCats?.has(catName)?'var(--green)':'var(--border2)'};color:${S.sharedCats?.has(catName)?'var(--green)':'var(--grey)'}">
       ${S.sharedCats?.has(catName) ? '✓ Partagée !' : '⊕ Partager sur le Hub'}
     </button>`;
-  $('m-json').onclick = ()=>exportPlaylistJSON(catName);
-  $('m-txt').onclick  = ()=>exportTXT(catName);
-  $('m-hub-btn').onclick = ()=>doHubShare(catName);
+  $('m-json')?.onclick = ()=>exportPlaylistJSON(catName);
+  $('m-txt')?.onclick  = ()=>exportTXT(catName);
+  $('m-hub-btn')?.onclick = ()=>doHubShare(catName);
   if (lfmConnecteed) {
-    $('m-lfm-scrobble').onclick = ()=>exportToLFMScrobble(catName);
-    $('m-lfm-love').onclick     = ()=>exportToLFMLoved(catName);
+    $('m-lfm-scrobble')?.onclick = ()=>exportToLFMScrobble(catName);
+    $('m-lfm-love')?.onclick     = ()=>exportToLFMLoved(catName);
   } else {
-    $('m-lfm-auth').onclick = ()=>startLFMAuth(catName);
+    $('m-lfm-auth')?.onclick = ()=>startLFMAuth(catName);
   }
   if (dzConnecteed) {
-    $('m-dz-export').onclick = ()=>exportToDeezer(catName);
+    $('m-dz-export')?.onclick = ()=>exportToDeezer(catName);
   }
   if (scConnected) {
-    $('m-sc-export').onclick = ()=>exportToSC(catName);
+    $('m-sc-export')?.onclick = ()=>exportToSC(catName);
   }
 
   // Catégories disponibles pour le déplacement (celles qui ont des tracks)
@@ -3060,14 +3060,14 @@ if (savedU) {
     if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connecte Last.fm pour export"';}
   });
 })();
-$('lfm-btn').onclick=connectLFM;
+$('lfm-btn')?.addEventListener('click', connectLFM);
 $('lfm-inp').addEventListener('keydown',e=>{if(e.key==='Enter')connectLFM();});
-$('lfm-disc').onclick=e=>{e.stopPropagation();disconn('lfm');};
+$('lfm-disc')?.addEventListener('click', e=>{e.stopPropagation();disconn('lfm');});
 
-$('dz-btn').onclick=connectDZ;
-$('dz-disc').onclick=e=>{e.stopPropagation();disconn('dz');};
+// dz-btn supprimé
+// dz-disc supprimé
 
-$('sc-btn').onclick=connectSC;
+// sc-btn supprimé
 
 // ── Bookmarklet SC ──────────────────────────────────────────────────────────
 (function(){
@@ -3091,36 +3091,35 @@ window.addEventListener('message', function(ev){
   setMsg('sc','⟳ Token reçu, connexion en cours...','var(--sc)');
   connectSC();
 });
-$('sc-disc').onclick=e=>{e.stopPropagation();disconn('sc');};
+// sc-disc supprimé
 
-$('sp-btn').onclick=e=>{e.stopPropagation();$('sp-file').click();};
-$('sp-file').addEventListener('change',importSP);
-$('sp-disc').onclick=e=>{e.stopPropagation();disconn('sp');};
+$('sp-btn')?.addEventListener('click', e=>{e.stopPropagation();$('sp-file')?.click();});
+$('sp-file')?.addEventListener('change',importSP);
+$('sp-disc')?.addEventListener('click', e=>{e.stopPropagation();disconn('sp');});
 
-$('run-btn').onclick=run;
 
-$('btn-export-all').onclick=exportAllJSON;
-$('btn-rerun').onclick=run;
+$('btn-export-all')?.addEventListener('click', exportAllJSON);
+$('btn-rerun')?.addEventListener('click', run);
 
 // ── Merge / Supprimer mode ────────────────────────────────────────────────────
 let mergeMode = false;
 const mergeSelected = new Set();
 
-$('btn-merge-mode').onclick = ()=>{
+$('btn-merge-mode')?.onclick = ()=>{
   mergeMode = !mergeMode;
   $('merge-bar').style.display = mergeMode ? 'flex' : 'none';
   $('btn-merge-mode').textContent = mergeMode ? '✕ Quitter merge' : '⊕ Fusionner / Supprimer';
   $('btn-merge-mode').style.borderColor = mergeMode ? 'var(--red)' : 'var(--accent2)';
   mergeSelected.clear(); renderGrid(S.results);
 };
-$('btn-cancel-merge').onclick = ()=>{
+$('btn-cancel-merge')?.onclick = ()=>{
   mergeMode=false; mergeSelected.clear();
   $('merge-bar').style.display='none';
   $('btn-merge-mode').textContent='⊕ Fusionner / Supprimer';
   $('btn-merge-mode').style.borderColor='var(--accent2)';
   renderGrid(S.results);
 };
-$('btn-do-merge').onclick = ()=>{
+$('btn-do-merge')?.onclick = ()=>{
   if (mergeSelected.size<2){alert('Sélectionne au moins 2 playlists');return;}
   const cats=[...mergeSelected], dest=cats[0];
   for(let i=1;i<cats.length;i++){S.results[dest].push(...(S.results[cats[i]]||[]));S.results[cats[i]]=[];}
@@ -3134,7 +3133,7 @@ $('btn-do-merge').onclick = ()=>{
   $('res-meta').textContent=`${total.toLocaleString('fr')} tracks · ${Object.values(S.results).filter(b=>b.length).length} catégories`;
   renderGrid(S.results);
 };
-$('btn-do-delete').onclick = ()=>{
+$('btn-do-delete')?.onclick = ()=>{
   if(!mergeSelected.size)return;
   if(!confirm(`Delete ${mergeSelected.size} playlist(s)? Les morceaux seront perdus.`))return;
   for(const cat of mergeSelected) S.results[cat]=[];
@@ -3271,21 +3270,39 @@ async function _extConnectSC(d) {
 
 function _extConnectDZ(d) {
   if (!d?.arl) { dbg('DZ: ARL vide', '#f66'); return; }
-  dbg('DZ: ARL reçu ' + d.arl.slice(0,10) + '...', '#6af');
-  S.dz = { on: true, arl: d.arl, userId: '' };
+  const userId = d.userId || localStorage.getItem('dz_user_id') || '';
+  dbg('DZ: ARL reçu, userId=' + (userId||'manquant'), '#6af');
+  S.dz = { on: true, arl: d.arl, userId };
+  if (userId) localStorage.setItem('dz_user_id', userId);
   renderConnectedPlats();
   updateContinueBtn();
-  dbg('DZ: ✓ connecté (userId en cours...)', '#4f4');
-  // Récupérer le userId via l'API Deezer publique — le cookie ARL est envoyé auto par le navigateur
-  dzFetch('https://api.deezer.com/user/me').then(user => {
-    if (user?.id) {
-      S.dz.userId = String(user.id);
-      dbg('DZ: userId=' + user.id + ' ✓', '#4f4');
-      renderConnectedPlats();
-    }
-  }).catch(e => {
-    dbg('DZ: userId fetch failed — ' + e.message, '#fa0');
-    // Fallback : essayer de lire depuis l'onglet Deezer via le titre de page ou autre
+  if (userId) {
+    dbg('DZ: ✓ connecté userId=' + userId, '#4f4');
+  } else {
+    dbg('DZ: ARL ok — entre ton ID Deezer ci-dessous', '#fa0');
+    _showDZUserIdInput();
+  }
+}
+
+function _showDZUserIdInput() {
+  // Créer un mini-champ si pas déjà présent
+  if (document.getElementById('dz-uid-wrap')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'dz-uid-wrap';
+  wrap.style.cssText = 'margin-top:8px;display:flex;gap:6px;align-items:center';
+  wrap.innerHTML = \`<input id="dz-uid-inp" placeholder="Ton ID Deezer (deezer.com/profile/XXXXXXX)" 
+    style="flex:1;padding:6px 8px;background:#111;border:1px solid #333;border-radius:6px;color:#ccc;font-family:'Space Mono',monospace;font-size:9px">
+    <button id="dz-uid-btn" style="padding:6px 10px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer">OK</button>\`;
+  const plats = document.getElementById('connected-plats');
+  if (plats) plats.after(wrap);
+  document.getElementById('dz-uid-btn')?.addEventListener('click', () => {
+    const uid = document.getElementById('dz-uid-inp')?.value.trim().replace(/.*\/profile\//, '').replace(/[^0-9]/g,'');
+    if (!uid) return;
+    S.dz.userId = uid;
+    localStorage.setItem('dz_user_id', uid);
+    wrap.remove();
+    dbg('DZ: userId=' + uid + ' ✓', '#4f4');
+    renderConnectedPlats();
   });
 }
 
