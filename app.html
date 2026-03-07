@@ -3230,18 +3230,20 @@ function openMultiExportModal(cats) {
   });
 
   modal.style.display='flex';
-  modal._cats = cats;
+  S._exportCats = cats;
 }
 
 
 
 document.getElementById('multi-export-confirm')?.addEventListener('click', async () => {
   const modal = document.getElementById('multi-export-modal');
-  const cats = modal._cats || [];
+  const cats = S._exportCats || [];
   const selected = [...document.querySelectorAll('#multi-export-dests .dest-on')].map(el => el.dataset.dest);
-  if (!selected.length) { document.getElementById('multi-export-progress').textContent = 'Sélectionne une destination'; return; }
-
+  console.log('[export] cats:', cats, 'selected:', selected);
   const prog = document.getElementById('multi-export-progress');
+  if (!cats.length) { if(prog) prog.textContent = 'Erreur: aucune playlist sélectionnée'; return; }
+  if (!selected.length) { if(prog) prog.textContent = 'Sélectionne une destination'; return; }
+
   const confirmBtn = document.getElementById('multi-export-confirm');
   confirmBtn.disabled = true;
 
