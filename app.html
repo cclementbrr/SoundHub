@@ -178,21 +178,15 @@ textarea.f-input{resize:none}
   .step.active { display:block; }
 
   #btn-connect-all {
-    display:block; width:100%; padding:18px 20px;
-    background:linear-gradient(135deg,rgba(123,106,255,.22),rgba(160,64,255,.16));
-    border:1px solid rgba(123,106,255,.5); border-radius:12px;
-    color:#d0c4ff; font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
-    cursor:pointer; letter-spacing:1px; transition:all .2s; text-align:center;
-    box-shadow: 0 0 30px rgba(123,106,255,.12);
+    display:block; width:100%; padding:14px 16px;
+    background:linear-gradient(135deg,rgba(123,106,255,.2),rgba(160,64,255,.15));
+    border:1px solid rgba(123,106,255,.45); border-radius:10px;
+    color:#ccc0ff; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+    cursor:pointer; letter-spacing:.8px; transition:all .2s; text-align:center;
   }
-  #btn-connect-all:hover {
-    background:linear-gradient(135deg,rgba(123,106,255,.35),rgba(160,64,255,.28));
-    border-color:rgba(123,106,255,.8);
-    box-shadow: 0 0 40px rgba(123,106,255,.22);
-    transform: translateY(-1px);
-  }
-  #btn-connect-all:disabled { opacity:.5; cursor:wait; transform:none; }
-  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:8px; font-family:'Space Mono',monospace; min-height:16px; letter-spacing:.3px; }
+  #btn-connect-all:hover { background:linear-gradient(135deg,rgba(123,106,255,.3),rgba(160,64,255,.22)); border-color:rgba(123,106,255,.7); }
+  #btn-connect-all:disabled { opacity:.5; cursor:wait; }
+  #connect-status { font-size:9px; color:var(--grey); text-align:center; margin-top:6px; font-family:'Space Mono',monospace; min-height:14px; }
   .plat-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; }
   .plat-pill .pill-icon { font-size:18px; flex-shrink:0; }
   .plat-pill .pill-info { flex:1; }
@@ -232,59 +226,81 @@ textarea.f-input{resize:none}
   <!-- ══ ÉTAPE 1 : CONNEXION ═════════════════════════════════════════════ -->
   <div id="step-1" class="step active">
 
-    <!-- Debug panel -->
-    <div id="debug-panel" style="font-size:9px;font-family:'Space Mono',monospace;background:#080808;border:1px solid #2a2a2a;border-radius:8px;margin-bottom:10px;overflow:hidden">
-      <div style="padding:6px 10px;border-bottom:1px solid #1a1a1a;color:#444;display:flex;justify-content:space-between;align-items:center">
-        <span>liaison extension</span>
-        <span id="debug-ext-badge" style="color:#333">⬤ inactif</span>
+    <!-- Last.fm (toujours visible) -->
+    <div class="svc" id="lfm-card" style="--c:var(--lfm)">
+      <div class="svc-head">
+        <span class="svc-icon">🎵</span>
+        <div><div class="svc-name">Last.fm</div><div class="svc-st" id="lfm-st">Non connecté</div></div>
       </div>
-      <div id="debug-log" style="padding:8px 10px;max-height:90px;overflow-y:auto;line-height:1.8;color:#555">
-        <div style="color:#333">En attente de l'extension...</div>
+      <div class="conn-row" id="lfm-conn">
+        <img class="avt" id="lfm-avt" style="display:none" src="" alt="">
+        <div class="avt-ph" id="lfm-avt-ph">🎵</div>
+        <div><div class="conn-name" id="lfm-name">—</div><div class="conn-sub" id="lfm-sub">—</div></div>
+        <button class="disc" id="lfm-disc">✕</button>
+      </div>
+      <div class="svc-form open" id="lfm-form" onclick="event.stopPropagation()">
+        <div class="f-hint">Compatible Spotify, SoundCloud, Deezer et +30 services. <a href="https://www.last.fm/join" target="_blank" style="color:var(--lfm)">Créer un compte gratuit →</a></div>
+        <div id="lfm-secret-wrap">
+          <div style="font-size:9px;color:#f59e0b;margin-bottom:4px">⚡ Pour export vers Last.fm Loved</div>
+          <div class="f-hint" style="font-size:8.5px">La clé de démo ne supporte pas l'export. <a href="https://www.last.fm/api/account/create" target="_blank" style="color:var(--lfm)">Crée une app gratuite en 30s →</a></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button class="f-btn" id="lfm-save-btn" style="flex:1;font-size:9px">💾 Sauvegarder</button>
+        </div>
+        <div class="f-label" style="margin-top:6px">Pseudo Last.fm</div>
+        <input class="f-input" id="lfm-inp" type="text" placeholder="tonpseudo" style="margin-top:4px" onclick="event.stopPropagation()">
+        <div style="margin-top:8px">
+          <div class="f-label">Source</div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="f-tab active" id="lfm-tab-loved" onclick="setLfmTab('loved')">Loved</button>
+            <button class="f-tab" id="lfm-tab-recent" onclick="setLfmTab('recent')">Récentes</button>
+            <button class="f-tab" id="lfm-tab-top" onclick="setLfmTab('top')">Top</button>
+          </div>
+        </div>
+        <div class="f-msg" id="lfm-creds-msg"></div>
+        <button class="f-btn" id="lfm-btn">🔴 Connecte Last.fm</button>
+        <div class="f-msg" id="lfm-msg"></div>
       </div>
     </div>
 
-    <!-- Plateformes connectées (apparaissent après connexion) -->
-    <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <!-- Séparateur -->
+    <div style="margin:14px 0 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);letter-spacing:1px;text-transform:uppercase">Sources supplémentaires</div>
 
-    <!-- Bouton test local (bypass extension) -->
-    <button id="btn-test-inject" style="display:none;width:100%;padding:6px;background:none;border:1px dashed #333;border-radius:6px;color:#555;font-family:'Space Mono',monospace;font-size:9px;cursor:pointer;margin-bottom:6px">
-      🧪 Test : simuler injection SC+DZ
-    </button>
-
-    <!-- Bouton 1 clic centré -->
-    <!-- Debug log -->
-    <div id="debug-log" style="font-family:'Space Mono',monospace;padding:6px 8px;margin-bottom:8px;background:rgba(0,0,0,.3);border:1px solid #222;border-radius:6px;min-height:24px;max-height:90px;overflow:hidden"></div>
-
-    <div id="ext-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px">
-      <button id="btn-connect-all">⚡ Connexion en 1 clic</button>
+    <!-- Bouton 1 clic (extension) -->
+    <div id="ext-banner" style="display:none;margin-bottom:10px">
+      <button id="btn-connect-all">⚡ Connexion en 1 clic — SC · Deezer</button>
       <div id="connect-status"></div>
     </div>
 
     <!-- Pas d'extension -->
-    <div id="no-ext-msg" style="display:none;font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9">
+    <div id="no-ext-msg" style="font-size:9px;color:var(--grey2);font-family:'Space Mono',monospace;text-align:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;line-height:1.9;margin-bottom:10px">
       Installe l'extension SoundHub<br>pour la connexion en 1 clic
     </div>
 
-    <!-- Bouton continuer -->
-    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px">
+    <!-- Plateformes connectées (remplissent au fur et à mesure) -->
+    <div id="connected-plats" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+
+    <!-- Spotify JSON (toujours dispo) -->
+    <div class="plat-pill" style="cursor:pointer" id="sp-import-pill" title="Importer YourLibrary.json">
+      <span class="pill-icon">💚</span>
+      <div class="pill-info">
+        <div class="pill-name" id="sp-pill-name">Spotify</div>
+        <div class="pill-sub" id="sp-pill-sub">Importer YourLibrary.json</div>
+      </div>
+      <input id="sp-file" type="file" accept=".json" style="display:none">
+      <button id="sp-btn" style="font-size:9px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'Space Mono',monospace">📥 JSON</button>
+      <button id="sp-disc" class="pill-disc" style="display:none">✕</button>
+    </div>
+    <div class="f-msg" id="sp-msg" style="margin-top:4px"></div>
+
+    <!-- Bouton continuer (visible quand ≥1 source connectée) -->
+    <button id="btn-continue" style="display:none;width:100%;margin-top:14px;padding:12px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:opacity .2s">
       CONTINUER →
     </button>
 
-    <!-- IDs fantômes pour compatibilité JS (lfm-card toujours dans le DOM) -->
-    <div style="display:none" id="lfm-card"><div id="lfm-st"></div><div id="lfm-conn"></div><div id="lfm-avt-ph"></div><div id="lfm-name"></div><div id="lfm-sub"></div><div id="lfm-form"><div id="lfm-secret-wrap"></div><div id="lfm-creds-msg"></div><div id="lfm-msg"></div></div><input id="lfm-inp"><div id="lfm-avt"></div></div>
-    <div style="display:none" id="sp-import-pill">
-      <div id="sp-pill-name"></div><div id="sp-pill-sub"></div>
-      <input id="sp-file" type="file" accept=".json">
-      <button id="sp-btn"></button>
-      <button id="sp-disc"></button>
-    </div>
-    <div id="sp-msg" style="display:none"></div>
-    <div id="lfm-disc" style="display:none"></div>
-    <div id="lfm-btn" style="display:none"></div>
-    <div id="lfm-save-btn" style="display:none"></div>
-
   </div>
 
+  <!-- ══ ÉTAPE 2 : SÉLECTION SOURCES ═════════════════════════════════════ -->
   <div id="step-2" class="step">
     <button id="btn-back" style="background:none;border:none;color:var(--grey);font-size:9px;font-family:'Space Mono',monospace;cursor:pointer;margin-bottom:10px;padding:0">← Retour</button>
     <div class="sec-label" style="margin-bottom:8px">Analyser</div>
@@ -312,7 +328,11 @@ textarea.f-input{resize:none}
 
 
 <main class="main">
-  <div class="empty" id="empty" style="display:none"></div>
+  <div class="empty" id="empty">
+    <div class="empty-ico">🎛️</div>
+    <div class="empty-ttl">Prêt à classifier</div>
+    <div class="empty-sub">Entre ton pseudo Last.fm et lance l'analyse. Les genres sont détectés via les tags de l'artiste et une base de 100+ artistes.</div>
+  </div>
 
   <div class="prog-wrap" id="prog-wrap">
     <div class="prog-top">
@@ -374,7 +394,6 @@ textarea.f-input{resize:none}
 </div>
 
 <script>
-// ── soundhub-genres.js inliné ──────────────────────────────
 /**
  * SoundHub — Universal Genre Engine v2
  * ======================================
@@ -1851,7 +1870,7 @@ function classifyAll(tracks, source = "soundcloud", cats = GENRE_CATEGORIES) {
 }
 
 
-// ── fin genres ─────────────────────────────────────────────
+// ── FIN GENRES ──
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const S = {
@@ -2038,7 +2057,7 @@ async function enrichAll(tracks, onProg) {
 // ── Deezer ────────────────────────────────────────────────────────────────────
 // Deezer API publique — pas de CORS sur les endpoints publics GET
 async function connectDZ() {
-  const uid = ($('dz-inp')?.value || '').trim();
+  const uid = $('dz-inp').value.trim();
   if (!uid) { setMsg('dz','Enter your Deezer ID','var(--red)'); return; }
   setSt('dz','spin','⟳ Vérification...');
   try {
@@ -2167,7 +2186,7 @@ async function fetchDZ() {
 
 // ── SoundCloud ────────────────────────────────────────────────────────────────
 async function connectSC() {
-  const tok = ($('sc-tok')?.value || '').trim().replace(/^OAuth\s+/i,'');
+  const tok = $('sc-tok').value.trim().replace(/^OAuth\s+/i,'');
   if (!tok) { setMsg('sc','Entre ton token OAuth (commence par 2-)','var(--red)'); return; }
   setSt('sc','spin','⟳ Vérification...');
   try {
@@ -2251,20 +2270,11 @@ function importSP(e) {
         :{id:t.spotify_track_uri?.split(':').pop()||'',title:t.master_metadata_track_name||'',artist:t.master_metadata_album_artist_name||'',album:t.master_metadata_album_album_name||'',genre:'',tags:[],duration:Math.round((t.ms_played||0)/1000),description:'',label:'',source:'spotify'}
       ).filter(t=>{if(!t.id)return true;if(seen.has(t.id))return false;seen.add(t.id);return true;});
       S.sp.on = true;
-      // Mettre à jour les pills du nouveau DOM
-      const spName = document.getElementById('sp-pill-name');
-      const spSub  = document.getElementById('sp-pill-sub');
-      const spDisc = document.getElementById('sp-disc');
-      if (spName) spName.textContent = 'Spotify';
-      if (spSub)  spSub.textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks importés`;
-      if (spDisc) spDisc.style.display = 'block';
-      // Compatibilité ancien DOM
-      if ($('sp-name')) $('sp-name').textContent = file.name;
-      if ($('sp-sub'))  $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
-      setSt('sp','ok','✓ Importé'); setMsg('sp','');
-      try { localStorage.setItem('sp_tracks', JSON.stringify(S.sp.tracks)); } catch(e) {}
-      if (typeof updateContinueBtn === 'function') updateContinueBtn();
-      if (typeof buildSourceChecks === 'function' && document.getElementById('step-2')?.classList.contains('active')) buildSourceChecks();
+      $('sp-name').textContent = file.name;
+      $('sp-sub').textContent  = `${S.sp.tracks.length.toLocaleString('fr')} tracks`;
+      $('sp-conn').classList.add('show');
+      $('sp-card').classList.add('on');
+      setSt('sp','ok','✓ Importé'); setMsg('sp',''); updateRun();
     } catch(err) { setSt('sp','err','✕ Erreur'); setMsg('sp','✕ '+err.message,'var(--red)'); }
     e.target.value='';
   };
@@ -2276,7 +2286,7 @@ function disconn(svc) {
   S[svc].on = false;
   if (svc==='lfm') { S.lfm.user=null; localStorage.removeItem('lfm_user'); localStorage.removeItem('lfm_src'); $('lfm-avt').style.display='none'; $('lfm-avt-ph').style.display='flex'; $('lfm-form').classList.add('open'); }
   if (svc==='dz')  { S.dz.accessToken=null; localStorage.removeItem('dz_token'); $('dz-avt').style.display='none'; $('dz-avt-ph').style.display='flex'; }
-  if (svc==='sp')  { S.sp.tracks=[]; localStorage.removeItem('sp_tracks'); }
+  if (svc==='sp')  S.sp.tracks=[];
   $(`${svc}-conn`).classList.remove('show');
   $(`${svc}-card`).classList.remove('on');
   setSt(svc,'','Non connecté'); updateRun();
@@ -3041,7 +3051,6 @@ if (savedU) {
 // Events
 // Init champs clé API Last.fm
 (function(){
-  try {
   const wrap    = $('lfm-secret-wrap');
   const keyInp  = $('lfm-apikey-inp');
   const secInp  = $('lfm-secret-inp');
@@ -3063,16 +3072,15 @@ if (savedU) {
     localStorage.setItem('lfm_api_secret', s);
     if(msg){msg.style.color='var(--green)';msg.textContent='✓ Sauvegardé — clique sur "Connecte Last.fm pour export"';}
   });
-  } catch(e) {}
 })();
 $('lfm-btn').onclick=connectLFM;
 $('lfm-inp').addEventListener('keydown',e=>{if(e.key==='Enter')connectLFM();});
 $('lfm-disc').onclick=e=>{e.stopPropagation();disconn('lfm');};
 
-// $('dz-btn') supprimé du HTML — connexion via extension uniquement
-document.getElementById('dz-disc')?.addEventListener('click', e=>{e.stopPropagation();disconn('dz');});
+$('dz-btn').onclick=connectDZ;
+$('dz-disc').onclick=e=>{e.stopPropagation();disconn('dz');};
 
-// $('sc-btn') supprimé du HTML — connexion via extension uniquement
+$('sc-btn').onclick=connectSC;
 
 // ── Bookmarklet SC ──────────────────────────────────────────────────────────
 (function(){
@@ -3096,7 +3104,16 @@ window.addEventListener('message', function(ev){
   setMsg('sc','⟳ Token reçu, connexion en cours...','var(--sc)');
   connectSC();
 });
-// (wirings handled below in FLOW block)
+$('sc-disc').onclick=e=>{e.stopPropagation();disconn('sc');};
+
+$('sp-btn').onclick=e=>{e.stopPropagation();$('sp-file').click();};
+$('sp-file').addEventListener('change',importSP);
+$('sp-disc').onclick=e=>{e.stopPropagation();disconn('sp');};
+
+$('run-btn').onclick=run;
+
+$('btn-export-all').onclick=exportAllJSON;
+$('btn-rerun').onclick=run;
 
 // ── Merge / Supprimer mode ────────────────────────────────────────────────────
 let mergeMode = false;
@@ -3168,66 +3185,47 @@ if(resSearch){
 }
 
 
+
 // ════════════════════════════════════════════════════════════════════════════
-//  EXTENSION + CONNEXION FLOW
-function dbg(msg, color) {
-  const log = document.getElementById('debug-log');
-  if (!log) { console.log('[dbg]', msg); return; }
-  // Vider le "En attente..." au premier message
-  if (log.children.length === 1 && log.children[0].style.color === 'rgb(51, 51, 51)') log.innerHTML = '';
-  const d = document.createElement('div');
-  d.style.color = color || '#666';
-  d.textContent = new Date().toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) + ' ' + msg;
-  log.appendChild(d);
-  log.scrollTop = log.scrollHeight;
-  console.log('[SoundHub dbg]', msg);
-} (v9 — version unique, pas de doublon)
+//  CONNEXION FLOW — v10 clean
 // ════════════════════════════════════════════════════════════════════════════
 
 let _extAvailable = false;
 
-// ── Debug log visible ─────────────────────────────────────────────────────────
+// ── Debug panel ──────────────────────────────────────────────────────────────
 function dbg(msg, color) {
   console.log('[SoundHub]', msg);
   const el = document.getElementById('debug-log');
-  if (el) {
-    const line = document.createElement('div');
-    line.style.cssText = 'font-size:8px;padding:2px 0;color:' + (color||'#888');
-    line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
-    el.prepend(line);
-    if (el.children.length > 8) el.lastChild.remove();
-  }
+  if (!el) return;
+  const line = document.createElement('div');
+  line.style.cssText = 'padding:1px 0;color:' + (color || '#888');
+  line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  el.prepend(line);
+  if (el.children.length > 10) el.lastChild.remove();
 }
 
-// ── Steps UI ─────────────────────────────────────────────────────────────────
+// ── Steps ─────────────────────────────────────────────────────────────────────
 function showStep(n) {
-  const s1 = document.getElementById('step-1');
-  const s2 = document.getElementById('step-2');
-  if (s1) { s1.classList.toggle('active', n === 1); }
-  if (s2) { s2.classList.toggle('active', n === 2); }
+  document.getElementById('step-1')?.classList.toggle('active', n === 1);
+  document.getElementById('step-2')?.classList.toggle('active', n === 2);
 }
 
-// ── Plateformes connectées : pills ───────────────────────────────────────────
+// ── Pills plateformes connectées ──────────────────────────────────────────────
 function renderConnectedPlats() {
   const container = document.getElementById('connected-plats');
   if (!container) return;
   container.innerHTML = '';
-  [
-    { id:'sc', icon:'☁️', name:'SoundCloud', sub: () => S.sc.userId || '✓' },
-    { id:'dz', icon:'🎶', name:'Deezer',     sub: () => 'Connecté' },
+  [{id:'sc',icon:'☁️',name:'SoundCloud',sub:()=>S.sc.userId||'connecté'},
+   {id:'dz',icon:'🎶',name:'Deezer',    sub:()=>'connecté'}
   ].forEach(p => {
     if (!S[p.id]?.on) return;
     const div = document.createElement('div');
     div.className = 'plat-pill';
-    div.innerHTML = `
-      <span class="pill-icon">${p.icon}</span>
-      <div class="pill-info">
-        <div class="pill-name">${p.name}</div>
-        <div class="pill-sub">${p.sub()}</div>
-      </div>
+    div.innerHTML = `<span class="pill-icon">${p.icon}</span>
+      <div class="pill-info"><div class="pill-name">${p.name}</div><div class="pill-sub">${p.sub()}</div></div>
       <button class="pill-disc" data-plat="${p.id}">✕</button>`;
     div.querySelector('.pill-disc').addEventListener('click', () => {
-      S[p.id] = { on:false };
+      S[p.id] = { on: false };
       renderConnectedPlats();
       updateContinueBtn();
     });
@@ -3240,26 +3238,19 @@ function updateContinueBtn() {
   if (btn) btn.style.display = (S.sc?.on || S.dz?.on) ? 'block' : 'none';
 }
 
-// ── Étape 2 : sources ────────────────────────────────────────────────────────
+// ── Sources (step 2) ──────────────────────────────────────────────────────────
 function buildSourceChecks() {
   const c = document.getElementById('source-checks');
   if (!c) return;
   c.innerHTML = '';
-  [
-    { id:'sc', icon:'☁️', name:'SoundCloud', sub: () => `${S.sc.userId||''}` },
-    { id:'dz', icon:'🎶', name:'Deezer',     sub: () => 'ARL actif' },
-    { id:'sp', icon:'💚', name:'Spotify',    sub: () => `${(S.sp.tracks||[]).length} tracks` },
-  ].forEach(p => {
+  [{id:'sc',icon:'☁️',name:'SoundCloud'},{id:'dz',icon:'🎶',name:'Deezer'},{id:'sp',icon:'💚',name:'Spotify'}]
+  .forEach(p => {
     if (!S[p.id]?.on) return;
     const label = document.createElement('label');
     label.className = 'src-check';
-    label.innerHTML = `
-      <input type="checkbox" value="${p.id}" checked>
+    label.innerHTML = `<input type="checkbox" value="${p.id}" checked>
       <span style="font-size:18px">${p.icon}</span>
-      <div style="flex:1">
-        <div style="font-size:11px;font-weight:600">${p.name}</div>
-        <div style="font-size:9px;color:var(--grey);font-family:'Space Mono',monospace">${p.sub()}</div>
-      </div>`;
+      <div><div style="font-size:11px;font-weight:600">${p.name}</div></div>`;
     label.querySelector('input').addEventListener('change', refreshRunBtn);
     c.appendChild(label);
   });
@@ -3271,85 +3262,96 @@ function getSelectedSources() {
 }
 
 function refreshRunBtn() {
-  const btn  = document.getElementById('run-btn');
-  const info = document.getElementById('run-info');
-  const sel  = getSelectedSources();
-  if (btn)  btn.disabled = sel.length === 0;
-  if (info) info.textContent = sel.length > 0 ? `${sel.length} source(s) sélectionnée(s)` : 'Sélectionne au moins une source';
+  const btn = document.getElementById('run-btn');
+  if (btn) btn.disabled = getSelectedSources().length === 0;
 }
 
-// ── Extension ────────────────────────────────────────────────────────────────
-function _showExtUI() {
-  const noExt  = document.getElementById('no-ext-msg');
-  const badge  = document.getElementById('debug-ext-badge');
-  if (noExt)  noExt.style.display = 'none';
-  if (badge) { badge.textContent = '⬤ actif'; badge.style.color = '#4a4'; }
-  _setConnectStatus('⚡ Extension détectée', 'rgba(123,106,255,.9)');
-  setTimeout(() => { if (!S.sc?.on && !S.dz?.on) _setConnectStatus('', ''); }, 3000);
+// ── Extension connect functions ───────────────────────────────────────────────
+async function _extConnectSC(d) {
+  const tok = (d?.token || '').replace(/^OAuth\s+/i, '');
+  if (!tok) { dbg('SC: token vide', '#f66'); return; }
+  dbg('SC: token reçu ' + tok.slice(0,10) + '...', '#6af');
+  S.sc = { on: true, token: tok, userId: '', cookies: d.cookies || '' };
+  renderConnectedPlats();
+  updateContinueBtn();
+  dbg('SC: ✓ connecté', '#4f4');
+  // userId en arrière-plan
+  try {
+    const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
+    if (me?.id) { S.sc.userId = String(me.id); renderConnectedPlats(); }
+  } catch(e) {}
 }
 
-function _setConnectStatus(msg, color) {
-  const el = document.getElementById('connect-status');
-  if (el) { el.textContent = msg; el.style.color = color || 'var(--grey)'; }
+function _extConnectDZ(d) {
+  if (!d?.arl) { dbg('DZ: ARL vide', '#f66'); return; }
+  dbg('DZ: ARL reçu ' + d.arl.slice(0,10) + '...', '#6af');
+  S.dz = { on: true, arl: d.arl };
+  renderConnectedPlats();
+  updateContinueBtn();
+  dbg('DZ: ✓ connecté', '#4f4');
 }
 
-// Bouton principal : lit window.__shCreds déposé par l'extension
+// Exposer sur window pour injection directe par l'extension
+window._extConnectSC = _extConnectSC;
+window._extConnectDZ = _extConnectDZ;
+
+// ── Bouton principal ──────────────────────────────────────────────────────────
 document.getElementById('btn-connect-all')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-connect-all');
   btn.disabled = true;
   btn.textContent = '⟳ Connexion...';
-  dbg('Bouton cliqué — lecture window.__shCreds', '#fa0');
+  dbg('Bouton cliqué', '#fa0');
 
+  // Lire les creds déposés par l'extension
   const creds = window.__shCreds || {};
-  dbg('sc=' + !!creds.sc + ' dz=' + !!creds.dz, '#888');
+  dbg('__shCreds: sc=' + !!creds.sc + ' dz=' + !!creds.dz, '#888');
 
   let n = 0;
   if (creds.sc?.token) { await _extConnectSC(creds.sc); n++; }
-  if (creds.dz?.arl)   { _extConnectDZ(creds.dz);       n++; }
+  if (creds.dz?.arl)   { _extConnectDZ(creds.dz);        n++; }
 
   if (n > 0) {
     btn.textContent = '✓ Connecté';
-    _setConnectStatus('✓ ' + ['sc','dz'].filter(p=>S[p]?.on).map(p=>({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + '), 'var(--green)');
+    _setConnectStatus('✓ ' + ['sc','dz'].filter(p => S[p]?.on).map(p => ({sc:'SoundCloud',dz:'Deezer'}[p])).join(' + '), 'var(--green)');
   } else {
     btn.disabled = false;
     btn.textContent = '⚡ Connexion en 1 clic';
-    _setConnectStatus('Utilise le popup extension : Récupérer → Injecter', '#888');
-    dbg('Aucune donnée dans __shCreds — relance l'injection', '#f66');
+    _setConnectStatus('Utilise le popup extension : Récupérer → Injecter', '#666');
+    dbg('Aucune donnée — utilise le popup extension', '#f66');
   }
 });
 
-// Bouton test : simuler une injection (toujours visible pour debug)
-document.getElementById('btn-test-inject')?.addEventListener('click', async () => {
-  dbg('Test : injection simulée', '#fa0');
-  await _extConnectSC({ token: '2-test-fake-token-1234567890', cookies: '' });
-  _extConnectDZ({ arl: 'arl_test_fake_1234567890' });
-});
+function _setConnectStatus(msg, color) {
+  const el = document.getElementById('connect-status');
+  if (el) { el.textContent = msg; el.style.color = color || '#888'; }
+}
 
-// Bouton test toujours visible pour debug
-const testBtn = document.getElementById('btn-test-inject');
-if (testBtn) testBtn.style.display = 'block';
+function _showExtUI() {
+  const noExt = document.getElementById('no-ext-msg');
+  if (noExt) noExt.style.display = 'none';
+  const badge = document.getElementById('debug-ext-badge');
+  if (badge) { badge.textContent = '⬤ actif'; badge.style.color = '#4a4'; }
+  _setConnectStatus('Extension détectée', '#888');
+}
 
-// Listener messages depuis content-soundhub.js
+// ── Listener postMessage (content script ou injection MAIN world) ─────────────
 window.addEventListener('message', async function(ev) {
   if (!ev.data?.type) return;
-  console.log('[SoundHub page] message reçu:', ev.data.type, ev.data);
-  dbg('msg: ' + ev.data.type, '#666');
+  const t = ev.data.type;
+  dbg('msg: ' + t, '#555');
 
-  if (ev.data.type === 'soundhub_ext_present') {
+  if (t === 'soundhub_ext_present') {
     _extAvailable = true;
     _showExtUI();
-    dbg('✓ Extension détectée!', '#a0f0a0');
-    dbg('✓ Extension détectée', '#6f6');
-    const badge = document.createElement('div');
-    badge.style.cssText = 'position:fixed;bottom:16px;right:16px;background:rgba(123,106,255,.15);border:1px solid rgba(123,106,255,.35);color:#b0a0ff;font-size:10px;padding:6px 14px;border-radius:20px;font-family:Space Mono,monospace;z-index:9999;pointer-events:none;transition:opacity .5s';
-    badge.textContent = '⚡ Extension SoundHub active';
-    document.body.appendChild(badge);
-    setTimeout(() => { badge.style.opacity='0'; setTimeout(()=>badge.remove(),500); }, 2500);
     return;
   }
-
-  if (ev.data.type === 'soundhub_ext_init') {
-    dbg('← Init reçu depuis extension', '#6f6');
+  if (t === 'soundhub_ext_credentials') {
+    const { platform, data } = ev.data;
+    if (platform === 'sc') await _extConnectSC(data);
+    if (platform === 'dz') _extConnectDZ(data);
+    return;
+  }
+  if (t === 'soundhub_ext_init') {
     _extAvailable = true;
     _showExtUI();
     const d = ev.data.data || {};
@@ -3357,63 +3359,23 @@ window.addEventListener('message', async function(ev) {
     if (d.dz?.arl   && !S.dz?.on) _extConnectDZ(d.dz);
     return;
   }
+});
 
-  if (ev.data.type === 'soundhub_ext_no_session') {
-    console.log('[SoundHub] Pas de session pour', ev.data.platform);
-    _setConnectStatus('Pas de session ' + ev.data.platform.toUpperCase() + ' — ouvre l'onglet', 'var(--red)');
-    return;
-  }
+// ── Bouton test (toujours visible) ────────────────────────────────────────────
+document.getElementById('btn-test-inject')?.addEventListener('click', async () => {
+  dbg('Test simulé', '#fa0');
+  await _extConnectSC({ token: '2-test-000000000000', cookies: '' });
+  _extConnectDZ({ arl: 'arl_test_000000000000' });
+});
 
-  if (ev.data.type === 'soundhub_ext_credentials') {
-    dbg('← Credentials reçus: ' + ev.data.platform, '#fa0');
-    const { platform, data } = ev.data;
-    if (platform === 'sc') await _extConnectSC(data);
-    if (platform === 'dz') _extConnectDZ(data);
-    return;
-  }
-}, false);
-
-async function _extConnectSC(d) {
-  const tok = (d?.token||'').replace(/^OAuth\s+/i,'');
-  if (!tok) { console.warn('[SC] token vide'); dbg('SC: token vide!', '#f66'); return; }
-  dbg('SC: connexion avec token ' + tok.slice(0,10) + '...', '#6af');
-  S.sc = { on:true, token:tok, userId:'', cookies:d.cookies||'' };
-  setSt('sc', 'ok', '✓ SoundCloud');
-  renderConnectedPlats();
-  updateContinueBtn();
-  dbg('SC: ✓ connecté, pills mises à jour', '#4f4');
-  // Tenter de récupérer le userId en arrière-plan (non bloquant)
-  try {
-    const me = await scFetch('https://api-v2.soundcloud.com/me', tok);
-    if (me?.id) { S.sc.userId = String(me.id); renderConnectedPlats(); }
-  } catch(e) { console.warn('[SC] userId fetch failed (non critique):', e.message); }
-}
-
-function _extConnectDZ(d) {
-  if (!d?.arl) { dbg('DZ: ARL vide!', '#f66'); return; }
-  dbg('DZ: connexion avec ARL ' + d.arl.slice(0,10) + '...', '#6af');
-  S.dz = { on:true, arl:d.arl };
-  setSt('dz', 'ok', '✓');
-  renderConnectedPlats();
-  updateContinueBtn();
-  dbg('DZ: ✓ connecté', '#4f4');
-}
-
-// Exposer sur window pour que l'extension puisse les appeler directement
-window._extConnectSC = _extConnectSC;
-window._extConnectDZ = _extConnectDZ;
-
-// ── Navigation ────────────────────────────────────────────────────────────────
+// ── Navigation step 1/2 ───────────────────────────────────────────────────────
 document.getElementById('btn-continue')?.addEventListener('click', () => {
   buildSourceChecks();
   showStep(2);
 });
-document.getElementById('btn-back')?.addEventListener('click', () => {
-  showStep(1);
-});
+document.getElementById('btn-back')?.addEventListener('click', () => showStep(1));
 
 // ── Run ───────────────────────────────────────────────────────────────────────
-// Override : run-btn déclenche run() avec les sources sélectionnées
 document.getElementById('run-btn')?.addEventListener('click', () => {
   S._selectedSources = getSelectedSources();
   run();
@@ -3426,28 +3388,19 @@ function openExportModal(playlistName, tracks) {
   const sub  = document.getElementById('export-modal-sub');
   if (!list) return;
   list.innerHTML = '';
-  if (sub) sub.textContent = `"${playlistName}" — ${(tracks||[]).length} tracks`;
-
+  if (sub) sub.textContent = '"' + playlistName + '" — ' + (tracks||[]).length + ' tracks';
   const dests = [];
-  if (S.sc?.on && S.sc?.token) dests.push({ id:'sc',   icon:'☁️', name:'SoundCloud', sub:'Créer une playlist' });
-  if (S.dz?.on && S.dz?.arl)   dests.push({ id:'dz',   icon:'🎶', name:'Deezer',     sub:'Créer une playlist' });
-  dests.push(
-    { id:'json', icon:'📄', name:'JSON',  sub:'Télécharger le fichier' },
-    { id:'txt',  icon:'📝', name:'TXT',   sub:'Télécharger le fichier' },
-  );
-
+  if (S.sc?.on && S.sc?.token) dests.push({ id:'sc',  icon:'☁️', name:'SoundCloud' });
+  if (S.dz?.on && S.dz?.arl)   dests.push({ id:'dz',  icon:'🎶', name:'Deezer' });
+  dests.push({ id:'json', icon:'📄', name:'JSON' }, { id:'txt', icon:'📝', name:'TXT' });
   dests.forEach(p => {
     const div = document.createElement('div');
     div.className = 'export-plat';
     div.dataset.id = p.id;
-    div.innerHTML = `
-      <span class="ep-icon">${p.icon}</span>
-      <div class="ep-name">${p.name}<br><span style="font-size:9px;color:var(--grey);font-weight:400;font-family:'Space Mono',monospace">${p.sub}</span></div>
-      <div class="ep-check">✓</div>`;
+    div.innerHTML = '<span class="ep-icon">' + p.icon + '</span><div class="ep-name">' + p.name + '</div><div class="ep-check">✓</div>';
     div.addEventListener('click', () => div.classList.toggle('selected'));
     list.appendChild(div);
   });
-
   document.getElementById('export-modal').classList.add('open');
 }
 window.openExportModal = openExportModal;
@@ -3456,68 +3409,47 @@ document.getElementById('export-cancel-btn')?.addEventListener('click', () => {
   document.getElementById('export-modal').classList.remove('open');
   document.getElementById('export-progress').textContent = '';
 });
-
 document.getElementById('export-confirm-btn')?.addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.export-plat.selected')).map(d => d.dataset.id);
   if (!selected.length) { document.getElementById('export-progress').textContent = 'Sélectionne une destination'; return; }
   const prog = document.getElementById('export-progress');
   const { name, tracks } = S._exportTarget || {};
-  if (!name || !tracks) return;
   document.getElementById('export-confirm-btn').disabled = true;
   for (const dest of selected) {
-    prog.textContent = `⟳ Export ${dest.toUpperCase()}...`;
+    prog.textContent = '⟳ ' + dest.toUpperCase() + '...';
     try {
-      if (dest === 'sc')        await exportToSC(name, tracks);
+      if (dest === 'sc')   await exportToSC(name, tracks);
       else if (dest === 'dz')   await exportToDeezer(name, tracks);
       else if (dest === 'json') exportPlaylistJSON(name, tracks);
       else if (dest === 'txt')  exportTXT(name, tracks);
-      prog.textContent = `✓ ${dest.toUpperCase()} exporté`;
-    } catch(e) { prog.textContent = `✕ ${dest}: ${e.message}`; }
+      prog.textContent = '✓ ' + dest.toUpperCase();
+    } catch(e) { prog.textContent = '✕ ' + e.message; }
     await new Promise(r => setTimeout(r, 600));
   }
   document.getElementById('export-confirm-btn').disabled = false;
   setTimeout(() => { document.getElementById('export-modal').classList.remove('open'); prog.textContent = ''; }, 2000);
 });
-
 document.getElementById('export-modal')?.addEventListener('click', e => {
   if (e.target.id === 'export-modal') document.getElementById('export-modal').classList.remove('open');
 });
-
-// Bouton "Exporter" dans la toolbar résultats
 document.getElementById('btn-export-modal')?.addEventListener('click', () => {
-  const allTracks = Object.values(S.results || {}).flat();
-  openExportModal('Toutes les playlists', allTracks);
+  openExportModal('Toutes les playlists', Object.values(S.results || {}).flat());
 });
 
-// Init : restaurer session / résultats précédents
+// ── Init ──────────────────────────────────────────────────────────────────────
 (function init() {
-  // Restaurer Spotify tracks depuis localStorage
-  try {
-    const spTracks = localStorage.getItem('sp_tracks');
-    if (spTracks) {
-      const tracks = JSON.parse(spTracks);
-      if (tracks?.length) {
-        S.sp = { on:true, tracks };
-        setSt('sp','ok',`✓ ${tracks.length} tracks`);
-        updateContinueBtn();
-        renderConnectedPlats();
-      }
-    }
-  } catch(e) {}
-
-  // Restaurer résultats depuis sessionStorage (survive au redirect OAuth)
+  // Restaurer résultats
   try {
     const saved = sessionStorage.getItem('sh_results');
-    const savedLabels = sessionStorage.getItem('sh_labels');
     if (saved) {
       S.results = JSON.parse(saved);
+      const savedLabels = sessionStorage.getItem('sh_labels');
       if (savedLabels) S.labels = JSON.parse(savedLabels);
-      const total = Object.values(S.results).reduce((s,a) => s+a.length, 0);
-      showResults(S.results, total);
+      showResults(S.results, Object.values(S.results).reduce((s,a) => s+a.length, 0));
     }
   } catch(e) {}
 
-  // Handle Last.fm OAuth callback
+  // OAuth LFM callback
   const params = new URLSearchParams(window.location.search);
   const token = params.get('token');
   if (token) {
@@ -3525,11 +3457,7 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
     const pendingCat = sessionStorage.getItem('lfm_pending_cat') || null;
     sessionStorage.removeItem('lfm_pending_cat');
     setTimeout(async () => {
-      if (S.results) {
-        const total = Object.values(S.results).reduce((s,a)=>s+a.length,0);
-        showResults(S.results, total);
-        await new Promise(r => setTimeout(r, 400));
-      }
+      if (S.results) showResults(S.results, Object.values(S.results).reduce((s,a)=>s+a.length,0));
       await getLFMSession(token, pendingCat);
     }, 100);
   }
@@ -3538,20 +3466,13 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
   const sess = localStorage.getItem('lfm_session');
   if (sess) S.lfmSession = sess;
 
-  // Restaurer Spotify depuis localStorage (persist entre sessions)
+  // Restaurer Spotify
   try {
     const spRaw = localStorage.getItem('sp_tracks');
     if (spRaw) {
       const tracks = JSON.parse(spRaw);
       if (Array.isArray(tracks) && tracks.length > 0) {
-        S.sp = { on:true, tracks };
-        const spName = document.getElementById('sp-pill-name');
-        const spSub  = document.getElementById('sp-pill-sub');
-        const spDisc = document.getElementById('sp-disc');
-        if (spName) spName.textContent = 'Spotify';
-        if (spSub)  spSub.textContent  = tracks.length.toLocaleString('fr') + ' tracks';
-        if (spDisc) spDisc.style.display = 'block';
-        setSt('sp','ok','✓ Restauré');
+        S.sp = { on: true, tracks };
         updateContinueBtn();
       }
     }
@@ -3560,12 +3481,11 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
 
 </script>
 
-
-<!-- ══ MODAL EXPORT ═════════════════════════════════════════════════════════ -->
+<!-- ══ MODAL EXPORT ═══════════════════════════════════════════════════════════ -->
 <div id="export-modal">
   <div class="em-box">
     <h3>Exporter</h3>
-    <div class="em-sub" id="export-modal-sub">Sélectionne les destinations</div>
+    <div class="em-sub" id="export-modal-sub"></div>
     <div id="export-plat-list" style="margin-bottom:16px"></div>
     <div style="display:flex;gap:8px">
       <button id="export-cancel-btn" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
