@@ -3113,13 +3113,10 @@ document.getElementById('overlay')?.addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 document.getElementById('multi-export-cancel')?.addEventListener('click', function() {
-  document.getElementById('multi-export-modal').close();
+  document.getElementById('multi-export-modal').style.display='none';
 });
 document.getElementById('multi-export-modal')?.addEventListener('click', function(e) {
-  const r = this.getBoundingClientRect();
-  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
-    this.close();
-  }
+  if (e.target === this) this.style.display = 'none';
 });
 
 // ── Mode sélection (fusionner / supprimer / exporter) ────────────────────────
@@ -3232,7 +3229,7 @@ function openMultiExportModal(cats) {
     dests.appendChild(row);
   });
 
-  modal.showModal();
+  modal.style.display='flex';
   modal._cats = cats;
 }
 
@@ -3268,7 +3265,7 @@ document.getElementById('multi-export-confirm')?.addEventListener('click', async
   prog.textContent = '✓ Export terminé !';
   confirmBtn.disabled = false;
   exitSelectMode();
-  setTimeout(() => { modal.close(); }, 2000);
+  setTimeout(() => { modal.style.display='none'; }, 2000);
 });
 
 // ── Barre de recherche résultats ─────────────────────────────────────────────
@@ -3642,17 +3639,20 @@ document.getElementById('btn-export-modal')?.addEventListener('click', () => {
 </div>
 
 
+
 <!-- ══ MODAL EXPORT MULTI-PLAYLISTS ═════════════════════════════════════════ -->
-<dialog id="multi-export-modal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);border:none;border-radius:12px;padding:24px;width:340px;max-width:90vw;background:var(--dark2);color:var(--white);margin:0">
-  <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:var(--white);margin:0 0 6px">Exporter les playlists</h3>
-  <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey);margin-bottom:16px"></div>
-  <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--grey2);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
-  <div id="multi-export-dests" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
-  <div style="display:flex;gap:8px">
-    <button id="multi-export-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border2);color:var(--grey);border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
-    <button id="multi-export-confirm" style="flex:2;padding:10px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
+<div id="multi-export-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(0,0,0,.85);box-sizing:border-box;align-items:center;justify-content:center">
+  <div id="multi-export-inner" style="background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:24px;width:340px;max-width:90vw;box-sizing:border-box;pointer-events:all">
+    <h3 style="font-family:'Space Mono',monospace;font-size:13px;color:#fff;margin:0 0 6px">Exporter les playlists</h3>
+    <div id="multi-export-sub" style="font-family:'Space Mono',monospace;font-size:9px;color:#888;margin-bottom:16px"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:9px;color:#555;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Destination(s)</div>
+    <div id="multi-export-dests" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button id="multi-export-cancel" style="flex:1;padding:10px;background:none;border:1px solid #333;color:#888;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer">Annuler</button>
+      <button id="multi-export-confirm" style="flex:2;padding:10px;background:#ff4400;border:none;color:#fff;border-radius:7px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer">Exporter →</button>
+    </div>
+    <div id="multi-export-progress" style="margin-top:12px;font-size:9px;font-family:'Space Mono',monospace;color:#888;min-height:14px"></div>
   </div>
-  <div id="multi-export-progress" style="margin-top:12px;font-size:9px;font-family:'Space Mono',monospace;color:var(--grey);min-height:14px"></div>
-</dialog>
+</div>
 </body>
 </html>
