@@ -2297,14 +2297,16 @@ async function run() {
       log(`Last.fm — ${t.length} tracks ✓`,'ok');
       setProg(15,'Last.fm ✓');
     }
-    if (S.dz.on) {
+    const sel = S._selectedSources || ['sc','dz','sp','lfm'];
+    if (S.dz.on && sel.includes('dz')) {
+      if (!S.dz.userId) throw new Error('Deezer: userId manquant — attends 2s et relance');
       log('Deezer — fetching...','info');
       const t = await fetchDZ();
       all.push(...t);
       log(`Deezer — ${t.length} tracks ✓`,'ok');
       setProg(25,'Deezer ✓');
     }
-    if (S.sc.on) {
+    if (S.sc.on && sel.includes('sc')) {
       log('SoundCloud — fetching...','info');
       const t = await fetchSC();
       all.push(...t);
@@ -3270,10 +3272,21 @@ async function _extConnectSC(d) {
 function _extConnectDZ(d) {
   if (!d?.arl) { dbg('DZ: ARL vide', '#f66'); return; }
   dbg('DZ: ARL reçu ' + d.arl.slice(0,10) + '...', '#6af');
-  S.dz = { on: true, arl: d.arl };
+  S.dz = { on: true, arl: d.arl, userId: '' };
   renderConnectedPlats();
   updateContinueBtn();
-  dbg('DZ: ✓ connecté', '#4f4');
+  dbg('DZ: ✓ connecté (userId en cours...)', '#4f4');
+  // Récupérer le userId via l'API Deezer publique — le cookie ARL est envoyé auto par le navigateur
+  dzFetch('https://api.deezer.com/user/me').then(user => {
+    if (user?.id) {
+      S.dz.userId = String(user.id);
+      dbg('DZ: userId=' + user.id + ' ✓', '#4f4');
+      renderConnectedPlats();
+    }
+  }).catch(e => {
+    dbg('DZ: userId fetch failed — ' + e.message, '#fa0');
+    // Fallback : essayer de lire depuis l'onglet Deezer via le titre de page ou autre
+  });
 }
 
 // Exposer sur window pour injection directe par l'extension
